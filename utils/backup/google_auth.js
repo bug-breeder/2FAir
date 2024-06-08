@@ -87,7 +87,6 @@ function decodeGoogleAuthenticatorBackupURL(urlString) {
 module.exports = decodeGoogleAuthenticatorBackupURL; 
 
 // Example usage
-
 // const url = 'otpauth-migration://offline?data=CjYKEExyJfPiZeroMa/MdF%2BnkTISE2pvaG5kb2VAZXhhbXBsZS5jb20aB0Rpc2NvcmQgASgBMAIQARgBIAA%3D';
 // const decodedOtps = decodeGoogleAuthenticatorBackupURL(url);
 // console.log(decodedOtps);
