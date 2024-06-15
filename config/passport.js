@@ -24,34 +24,52 @@ passport.use(new GoogleStrategy({
     scope: ['profile', 'email']
 }, async (token, tokenSecret, profile, done) => {
     try {
-        let user = await User.findOneAndUpdate(
-            { googleId: profile.id },
-            { email: profile.emails[0].value },
-            { new: true, upsert: true }
-        );
+        let user = await User.findOne({ email: profile.emails[0].value });
+
+        if (user) {
+            // If the user exists, update their Google ID
+            user.googleId = profile.id;
+        } else {
+            // Otherwise, create a new user
+            user = new User({
+                googleId: profile.id,
+                email: profile.emails[0].value,
+            });
+        }
+
+        await user.save();
         done(null, user);
     } catch (err) {
         done(err, null);
     }
 }));
 
-// passport.use(new MicrosoftStrategy({
-//     clientID: process.env.MICROSOFT_CLIENT_ID,
-//     clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-//     callbackURL: '/auth/microsoft/callback',
-//     scope: ['user.read']
-// }, async (token, tokenSecret, profile, done) => {
-//     try {
-//         let user = await User.findOneAndUpdate(
-//             { microsoftId: profile.id },
-//             { email: profile.emails[0].value },
-//             { new: true, upsert: true }
-//         );
-//         done(null, user);
-//     } catch (err) {
-//         done(err, null);
-//     }
-// }));
+passport.use(new MicrosoftStrategy({
+    clientID: process.env.MICROSOFT_CLIENT_ID,
+    clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
+    callbackURL: '/auth/microsoft/callback',
+    scope: ['user.read']
+}, async (token, tokenSecret, profile, done) => {
+    try {
+        let user = await User.findOne({ email: profile.emails[0].value });
+
+        if (user) {
+            // If the user exists, update their Microsoft ID
+            user.microsoftId = profile.id;
+        } else {
+            // Otherwise, create a new user
+            user = new User({
+                microsoftId: profile.id,
+                email: profile.emails[0].value,
+            });
+        }
+
+        await user.save();
+        done(null, user);
+    } catch (err) {
+        done(err, null);
+    }
+}));
 
 // passport.use(new AppleStrategy({
 //     clientID: process.env.APPLE_CLIENT_ID,
@@ -60,11 +78,20 @@ passport.use(new GoogleStrategy({
 //     scope: []
 // }, async (token, tokenSecret, profile, done) => {
 //     try {
-//         let user = await User.findOneAndUpdate(
-//             { appleId: profile.id },
-//             { email: profile.emails[0].value },
-//             { new: true, upsert: true }
-//         );
+//         let user = await User.findOne({ email: profile.emails[0].value });
+
+//         if (user) {
+//             // If the user exists, update their Apple ID
+//             user.appleId = profile.id;
+//         } else {
+//             // Otherwise, create a new user
+//             user = new User({
+//                 appleId: profile.id,
+//                 email: profile.emails[0].value,
+//             });
+//         }
+
+//         await user.save();
 //         done(null, user);
 //     } catch (err) {
 //         done(err, null);
