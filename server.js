@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 
 dotenv.config();
-require('./config/passportConfig');
+require('./config/passport');
 
 const authRoutes = require('./routes/auth');
 const otpRoutes = require('./routes/otp');

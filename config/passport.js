@@ -8,20 +8,31 @@ passport.serializeUser((user, done) => {
     done(null, user.id);
 });
 
-passport.deserializeUser((id, done) => {
-    User.findById(id, (err, user) => {
-        done(err, user);
-    });
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await User.findById(id);
+        done(null, user);
+    } catch (err) {
+        done(err, null);
+    }
 });
 
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: '/auth/google/callback'
-}, (token, tokenSecret, profile, done) => {
-    User.findOrCreate({ googleId: profile.id }, (err, user) => {
-        return done(err, user);
-    });
+    callbackURL: '/auth/google/callback',
+    scope: ['profile', 'email']
+}, async (token, tokenSecret, profile, done) => {
+    try {
+        let user = await User.findOneAndUpdate(
+            { googleId: profile.id },
+            { email: profile.emails[0].value },
+            { new: true, upsert: true }
+        );
+        done(null, user);
+    } catch (err) {
+        done(err, null);
+    }
 }));
 
 // passport.use(new MicrosoftStrategy({
@@ -29,18 +40,33 @@ passport.use(new GoogleStrategy({
 //     clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
 //     callbackURL: '/auth/microsoft/callback',
 //     scope: ['user.read']
-// }, (token, tokenSecret, profile, done) => {
-//     User.findOrCreate({ microsoftId: profile.id }, (err, user) => {
-//         return done(err, user);
-//     });
+// }, async (token, tokenSecret, profile, done) => {
+//     try {
+//         let user = await User.findOneAndUpdate(
+//             { microsoftId: profile.id },
+//             { email: profile.emails[0].value },
+//             { new: true, upsert: true }
+//         );
+//         done(null, user);
+//     } catch (err) {
+//         done(err, null);
+//     }
 // }));
 
 // passport.use(new AppleStrategy({
 //     clientID: process.env.APPLE_CLIENT_ID,
 //     clientSecret: process.env.APPLE_CLIENT_SECRET,
-//     callbackURL: '/auth/apple/callback'
-// }, (token, tokenSecret, profile, done) => {
-//     User.findOrCreate({ appleId: profile.id }, (err, user) => {
-//         return done(err, user);
-//     });
+//     callbackURL: '/auth/apple/callback',
+//     scope: []
+// }, async (token, tokenSecret, profile, done) => {
+//     try {
+//         let user = await User.findOneAndUpdate(
+//             { appleId: profile.id },
+//             { email: profile.emails[0].value },
+//             { new: true, upsert: true }
+//         );
+//         done(null, user);
+//     } catch (err) {
+//         done(err, null);
+//     }
 // }));

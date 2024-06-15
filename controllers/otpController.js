@@ -1,11 +1,11 @@
 const OTPAuth = require('otpauth');
 const Otp = require('../models/otp');
-const providers = require('../data/providers'); // Assume providers data is loaded from a separate file
+const Provider = require('../models/provider');
 
 exports.addOtp = async (req, res) => {
     const { otpauthUri } = req.body;
     const parsedUri = OTPAuth.URI.parse(otpauthUri);
-    const provider = providers.find(p => p.name === parsedUri.issuer);
+    const provider = await Provider.findOne({ name: parsedUri.issuer });
 
     if (!provider) {
         return res.status(400).json({ error: 'Provider not found' });
