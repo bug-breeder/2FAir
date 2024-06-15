@@ -158,6 +158,8 @@ curl -X GET http://localhost:3000/otp/<otp_id>/generate -H "Authorization: Beare
 - [x] Implement JWT-based authentication middleware
 - [x] Add endpoints for adding, retrieving, and generating OTPs
 - [x] Upload provider data from a JSON file to MongoDB
+- [ ] Allow users to add custom providers
+- [ ] Allow users to add profile pictures
 - [ ] Implement user registration and login endpoints
 - [ ] Enhance error handling and validation
 - [ ] Add unit and integration tests
