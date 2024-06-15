@@ -24,23 +24,23 @@ passport.use(new GoogleStrategy({
     });
 }));
 
-passport.use(new MicrosoftStrategy({
-    clientID: process.env.MICROSOFT_CLIENT_ID,
-    clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-    callbackURL: '/auth/microsoft/callback',
-    scope: ['user.read']
-}, (token, tokenSecret, profile, done) => {
-    User.findOrCreate({ microsoftId: profile.id }, (err, user) => {
-        return done(err, user);
-    });
-}));
+// passport.use(new MicrosoftStrategy({
+//     clientID: process.env.MICROSOFT_CLIENT_ID,
+//     clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
+//     callbackURL: '/auth/microsoft/callback',
+//     scope: ['user.read']
+// }, (token, tokenSecret, profile, done) => {
+//     User.findOrCreate({ microsoftId: profile.id }, (err, user) => {
+//         return done(err, user);
+//     });
+// }));
 
-passport.use(new AppleStrategy({
-    clientID: process.env.APPLE_CLIENT_ID,
-    clientSecret: process.env.APPLE_CLIENT_SECRET,
-    callbackURL: '/auth/apple/callback'
-}, (token, tokenSecret, profile, done) => {
-    User.findOrCreate({ appleId: profile.id }, (err, user) => {
-        return done(err, user);
-    });
-}));
+// passport.use(new AppleStrategy({
+//     clientID: process.env.APPLE_CLIENT_ID,
+//     clientSecret: process.env.APPLE_CLIENT_SECRET,
+//     callbackURL: '/auth/apple/callback'
+// }, (token, tokenSecret, profile, done) => {
+//     User.findOrCreate({ appleId: profile.id }, (err, user) => {
+//         return done(err, user);
+//     });
+// }));
