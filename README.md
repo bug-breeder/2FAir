@@ -152,8 +152,8 @@ curl -X GET http://localhost:3000/otp/<otp_id>/generate -H "Authorization: Beare
 
 - [x] Set up Express.js server
 - [x] Configure Google authentication using Passport.js
-- [ ] Configure Apple authentication using Passport.js
-- [ ] Configure Microsoft authentication using Passport.js
+- [ ] Configure Apple authentication using Passport.js (never, until it's free)
+- [x] Configure Microsoft authentication using Passport.js
 - [x] Create MongoDB models for User and OTP
 - [x] Implement JWT-based authentication middleware
 - [x] Add endpoints for adding, retrieving, and generating OTPs
