@@ -83,49 +83,49 @@ async function generateGoogleAuthenticatorBackupURL(otps) {
 module.exports = generateGoogleAuthenticatorBackupURL;
 
 // Example usage with mongoose OTP schema
-const mongoose = require("mongoose");
+// const mongoose = require("mongoose");
 
-const otpSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  issuer: String,
-  label: String,
-  secret: String,
-  algorithm: String,
-  digits: Number,
-  period: Number,
-  counter: Number,
-  method: String,
-  createdAt: { type: Date, default: Date.now },
-});
+// const otpSchema = new mongoose.Schema({
+//   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+//   issuer: String,
+//   label: String,
+//   secret: String,
+//   algorithm: String,
+//   digits: Number,
+//   period: Number,
+//   counter: Number,
+//   method: String,
+//   createdAt: { type: Date, default: Date.now },
+// });
 
-const Otp = mongoose.model("Otp", otpSchema);
+// const Otp = mongoose.model("Otp", otpSchema);
 
-(async () => {
-  // Example OTP objects
-  const otps = [
-    {
-      issuer: "ExampleIssuer",
-      label: "johndoe@example.com",
-      secret: "THIl8+Jl6ugxr8x0X6eRMg==", // Base64 encoded secret
-      algorithm: "SHA1",
-      digits: 6,
-      method: "TOTP",
-      period: 30,
-      counter: 0,
-    },
-    {
-      algorithm: "SHA1",
-      digits: null, // Assuming default TOTP digits is 6
-      method: "TOTP", // Assuming the method is HOTP as per your data
-      secret: "THIl8+Jl6ugxr8x0X6eRMg", // Corrected expected secret
-      label: "johndoe@example.com", // Assuming this is the email used as label
-      issuer: "Discord",
-      period: null, // Assuming default TOTP period is 30
-      counter: null, // Assuming counter is null for TOTP
-    },
-  ];
+// (async () => {
+//   // Example OTP objects
+//   const otps = [
+//     {
+//       issuer: "ExampleIssuer",
+//       label: "johndoe@example.com",
+//       secret: "THIl8+Jl6ugxr8x0X6eRMg==", // Base64 encoded secret
+//       algorithm: "SHA1",
+//       digits: 6,
+//       method: "TOTP",
+//       period: 30,
+//       counter: 0,
+//     },
+//     {
+//       algorithm: "SHA1",
+//       digits: null, // Assuming default TOTP digits is 6
+//       method: "TOTP", // Assuming the method is HOTP as per your data
+//       secret: "THIl8+Jl6ugxr8x0X6eRMg", // Corrected expected secret
+//       label: "johndoe@example.com", // Assuming this is the email used as label
+//       issuer: "Discord",
+//       period: null, // Assuming default TOTP period is 30
+//       counter: null, // Assuming counter is null for TOTP
+//     },
+//   ];
 
-  const url = await generateGoogleAuthenticatorBackupURL(otps);
-  console.log(url);
-  console.log(decodeGoogleAuthenticatorBackupURL(url));
-})();
+//   const url = await generateGoogleAuthenticatorBackupURL(otps);
+//   console.log(url);
+//   console.log(decodeGoogleAuthenticatorBackupURL(url));
+// })();
