@@ -1,48 +1,100 @@
-const decodeGoogleAuthenticatorBackupURL = require("../export/google_auth.js");
+const generateGoogleAuthenticatorBackupURL = require("./google_auth");
 
-describe("decodeGoogleAuthenticatorBackupURL", () => {
-  it("should correctly decode and process OTP parameters from the backup URL", () => {
-    const url =
-      "otpauth-migration://offline?data=CjYKEExyJfPiZeroMa/MdF%2BnkTISE2pvaG5kb2VAZXhhbXBsZS5jb20aB0Rpc2NvcmQgASgBMAIQARgBIAA%3D";
-
-    const expectedOtps = [
+describe("generateGoogleAuthenticatorBackupURL", () => {
+  it("should generate a valid Google Authenticator backup URL", async () => {
+    const otps = [
       {
+        issuer: "ExampleIssuer",
+        label: "johndoe@example.com",
+        secret: "THIl8+Jl6ugxr8x0X6eRMg==", // Base64 encoded secret
         algorithm: "SHA1",
-        digits: null, // Assuming default TOTP digits is 6
-        method: "TOTP", // Assuming the method is HOTP as per your data
-        secret: "THIl8+Jl6ugxr8x0X6eRMg", // Corrected expected secret
-        label: "johndoe@example.com", // Assuming this is the email used as label
-        issuer: "Discord",
-        period: null, // Assuming default TOTP period is 30
-        counter: null, // Assuming counter is null for TOTP
+        digits: 6,
+        method: "TOTP",
+        period: 30,
+        counter: 0,
       },
     ];
 
-    const decodedOtps = decodeGoogleAuthenticatorBackupURL(url);
-    console.log(decodedOtps);
-    expect(decodedOtps).toEqual(expectedOtps);
+    const url = await generateGoogleAuthenticatorBackupURL(otps);
+    expect(url).toMatch(/^otpauth-migration:\/\/offline\?data=/);
   });
 
-  it("should throw an error for invalid protocol", () => {
-    const url =
-      "http://offline?data=CjYKEExyJfPiZeroMa/MdF%2BnkTISE2pvaG5kb2VAZXhhbXBsZS5jb20aB0Rpc2NvcmQgASgBMAIQARgBIAA%3D";
-    expect(() => decodeGoogleAuthenticatorBackupURL(url)).toThrow(
-      "Invalid OTP migration URL format: expected protocol to be otpauth-migration, got http:"
-    );
+  it("should throw an error for invalid algorithm", async () => {
+    const otps = [
+      {
+        issuer: "ExampleIssuer",
+        label: "johndoe@example.com",
+        secret: "THIl8+Jl6ugxr8x0X6eRMg==", // Base64 encoded secret
+        algorithm: "INVALID_ALGO",
+        digits: 6,
+        method: "TOTP",
+        period: 30,
+        counter: 0,
+      },
+    ];
+
+    await expect(generateGoogleAuthenticatorBackupURL(otps)).rejects.toThrow();
   });
 
-  it("should throw an error for invalid host", () => {
-    const url =
-      "otpauth-migration://invalid?data=CjYKEExyJfPiZeroMa/MdF%2BnkTISE2pvaG5kb2VAZXhhbXBsZS5jb20aB0Rpc2NvcmQgASgBMAIQARgBIAA%3D";
-    expect(() => decodeGoogleAuthenticatorBackupURL(url)).toThrow(
-      "Invalid OTP migration URL format: expected host to be offline, got invalid"
-    );
+  it("should throw an error for missing secret", async () => {
+    const otps = [
+      {
+        issuer: "ExampleIssuer",
+        label: "johndoe@example.com",
+        secret: "", // Missing secret
+        algorithm: "SHA1",
+        digits: 6,
+        method: "TOTP",
+        period: 30,
+        counter: 0,
+      },
+    ];
+
+    await expect(generateGoogleAuthenticatorBackupURL(otps)).rejects.toThrow();
   });
 
-  it("should throw an error for missing data parameter", () => {
-    const url = "otpauth-migration://offline";
-    expect(() => decodeGoogleAuthenticatorBackupURL(url)).toThrow(
-      "Invalid OTP migration URL format: expected a data query parameter"
-    );
+  it("should throw an error for invalid method", async () => {
+    const otps = [
+      {
+        issuer: "ExampleIssuer",
+        label: "johndoe@example.com",
+        secret: "THIl8+Jl6ugxr8x0X6eRMg==", // Base64 encoded secret
+        algorithm: "SHA1",
+        digits: 6,
+        method: "INVALID_METHOD",
+        period: 30,
+        counter: 0,
+      },
+    ];
+
+    await expect(generateGoogleAuthenticatorBackupURL(otps)).rejects.toThrow();
+  });
+
+  it("should handle multiple OTPs correctly", async () => {
+    const otps = [
+      {
+        issuer: "ExampleIssuer1",
+        label: "johndoe1@example.com",
+        secret: "THIl8+Jl6ugxr8x0X6eRMg==", // Base64 encoded secret
+        algorithm: "SHA1",
+        digits: 6,
+        method: "TOTP",
+        period: 30,
+        counter: 0,
+      },
+      {
+        issuer: "ExampleIssuer2",
+        label: "johndoe2@example.com",
+        secret: "dGhpc2lzYW5vdGhlcmV4YW1wbGU=", // Base64 encoded secret
+        algorithm: "SHA1",
+        digits: 6,
+        method: "HOTP",
+        period: 0,
+        counter: 1,
+      },
+    ];
+
+    const url = await generateGoogleAuthenticatorBackupURL(otps);
+    expect(url).toMatch(/^otpauth-migration:\/\/offline\?data=/);
   });
 });

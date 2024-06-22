@@ -128,4 +128,4 @@ module.exports = generateGoogleAuthenticatorBackupURL;
 //   const url = await generateGoogleAuthenticatorBackupURL(otps);
 //   console.log(url);
 //   console.log(decodeGoogleAuthenticatorBackupURL(url));
-// })();
+})();
