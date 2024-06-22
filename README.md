@@ -1,4 +1,4 @@
-# fly2FAst
+# 2FAir
 
 This project is an Authenticator Web App similar to Google Authenticator/Authy, built using Express.js and MongoDB. It supports time-based (TOTP), counter-based (HOTP), and Steam methods. The app allows users to log in with Google, Microsoft, and Apple accounts and manage multiple authentication codes.
 
