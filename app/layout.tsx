@@ -55,7 +55,7 @@ export default function RootLayout({
                 href="https://github.com/anh-ngn"
                 title="anh-ngn"
               >
-                <FAir />
+                <FAir size={24} />
                 <span className="text-default-600">Made by</span>
                 <span className="text-primary">anh-ngn</span>
                 <span className="text-default-600">with</span>
