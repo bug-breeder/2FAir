@@ -8,7 +8,7 @@ import { Providers } from "./providers";
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
 import { Navbar } from "@/components/navbar";
-import { HeartFilledIcon } from "@/components/icons";
+import { FAir, HeartFilledIcon } from "@/components/icons";
 
 export const metadata: Metadata = {
   title: {
@@ -55,6 +55,7 @@ export default function RootLayout({
                 href="https://github.com/anh-ngn"
                 title="anh-ngn"
               >
+                <FAir />
                 <span className="text-default-600">Made by</span>
                 <span className="text-primary">anh-ngn</span>
                 <span className="text-default-600">with</span>

@@ -18,12 +18,13 @@ import clsx from "clsx";
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
 import {
+  FAir,
   GithubIcon,
   HeartFilledIcon,
   SearchIcon,
   Logo,
 } from "@/components/icons";
-import { FaEnvelope } from "react-icons/fa";
+import { FaEnvelope, FaRibbon } from "react-icons/fa";
 
 export const Navbar = () => {
   const searchInput = (
