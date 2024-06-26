@@ -22,7 +22,7 @@ export default function Home() {
   const otps = [
     {
       issuer: "Google",
-      label: "nguyentranvietanh@gmail.com",
+      label: "abcdkmlkafnguyentranvietanh@gmail.com",
       secret: "NB2W45DFOIZA",
       period: 30,
     },
@@ -114,7 +114,7 @@ export default function Home() {
         </Snippet>
       </div> */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-2 sm:gap-5">
         {otps.map((otp, index) => (
           <OTPCard key={index} otp={otp} />
         ))}

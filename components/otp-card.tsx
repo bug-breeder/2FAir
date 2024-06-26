@@ -65,24 +65,24 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
         isPressable
         isHoverable
         onPress={handleCopy}
-        className="max-w-[430px] transition-transform transform hover:scale-105 active:scale-95"
+        className="w-full max-w-[430px] transition-transform transform hover:scale-105 active:scale-95"
       >
-        <CardBody className="flex flex-row gap-5 justify-between pt-3 pl-3 pr-3 pb-1">
-          <div className="flex gap-5">
+        <CardBody className="flex flex-row gap-5 justify-between items-center pt-3 pl-3 pr-3 pb-1">
+          <div className="flex gap-3 items-center flex-grow overflow-hidden">
             <Avatar
               isBordered
               radius="full"
               size="md"
               src="https://nextui.org/avatars/avatar-1.png"
             />
-            <div className="flex flex-col gap-1 items-start justify-center">
+            <div className="flex flex-col gap-1 items-start justify-center flex-grow overflow-hidden">
               <h4 className="text-md leading-none">{otp.issuer}</h4>
-              <h5 className="text-small tracking-tight truncate w-40">
+              <h5 className="text-small tracking-tight truncate w-full">
                 {otp.label}
               </h5>
             </div>
           </div>
-          <div className="flex flex-col gap-1 items-start justify-center font-bold text-xl">
+          <div className="flex items-center font-bold text-xl">
             {currentCode}
           </div>
         </CardBody>
