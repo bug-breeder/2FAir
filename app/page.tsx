@@ -114,9 +114,9 @@ export default function Home() {
         </Snippet>
       </div> */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
         {otps.map((otp, index) => (
-          <OTPCard key={index} {...otp} />
+          <OTPCard key={index} otp={otp} />
         ))}
       </div>
       <ToastContainer
@@ -129,7 +129,7 @@ export default function Home() {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme={theme}
+        theme="dark"
       />
     </section>
   );
