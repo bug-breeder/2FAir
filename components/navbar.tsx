@@ -78,7 +78,7 @@ export const Navbar = () => {
             <p className="font-bold text-inherit">2FAir</p>
           </NextLink>
         </NavbarBrand>
-        <ul className="hidden lg:flex gap-4 justify-start ml-2">
+        <ul className="hidden md:flex gap-4 justify-start ml-2">
           {siteConfig.navItems.map((item) => (
             <NavbarItem key={item.href}>
               <NextLink
@@ -108,9 +108,16 @@ export const Navbar = () => {
             <GithubIcon className="text-default-500" />
           </Link>
           <ThemeSwitch />
+          <Link
+            isExternal
+            aria-label="Sponsor"
+            className="hidden md:flex lg:hidden"
+            href={siteConfig.links.sponsor}
+          >
+            <HeartFilledIcon className="text-danger" />
+          </Link>
         </NavbarItem>
-        <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
-        <NavbarItem className="hidden md:flex">
+        <NavbarItem className="hidden lg:flex">
           <Button
             isExternal
             as={Link}
@@ -122,13 +129,25 @@ export const Navbar = () => {
             Sponsor
           </Button>
         </NavbarItem>
+        <NavbarItem className="hidden md:flex">{searchInput}</NavbarItem>
       </NavbarContent>
 
       <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
         <Link isExternal aria-label="Github" href={siteConfig.links.github}>
           <GithubIcon className="text-default-500" />
         </Link>
+        <Link isExternal aria-label="Email" href={siteConfig.links.email}>
+          <FaEnvelope className="text-default-500" />
+        </Link>
         <ThemeSwitch />
+        <Link
+          isExternal
+          aria-label="Sponsor"
+          className="md:hidden"
+          href={siteConfig.links.sponsor}
+        >
+          <HeartFilledIcon className="text-danger" />
+        </Link>
         <NavbarMenuToggle />
       </NavbarContent>
 
