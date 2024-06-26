@@ -1,3 +1,6 @@
+"use client";
+import React, { useRef, useEffect } from "react";
+
 import {
   Navbar as NextUINavbar,
   NavbarContent,
@@ -27,6 +30,8 @@ import {
 import { FaEnvelope, FaRibbon } from "react-icons/fa";
 
 export const Navbar = () => {
+  const searchRef = useRef<HTMLInputElement>(null);
+
   const searchInput = (
     <Input
       aria-label="Search"
@@ -45,8 +50,24 @@ export const Navbar = () => {
         <SearchIcon className="text-base text-default-400 pointer-events-none flex-shrink-0" />
       }
       type="search"
+      ref={searchRef}
     />
   );
+
+  useEffect(() => {
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === "k") {
+        event.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeydown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeydown);
+    };
+  }, []);
 
   return (
     <NextUINavbar maxWidth="xl" position="sticky">
@@ -136,3 +157,4 @@ export const Navbar = () => {
     </NextUINavbar>
   );
 };
+NextUINavbar;
