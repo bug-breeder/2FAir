@@ -8,6 +8,7 @@ import { Providers } from "./providers";
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
 import { Navbar } from "@/components/navbar";
+import { HeartFilledIcon } from "@/components/icons";
 
 export const metadata: Metadata = {
   title: {
@@ -51,11 +52,13 @@ export default function RootLayout({
               <Link
                 isExternal
                 className="flex items-center gap-1 text-current"
-                href="https://nextui-docs-v2.vercel.app?utm_source=next-app-template"
-                title="nextui.org homepage"
+                href="https://github.com/anh-ngn"
+                title="anh-ngn"
               >
-                <span className="text-default-600">Powered by</span>
-                <p className="text-primary">NextUI</p>
+                <span className="text-default-600">Made by</span>
+                <span className="text-primary">anh-ngn</span>
+                <span className="text-default-600">with</span>
+                <HeartFilledIcon className="text-danger" />
               </Link>
             </footer>
           </div>
