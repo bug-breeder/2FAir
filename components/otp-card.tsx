@@ -70,7 +70,6 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
         <CardBody className="flex flex-row gap-5 justify-between items-center pt-3 pl-3 pr-3 pb-1">
           <div className="flex gap-3 items-center flex-grow overflow-hidden">
             <Avatar
-              isBordered
               radius="full"
               size="md"
               src="https://nextui.org/avatars/avatar-1.png"
