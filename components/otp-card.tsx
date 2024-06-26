@@ -74,6 +74,7 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
               radius="full"
               size="md"
               src="https://nextui.org/avatars/avatar-1.png"
+              className="flex-shrink-0"
             />
             <div className="flex flex-col gap-1 items-start justify-center flex-grow overflow-hidden">
               <h4 className="text-md leading-none">{otp.issuer}</h4>
