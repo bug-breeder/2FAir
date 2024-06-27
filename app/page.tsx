@@ -8,8 +8,6 @@ import { title, subtitle } from "@/components/primitives";
 import { GithubIcon } from "@/components/icons";
 import { useTheme } from "next-themes";
 import OTPCard from "@/components/otp-card";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 const generateCode = () => {
   // Function to generate a new OTP code
@@ -119,18 +117,6 @@ export default function Home() {
           <OTPCard key={index} otp={otp} />
         ))}
       </div>
-      <ToastContainer
-        position="bottom-right"
-        autoClose={2000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
     </section>
   );
 }

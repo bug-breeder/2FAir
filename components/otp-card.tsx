@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { Avatar, Tooltip } from "@nextui-org/react";
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import * as OTPAuth from "otpauth";
-import { toast } from "react-toastify";
 
 interface OTPCardProps {
   otp: {
@@ -50,7 +49,6 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(currentCode).then(() => {
-      toast.success("OTP code copied to clipboard!");
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
