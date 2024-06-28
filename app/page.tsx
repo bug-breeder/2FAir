@@ -1,4 +1,5 @@
 "use client";
+import FAB from "@/components/fab";
 import OTPCard from "@/components/otp-card";
 
 export default function Home() {
@@ -60,6 +61,7 @@ export default function Home() {
           <OTPCard key={index} otp={otp} />
         ))}
       </div>
+      <FAB />
     </section>
   );
 }

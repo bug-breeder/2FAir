@@ -1,6 +1,5 @@
 "use client";
-import React, { useRef, useEffect } from "react";
-
+import React, { useRef, useEffect, useState } from "react";
 import {
   Navbar as NextUINavbar,
   NavbarContent,
@@ -17,17 +16,23 @@ import { Input } from "@nextui-org/input";
 import { link as linkStyles } from "@nextui-org/theme";
 import NextLink from "next/link";
 import clsx from "clsx";
+import {
+  Avatar,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+} from "@nextui-org/react";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
-import {
-  FAir,
-  GithubIcon,
-  HeartFilledIcon,
-  SearchIcon,
-  Logo,
-} from "@/components/icons";
-import { FaEnvelope, FaRibbon } from "react-icons/fa";
+import { FAir, HeartFilledIcon, SearchIcon } from "@/components/icons";
 
 export const Navbar = () => {
   const searchRef = useRef<HTMLInputElement>(null);
@@ -101,12 +106,6 @@ export const Navbar = () => {
         justify="end"
       >
         <NavbarItem className="hidden sm:flex gap-2">
-          <Link isExternal aria-label="Email" href={siteConfig.links.email}>
-            <FaEnvelope className="text-default-500" />
-          </Link>
-          <Link isExternal aria-label="Github" href={siteConfig.links.github}>
-            <GithubIcon className="text-default-500" />
-          </Link>
           <ThemeSwitch />
           <Link
             isExternal
@@ -130,15 +129,30 @@ export const Navbar = () => {
           </Button>
         </NavbarItem>
         <NavbarItem className="hidden md:flex">{searchInput}</NavbarItem>
+        {/* <Button
+          onPress={onOpen}
+          className="text-sm font-normal text-default-600 bg-default-100"
+        >
+          <FaPlus />
+        </Button> */}
+        <Dropdown>
+          <DropdownTrigger>
+            <Avatar
+              src="https://i.pravatar.cc/149?u=a042581f4e29026024d"
+              size="md"
+            />
+          </DropdownTrigger>
+          <DropdownMenu
+            aria-label="User menu"
+            onAction={(key) => console.log(key)}
+          >
+            <DropdownItem key="settings">Settings</DropdownItem>
+            <DropdownItem key="logout">Logout</DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
       </NavbarContent>
 
       <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
-        <Link isExternal aria-label="Github" href={siteConfig.links.github}>
-          <GithubIcon className="text-default-500" />
-        </Link>
-        <Link isExternal aria-label="Email" href={siteConfig.links.email}>
-          <FaEnvelope className="text-default-500" />
-        </Link>
         <ThemeSwitch />
         <Link
           isExternal
