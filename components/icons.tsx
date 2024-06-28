@@ -24,7 +24,7 @@ export const Logo: React.FC<IconSvgProps> = ({
   </svg>
 );
 
-export const FAir: React.FC<IconSvgProps> = ({ size = 28, ...props }) => (
+export const FAir: React.FC<IconSvgProps> = ({ size = 32, ...props }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={size}
