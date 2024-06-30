@@ -32,7 +32,7 @@ export default function Home() {
             radius: "full",
             variant: "shadow",
           })}
-          href={siteConfig.links.docs}
+          href={siteConfig.links.login}
         >
           Getting Started
         </Link>
