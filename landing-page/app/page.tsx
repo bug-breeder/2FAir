@@ -11,8 +11,6 @@ export default function Home() {
   return (
     <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
       <div className="inline-block max-w-lg text-center justify-center">
-        {/* <h1 className={title({ color: "violet" })}>2FAir</h1>
-        <br /> */}
         <h1 className={title()}>Secure Your &nbsp;</h1>
         <h1 className={title({ color: "violet" })}>Accounts&nbsp;</h1>
         <h1 className={title()}>on Every &nbsp;</h1>
@@ -36,14 +34,6 @@ export default function Home() {
         >
           Getting Started
         </Link>
-        {/* <Link
-          isExternal
-          className={buttonStyles({ variant: "bordered", radius: "full" })}
-          href={siteConfig.links.github}
-        >
-          <GithubIcon size={20} />
-          GitHub
-        </Link> */}
       </div>
 
       <div className="mt-8">
