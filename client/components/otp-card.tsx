@@ -38,8 +38,10 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
       setRemainingTime((prev) => {
         if (prev === 1) {
           generateCode();
+
           return otp.period;
         }
+
         return prev - 1;
       });
     }, 1000);
@@ -60,18 +62,18 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
   return (
     <Tooltip content={copied ? "Copied!" : "Click to copy"} placement="top">
       <Card
-        isPressable
         isHoverable
-        onPress={handleCopy}
+        isPressable
         className="w-full max-w-[430px] transition-transform transform betterhover:hover:scale-105 active:scale-95"
+        onPress={handleCopy}
       >
         <CardBody className="flex flex-row gap-5 justify-between items-center pt-3 pl-3 pr-3 pb-1">
           <div className="flex gap-3 items-center flex-grow overflow-hidden">
             <Avatar
+              className="flex-shrink-0"
               radius="full"
               size="md"
               src="https://nextui.org/avatars/avatar-1.png"
-              className="flex-shrink-0"
             />
             <div className="flex flex-col gap-1 items-start justify-center flex-grow overflow-hidden">
               <h4 className="text-md leading-none">{otp.issuer}</h4>
