@@ -32,6 +32,7 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
     null
   );
   const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
+  const isLongPress = useRef(false);
 
   const totp = new OTPAuth.TOTP({
     issuer: otp.issuer,
@@ -63,10 +64,13 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
   }, [otp.period, totp]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(currentCode).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    if (!isLongPress.current) {
+      navigator.clipboard.writeText(currentCode).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+    isLongPress.current = false;
   };
 
   const filledDots = Math.floor((remainingTime / otp.period) * 5);
@@ -78,7 +82,9 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
   };
 
   const handleTouchStart = (event: React.TouchEvent) => {
+    isLongPress.current = false;
     longPressTimeout.current = setTimeout(() => {
+      isLongPress.current = true;
       setMenuAnchor({
         x: event.touches[0].clientX,
         y: event.touches[0].clientY,
@@ -108,6 +114,7 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchMove}
+      style={{ userSelect: menuAnchor ? "none" : "auto" }} // Disable text selection when menu is open
     >
       <Tooltip content={copied ? "Copied!" : "Click to copy"} placement="top">
         <Card
