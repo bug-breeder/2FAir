@@ -21,16 +21,23 @@ interface OTPCardProps {
     secret: string;
     period: number;
   };
+  isActive: boolean;
+  setActiveMenu: (x: number, y: number) => void;
+  activeMenu: { x: number; y: number };
+  closeMenu: () => void;
 }
 
-const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
+const OTPCard: React.FC<OTPCardProps> = ({
+  otp,
+  isActive,
+  activeMenu,
+  setActiveMenu,
+  closeMenu,
+}) => {
   const [copied, setCopied] = useState(false);
   const [remainingTime, setRemainingTime] = useState(otp.period);
   const [currentCode, setCurrentCode] = useState("");
   const [showQR, setShowQR] = useState(false);
-  const [menuAnchor, setMenuAnchor] = useState<{ x: number; y: number } | null>(
-    null
-  );
   const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
   const isLongPress = useRef(false);
 
@@ -54,10 +61,8 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
       setRemainingTime((prev) => {
         if (prev === 1) {
           generateCode();
-
           return otp.period;
         }
-
         return prev - 1;
       });
     }, 1000);
@@ -80,7 +85,7 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
 
   const handleContextMenu = (event: React.MouseEvent) => {
     event.preventDefault();
-    setMenuAnchor({ x: event.clientX, y: event.clientY });
+    setActiveMenu(event.clientX, event.clientY);
   };
 
   const handleLongPressStart = (event: React.TouchEvent) => {
@@ -88,10 +93,7 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
     isLongPress.current = false;
     longPressTimeout.current = setTimeout(() => {
       isLongPress.current = true;
-      setMenuAnchor({
-        x: event.touches[0].clientX,
-        y: event.touches[0].clientY,
-      });
+      setActiveMenu(event.touches[0].clientX, event.touches[0].clientY);
     }, 500);
     event.preventDefault(); // Prevent default behavior to avoid text selection
   };
@@ -110,16 +112,12 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
     document.documentElement.classList.remove("noselect"); // Remove noselect class
   };
 
-  const closeMenu = () => {
-    setMenuAnchor(null);
-  };
-
   return (
     <div
       onContextMenu={handleContextMenu}
+      onTouchStart={handleLongPressStart}
       onTouchEnd={handleLongPressEnd}
       onTouchMove={handleTouchMove}
-      onTouchStart={handleLongPressStart}
     >
       <Tooltip content={copied ? "Copied!" : "Click to copy"} placement="top">
         <Card
@@ -164,14 +162,14 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
           </CardFooter>
         </Card>
       </Tooltip>
-      {menuAnchor && (
+      {isActive && (
         <Dropdown isOpen onClose={closeMenu}>
           <DropdownTrigger>
             <div
               style={{
                 position: "absolute",
-                top: menuAnchor.y,
-                left: menuAnchor.x,
+                top: activeMenu.y,
+                left: activeMenu.x,
                 width: 0,
                 height: 0,
               }}

@@ -1,6 +1,7 @@
 "use client";
 import FAB from "@/components/fab";
 import OTPCard from "@/components/otp-card";
+import { useState } from "react";
 
 export default function Home() {
   const otps = [
@@ -54,11 +55,32 @@ export default function Home() {
     },
   ];
 
+  const [activeMenu, setActiveMenu] = useState<{
+    idx: number;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const handleOpenMenu = (index: number, x: number, y: number) => {
+    setActiveMenu({ idx: index, x, y });
+  };
+
+  const handleCloseMenu = () => {
+    setActiveMenu(null);
+  };
+
   return (
     <section className="flex flex-col items-center justify-center">
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-2 sm:gap-5">
         {otps.map((otp, index) => (
-          <OTPCard key={index} otp={otp} />
+          <OTPCard
+            key={index}
+            otp={otp}
+            isActive={activeMenu?.idx === index}
+            activeMenu={activeMenu}
+            setActiveMenu={(x, y) => handleOpenMenu(index, x, y)}
+            closeMenu={handleCloseMenu}
+          />
         ))}
       </div>
       <FAB />
