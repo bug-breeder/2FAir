@@ -54,8 +54,10 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
       setRemainingTime((prev) => {
         if (prev === 1) {
           generateCode();
+
           return otp.period;
         }
+
         return prev - 1;
       });
     }, 1000);
@@ -81,7 +83,8 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
     setMenuAnchor({ x: event.clientX, y: event.clientY });
   };
 
-  const handleTouchStart = (event: React.TouchEvent) => {
+  const handleLongPressStart = (event: React.TouchEvent) => {
+    document.documentElement.classList.add("noselect"); // Add noselect class
     isLongPress.current = false;
     longPressTimeout.current = setTimeout(() => {
       isLongPress.current = true;
@@ -93,16 +96,18 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
     event.preventDefault(); // Prevent default behavior to avoid text selection
   };
 
-  const handleTouchEnd = () => {
+  const handleLongPressEnd = () => {
     if (longPressTimeout.current) {
       clearTimeout(longPressTimeout.current);
     }
+    document.documentElement.classList.remove("noselect"); // Remove noselect class
   };
 
   const handleTouchMove = () => {
     if (longPressTimeout.current) {
       clearTimeout(longPressTimeout.current);
     }
+    document.documentElement.classList.remove("noselect"); // Remove noselect class
   };
 
   const closeMenu = () => {
@@ -112,10 +117,9 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
   return (
     <div
       onContextMenu={handleContextMenu}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+      onTouchEnd={handleLongPressEnd}
       onTouchMove={handleTouchMove}
-      style={{ userSelect: menuAnchor ? "none" : "auto" }} // Disable text selection when menu is open
+      onTouchStart={handleLongPressStart}
     >
       <Tooltip content={copied ? "Copied!" : "Click to copy"} placement="top">
         <Card
