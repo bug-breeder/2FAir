@@ -165,15 +165,17 @@ const OTPCard: React.FC<OTPCardProps> = ({
       {isActive && (
         <Dropdown isOpen onClose={closeMenu}>
           <DropdownTrigger>
-            <div
-              style={{
-                position: "absolute",
-                top: activeMenu.y,
-                left: activeMenu.x,
-                width: 0,
-                height: 0,
-              }}
-            />
+            {activeMenu && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: activeMenu.y,
+                  left: activeMenu.x,
+                  width: 0,
+                  height: 0,
+                }}
+              />
+            )}
           </DropdownTrigger>
           <DropdownMenu aria-label="Actions">
             <DropdownItem key="qr" onClick={() => setShowQR(true)}>
