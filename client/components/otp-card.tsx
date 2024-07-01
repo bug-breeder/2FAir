@@ -90,6 +90,7 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
         y: event.touches[0].clientY,
       });
     }, 500);
+    event.preventDefault(); // Prevent default behavior to avoid text selection
   };
 
   const handleTouchEnd = () => {
