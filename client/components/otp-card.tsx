@@ -23,7 +23,7 @@ interface OTPCardProps {
   };
   isActive: boolean;
   setActiveMenu: (x: number, y: number) => void;
-  activeMenu: { idx: number; x: number; y: number };
+  activeMenu: { idx: number; x: number; y: number } | null;
   closeMenu: () => void;
 }
 
