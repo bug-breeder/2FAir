@@ -31,6 +31,7 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
   const [menuAnchor, setMenuAnchor] = useState<{ x: number; y: number } | null>(
     null
   );
+  const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const totp = new OTPAuth.TOTP({
     issuer: otp.issuer,
@@ -76,9 +77,25 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
     setMenuAnchor({ x: event.clientX, y: event.clientY });
   };
 
-  const handleLongPress = (event: React.TouchEvent) => {
-    event.preventDefault();
-    setMenuAnchor({ x: event.touches[0].clientX, y: event.touches[0].clientY });
+  const handleTouchStart = (event: React.TouchEvent) => {
+    longPressTimeout.current = setTimeout(() => {
+      setMenuAnchor({
+        x: event.touches[0].clientX,
+        y: event.touches[0].clientY,
+      });
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimeout.current) {
+      clearTimeout(longPressTimeout.current);
+    }
+  };
+
+  const handleTouchMove = () => {
+    if (longPressTimeout.current) {
+      clearTimeout(longPressTimeout.current);
+    }
   };
 
   const closeMenu = () => {
@@ -86,7 +103,12 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
   };
 
   return (
-    <div onContextMenu={handleContextMenu} onTouchStart={handleLongPress}>
+    <div
+      onContextMenu={handleContextMenu}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
+    >
       <Tooltip content={copied ? "Copied!" : "Click to copy"} placement="top">
         <Card
           isHoverable
