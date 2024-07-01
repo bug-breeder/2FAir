@@ -94,7 +94,7 @@ const OTPCard: React.FC<OTPCardProps> = ({ otp }) => {
             {dots.map((filled, index) => (
               <div
                 key={index}
-                className={`h-2 w-2 mx-1 rounded-full ${
+                className={`h-2 w-2 ml-2 rounded-full ${
                   filled ? "bg-green-500" : "bg-gray-300"
                 }`}
               />
