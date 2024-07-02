@@ -93,7 +93,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
         <Card
           isHoverable
           isPressable
-          className="w-full max-w-[430px] transition-transform transform betterhover:hover:scale-105 active:scale-95"
+          className="w-full max-w-[430px] transition-transform transform betterhover:hover:scale-105 active:scale-95 noselect"
           onPress={handleCopy}
         >
           <CardBody className="flex flex-row gap-5 justify-between items-center pt-3 pl-3 pr-3 pb-1">
