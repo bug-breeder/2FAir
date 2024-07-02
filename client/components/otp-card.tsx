@@ -13,6 +13,9 @@ import {
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import * as OTPAuth from "otpauth";
 import QRCode from "qrcode.react";
+import { MdDeleteSweep, MdQrCode } from "react-icons/md";
+import clsx from "clsx";
+import { FaEdit } from "react-icons/fa";
 
 interface OTPCardProps {
   otp: {
@@ -26,9 +29,6 @@ interface OTPCardProps {
   activeMenu: { idx: number; x: number; y: number } | null;
   closeMenu: () => void;
 }
-import { MdDeleteSweep, MdQrCode } from "react-icons/md";
-import clsx from "clsx";
-import { FaEdit } from "react-icons/fa";
 
 const OTPCard: React.FC<OTPCardProps> = ({
   otp,
