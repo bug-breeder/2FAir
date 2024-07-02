@@ -82,7 +82,9 @@ const OTPCard: React.FC<OTPCardProps> = ({
 
   const handleContextMenu = (event: React.MouseEvent) => {
     event.preventDefault();
-    setActiveMenu(event.clientX, event.clientY);
+    setTimeout(() => {
+      setActiveMenu(event.clientX, event.clientY);
+    }, 50); // Add a slight delay to prevent immediate triggering
   };
 
   return (
