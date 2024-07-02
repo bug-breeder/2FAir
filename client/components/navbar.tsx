@@ -136,7 +136,7 @@ export const Navbar = () => {
           <FaPlus />
         </Button> */}
         <Dropdown>
-          <DropdownTrigger>
+          <DropdownTrigger className="min-w-160">
             <Avatar
               src="https://i.pravatar.cc/149?u=a042581f4e29026024d"
               size="md"

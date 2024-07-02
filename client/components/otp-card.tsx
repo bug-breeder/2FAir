@@ -168,7 +168,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
         </Card>
       </Tooltip>
       {isActive && (
-        <Dropdown isOpen onClose={closeMenu}>
+        <Dropdown isOpen onClose={closeMenu} className="min-w-0 w-fit h-fit">
           <DropdownTrigger>
             {activeMenu && (
               <div
@@ -189,14 +189,14 @@ const OTPCard: React.FC<OTPCardProps> = ({
               className="text-xl"
               startContent={<MdQrCode className={clsx(iconClasses)} />}
             >
-              Show QR code
+              <span className="text-lg lg:text-sm">Show QR code</span>
             </DropdownItem>
             <DropdownItem
               key="edit"
               className="text-xl"
               startContent={<FaEdit className={clsx(iconClasses)} />}
             >
-              Edit
+              <span className="text-lg lg:text-sm">Edit</span>
             </DropdownItem>
             <DropdownItem
               key="delete"
@@ -206,7 +206,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
                 <MdDeleteSweep className={clsx(iconClasses, "text-danger")} />
               }
             >
-              Delete
+              <span className="text-lg lg:text-sm">Delete</span>
             </DropdownItem>
           </DropdownMenu>
         </Dropdown>
