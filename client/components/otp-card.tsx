@@ -26,6 +26,9 @@ interface OTPCardProps {
   activeMenu: { idx: number; x: number; y: number } | null;
   closeMenu: () => void;
 }
+import { MdDeleteSweep, MdQrCode } from "react-icons/md";
+import clsx from "clsx";
+import { FaEdit } from "react-icons/fa";
 
 const OTPCard: React.FC<OTPCardProps> = ({
   otp,
@@ -112,6 +115,8 @@ const OTPCard: React.FC<OTPCardProps> = ({
     document.documentElement.classList.remove("noselect"); // Remove noselect class
   };
 
+  const iconClasses = "text-xl pointer-events-none flex-shrink-0";
+
   return (
     <div
       onContextMenu={handleContextMenu}
@@ -178,11 +183,29 @@ const OTPCard: React.FC<OTPCardProps> = ({
             )}
           </DropdownTrigger>
           <DropdownMenu aria-label="Actions">
-            <DropdownItem key="qr" onClick={() => setShowQR(true)}>
-              Show QR
+            <DropdownItem
+              key="qr"
+              onClick={() => setShowQR(true)}
+              className="text-xl"
+              startContent={<MdQrCode className={clsx(iconClasses)} />}
+            >
+              Show QR code
             </DropdownItem>
-            <DropdownItem key="edit">Edit</DropdownItem>
-            <DropdownItem key="delete" className="text-danger">
+            <DropdownItem
+              key="edit"
+              className="text-xl"
+              startContent={<FaEdit className={clsx(iconClasses)} />}
+            >
+              Edit
+            </DropdownItem>
+            <DropdownItem
+              key="delete"
+              className="text-danger"
+              color="danger"
+              startContent={
+                <MdDeleteSweep className={clsx(iconClasses, "text-danger")} />
+              }
+            >
               Delete
             </DropdownItem>
           </DropdownMenu>
