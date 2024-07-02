@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useLongPress } from "@uidotdev/usehooks";
 import {
   Avatar,
   Tooltip,
@@ -86,26 +85,8 @@ const OTPCard: React.FC<OTPCardProps> = ({
     setActiveMenu(event.clientX, event.clientY);
   };
 
-  const longPressAttrs = useLongPress(
-    () => {
-      setActiveMenu(0, 0);
-    },
-    {
-      onStart: (event) => {
-        document.documentElement.classList.add("noselect");
-      },
-      onFinish: (event) => {
-        document.documentElement.classList.remove("noselect");
-      },
-      onCancel: (event) => {
-        document.documentElement.classList.remove("noselect");
-      },
-      threshold: 500,
-    }
-  );
-
   return (
-    <div onContextMenu={handleContextMenu} {...longPressAttrs}>
+    <div onContextMenu={handleContextMenu}>
       <Tooltip content={copied ? "Copied!" : "Click to copy"} placement="top">
         <Card
           isHoverable
