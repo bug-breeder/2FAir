@@ -61,8 +61,8 @@ export default function Home() {
     y: number;
   } | null>(null);
 
-  const handleOpenMenu = (index: number, x: number, y: number) => {
-    setActiveMenu({ idx: index, x, y });
+  const handleOpenMenu = (idx: number, x: number, y: number) => {
+    setActiveMenu({ idx, x, y });
   };
 
   const handleCloseMenu = () => {
