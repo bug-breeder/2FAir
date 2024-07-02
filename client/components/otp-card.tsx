@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
+import { useLongPress } from "@uidotdev/usehooks";
 import {
   Avatar,
   Tooltip,
@@ -14,7 +15,6 @@ import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import * as OTPAuth from "otpauth";
 import QRCode from "qrcode.react";
 import { MdDeleteSweep, MdQrCode } from "react-icons/md";
-import clsx from "clsx";
 import { FaEdit } from "react-icons/fa";
 
 interface OTPCardProps {
@@ -41,8 +41,6 @@ const OTPCard: React.FC<OTPCardProps> = ({
   const [remainingTime, setRemainingTime] = useState(otp.period);
   const [currentCode, setCurrentCode] = useState("");
   const [showQR, setShowQR] = useState(false);
-  const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
-  const isLongPress = useRef(false);
 
   const totp = new OTPAuth.TOTP({
     issuer: otp.issuer,
@@ -74,13 +72,10 @@ const OTPCard: React.FC<OTPCardProps> = ({
   }, [otp.period, totp]);
 
   const handleCopy = () => {
-    if (!isLongPress.current) {
-      navigator.clipboard.writeText(currentCode).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
-    }
-    isLongPress.current = false;
+    navigator.clipboard.writeText(currentCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   const filledDots = Math.floor((remainingTime / otp.period) * 5);
@@ -91,39 +86,26 @@ const OTPCard: React.FC<OTPCardProps> = ({
     setActiveMenu(event.clientX, event.clientY);
   };
 
-  const handleLongPressStart = (event: React.TouchEvent) => {
-    document.documentElement.classList.add("noselect"); // Add noselect class
-    isLongPress.current = false;
-    longPressTimeout.current = setTimeout(() => {
-      isLongPress.current = true;
-      setActiveMenu(event.touches[0].clientX, event.touches[0].clientY);
-    }, 500);
-    event.preventDefault(); // Prevent default behavior to avoid text selection
-  };
-
-  const handleLongPressEnd = () => {
-    if (longPressTimeout.current) {
-      clearTimeout(longPressTimeout.current);
+  const longPressAttrs = useLongPress(
+    () => {
+      setActiveMenu(0, 0);
+    },
+    {
+      onStart: (event) => {
+        document.documentElement.classList.add("noselect");
+      },
+      onFinish: (event) => {
+        document.documentElement.classList.remove("noselect");
+      },
+      onCancel: (event) => {
+        document.documentElement.classList.remove("noselect");
+      },
+      threshold: 500,
     }
-    document.documentElement.classList.remove("noselect"); // Remove noselect class
-  };
-
-  const handleTouchMove = () => {
-    if (longPressTimeout.current) {
-      clearTimeout(longPressTimeout.current);
-    }
-    document.documentElement.classList.remove("noselect"); // Remove noselect class
-  };
-
-  const iconClasses = "text-xl pointer-events-none flex-shrink-0";
+  );
 
   return (
-    <div
-      onContextMenu={handleContextMenu}
-      onTouchStart={handleLongPressStart}
-      onTouchEnd={handleLongPressEnd}
-      onTouchMove={handleTouchMove}
-    >
+    <div onContextMenu={handleContextMenu} {...longPressAttrs}>
       <Tooltip content={copied ? "Copied!" : "Click to copy"} placement="top">
         <Card
           isHoverable
@@ -168,7 +150,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
         </Card>
       </Tooltip>
       {isActive && (
-        <Dropdown isOpen onClose={closeMenu} className="min-w-0 w-fit h-fit">
+        <Dropdown isOpen onClose={closeMenu}>
           <DropdownTrigger>
             {activeMenu && (
               <div
@@ -187,26 +169,24 @@ const OTPCard: React.FC<OTPCardProps> = ({
               key="qr"
               onClick={() => setShowQR(true)}
               className="text-xl"
-              startContent={<MdQrCode className={clsx(iconClasses)} />}
+              startContent={<MdQrCode className="text-2xl" />}
             >
-              <span className="text-lg lg:text-sm">Show QR code</span>
+              <span className="text-lg">Show QR code</span>
             </DropdownItem>
             <DropdownItem
               key="edit"
               className="text-xl"
-              startContent={<FaEdit className={clsx(iconClasses)} />}
+              startContent={<FaEdit className="text-2xl" />}
             >
-              <span className="text-lg lg:text-sm">Edit</span>
+              <span className="text-lg">Edit</span>
             </DropdownItem>
             <DropdownItem
               key="delete"
               className="text-danger"
               color="danger"
-              startContent={
-                <MdDeleteSweep className={clsx(iconClasses, "text-danger")} />
-              }
+              startContent={<MdDeleteSweep className="text-2xl text-danger" />}
             >
-              <span className="text-lg lg:text-sm">Delete</span>
+              <span className="text-lg text-danger">Delete</span>
             </DropdownItem>
           </DropdownMenu>
         </Dropdown>
