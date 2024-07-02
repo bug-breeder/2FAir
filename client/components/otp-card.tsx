@@ -150,19 +150,23 @@ const OTPCard: React.FC<OTPCardProps> = ({
           <DropdownMenu aria-label="Actions">
             <DropdownItem
               key="qr"
-              onClick={() => setShowQR(true)}
               className="text-xl"
               startContent={<MdQrCode className="text-2xl" />}
+              onClick={(event) => {
+                event.stopPropagation();
+                setShowQR(true);
+              }}
             >
               <span className="text-lg lg:text-sm">Show QR code</span>
             </DropdownItem>
             <DropdownItem
               key="edit"
-              className="text-xl"
-              startContent={<FaEdit />}
-              onClick={() => {
+              onClick={(event) => {
+                event.stopPropagation();
                 alert("Edit");
               }}
+              className="text-xl"
+              startContent={<FaEdit />}
             >
               <span className="text-lg lg:text-sm">Edit</span>
             </DropdownItem>
@@ -170,6 +174,9 @@ const OTPCard: React.FC<OTPCardProps> = ({
               key="delete"
               className="text-danger"
               startContent={<MdDeleteSweep className="text-2xl text-danger" />}
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
             >
               <span className="text-lg lg:text-sm text-danger">Delete</span>
             </DropdownItem>
