@@ -152,22 +152,24 @@ const OTPCard: React.FC<OTPCardProps> = ({
               className="text-xl"
               startContent={<MdQrCode className="text-2xl" />}
             >
-              <span className="text-lg">Show QR code</span>
+              <span className="text-lg lg:text-sm">Show QR code</span>
             </DropdownItem>
             <DropdownItem
               key="edit"
               className="text-xl"
-              startContent={<FaEdit className="text-2xl" />}
+              startContent={<FaEdit />}
+              onClick={() => {
+                alert("Edit");
+              }}
             >
-              <span className="text-lg">Edit</span>
+              <span className="text-lg lg:text-sm">Edit</span>
             </DropdownItem>
             <DropdownItem
               key="delete"
               className="text-danger"
-              color="danger"
               startContent={<MdDeleteSweep className="text-2xl text-danger" />}
             >
-              <span className="text-lg text-danger">Delete</span>
+              <span className="text-lg lg:text-sm text-danger">Delete</span>
             </DropdownItem>
           </DropdownMenu>
         </Dropdown>
