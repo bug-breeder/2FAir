@@ -8,7 +8,7 @@ export default function Home() {
   const otps = [
     {
       issuer: "Google",
-      label: "abcdkmlkafnguyentranvietanh@gmail.com",
+      label: "abcdkmlkafnvnh@gmail.com",
       secret: "NB2W45DFOIZA",
       period: 30,
     },
