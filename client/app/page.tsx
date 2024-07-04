@@ -72,7 +72,7 @@ export default function Home() {
 
   return (
     <section className="flex flex-col items-center justify-center">
-      {activeMenu && <Backdrop onClick={handleCloseMenu} />}{" "}
+      {/* {activeMenu && <Backdrop onClick={handleCloseMenu} />}{" "} */}
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-2 sm:gap-5">
         {otps.map((otp, index) => (
           <OTPCard
