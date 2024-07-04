@@ -5,9 +5,16 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-} from "@nextui-org/dropdown";
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+} from "@nextui-org/react";
 import { MdDeleteSweep, MdQrCode } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
+import { useMediaQuery } from "@react-hook/media-query";
 
 interface ContextMenuProps {
   activeMenu: { idx: number; x: number; y: number } | null;
@@ -20,8 +27,45 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
   closeMenu,
   setShowQR,
 }) => {
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  if (isMobile) {
+    return (
+      <Modal isOpen={true} onClose={closeMenu} placement="bottom-center">
+        <ModalContent>
+          <ModalHeader className="flex flex-col gap-1">Actions</ModalHeader>
+          <ModalBody>
+            <Button
+              onPress={() => {
+                setShowQR(true);
+                closeMenu();
+              }}
+            >
+              Show QR code
+            </Button>
+            <Button
+              onPress={() => {
+                alert("Edit");
+                closeMenu();
+              }}
+            >
+              Edit
+            </Button>
+            <Button onPress={closeMenu}>
+              <MdDeleteSweep className="text-2xl text-danger" />
+              Delete
+            </Button>
+          </ModalBody>
+          <ModalFooter>
+            <Button onPress={closeMenu}>Close</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    );
+  }
+
   return (
-    <Dropdown isOpen onClose={closeMenu}>
+    <Dropdown isOpen={true} onClose={closeMenu}>
       <DropdownTrigger>
         {activeMenu && (
           <div
