@@ -12,7 +12,7 @@ import {
   ModalFooter,
   Button,
 } from "@nextui-org/react";
-import { MdDeleteSweep, MdQrCode } from "react-icons/md";
+import { MdDelete, MdDeleteSweep, MdQrCode } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
 import { useMediaQuery } from "@react-hook/media-query";
 
@@ -40,6 +40,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
                 setShowQR(true);
                 closeMenu();
               }}
+              startContent={<MdQrCode className="text-2xl" />}
             >
               Show QR code
             </Button>
@@ -48,11 +49,16 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
                 alert("Edit");
                 closeMenu();
               }}
+              startContent={<FaEdit />}
             >
               Edit
             </Button>
-            <Button onPress={closeMenu}>
-              <MdDeleteSweep className="text-2xl text-danger" />
+
+            <Button
+              onPress={closeMenu}
+              className="text-danger"
+              startContent={<MdDeleteSweep className="text-2xl text-danger" />}
+            >
               Delete
             </Button>
           </ModalBody>

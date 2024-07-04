@@ -16,7 +16,7 @@ interface QRModalProps {
 
 const QRModal: React.FC<QRModalProps> = ({ showQR, closeQR, otp }) => {
   return (
-    <Modal isOpen={showQR} onClose={closeQR}>
+    <Modal isOpen={showQR} onClose={closeQR} placement="center">
       <ModalContent>
         <QRCode
           value={`otpauth://totp/${otp.issuer}:${otp.label}?secret=${otp.secret}&issuer=${otp.issuer}&algorithm=SHA1&digits=6&period=${otp.period}`}
