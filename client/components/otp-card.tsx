@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Tooltip, Avatar } from "@nextui-org/react";
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import * as OTPAuth from "otpauth";
@@ -30,9 +30,6 @@ const OTPCard: React.FC<OTPCardProps> = ({
   const [remainingTime, setRemainingTime] = useState(otp.period);
   const [currentCode, setCurrentCode] = useState("");
   const [showQR, setShowQR] = useState(false);
-  const [contextMenuOpened, setContextMenuOpened] = useState(false);
-  const longPressTimeout = useRef<NodeJS.Timeout | null>(null);
-  const isLongPress = useRef(false);
 
   const totp = new OTPAuth.TOTP({
     issuer: otp.issuer,
@@ -64,13 +61,10 @@ const OTPCard: React.FC<OTPCardProps> = ({
   }, [otp.period, totp]);
 
   const handleCopy = () => {
-    if (!contextMenuOpened) {
-      navigator.clipboard.writeText(currentCode).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
-    }
-    setContextMenuOpened(false);
+    navigator.clipboard.writeText(currentCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   const filledDots = Math.floor((remainingTime / otp.period) * 5);
@@ -78,41 +72,13 @@ const OTPCard: React.FC<OTPCardProps> = ({
 
   const handleContextMenu = (event: React.MouseEvent) => {
     event.preventDefault();
-    setContextMenuOpened(true);
     setTimeout(() => {
       setActiveMenu(event.clientX, event.clientY);
     }, 50); // Add a slight delay to prevent immediate triggering
   };
 
-  const handleLongPressStart = (event: React.TouchEvent) => {
-    isLongPress.current = false;
-    longPressTimeout.current = setTimeout(() => {
-      isLongPress.current = true;
-      setContextMenuOpened(true);
-      setActiveMenu(event.touches[0].clientX, event.touches[0].clientY);
-    }, 500);
-    event.preventDefault(); // Prevent default behavior to avoid text selection
-  };
-
-  const handleLongPressEnd = () => {
-    if (longPressTimeout.current) {
-      clearTimeout(longPressTimeout.current);
-    }
-  };
-
-  const handleTouchMove = () => {
-    if (longPressTimeout.current) {
-      clearTimeout(longPressTimeout.current);
-    }
-  };
-
   return (
-    <div
-      onContextMenu={handleContextMenu}
-      onTouchStart={handleLongPressStart}
-      onTouchEnd={handleLongPressEnd}
-      onTouchMove={handleTouchMove}
-    >
+    <div onContextMenu={handleContextMenu}>
       <Tooltip content={copied ? "Copied!" : "Click to copy"} placement="top">
         <Card
           isHoverable
