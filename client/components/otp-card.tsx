@@ -78,13 +78,14 @@ const OTPCard: React.FC<OTPCardProps> = ({
   };
 
   return (
-    <div onContextMenu={handleContextMenu}>
+    <div>
       <Tooltip content={copied ? "Copied!" : "Click to copy"} placement="top">
         <Card
           isHoverable
           isPressable
           className="w-full max-w-[430px] transition-transform transform betterhover:hover:scale-105 active:scale-95 noselect"
           onPress={handleCopy}
+          onContextMenu={handleContextMenu}
         >
           <CardBody className="flex flex-row gap-5 justify-between items-center pt-3 pl-3 pr-3 pb-1">
             <div className="flex gap-3 items-center flex-grow overflow-hidden">
