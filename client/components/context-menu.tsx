@@ -34,12 +34,13 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
       <Modal isOpen={true} onClose={closeMenu} placement="bottom-center">
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">Actions</ModalHeader>
-          <ModalBody>
+          <ModalBody className="gap-4">
             <Button
               onPress={() => {
                 setShowQR(true);
                 closeMenu();
               }}
+              variant="flat"
               startContent={<MdQrCode className="text-2xl" />}
             >
               Show QR code
@@ -50,15 +51,18 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
                 closeMenu();
               }}
               startContent={<FaEdit />}
+              variant="flat"
             >
               Edit
             </Button>
 
             <Button
               onPress={closeMenu}
-              className="text-danger"
               startContent={<MdDeleteSweep className="text-2xl text-danger" />}
+              variant="flat"
+              className="text-danger"
             >
+              {/* <MdDeleteSweep className="flex flex-start text-xl text-danger" /> */}
               Delete
             </Button>
           </ModalBody>
