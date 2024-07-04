@@ -56,9 +56,6 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
               Delete
             </Button>
           </ModalBody>
-          <ModalFooter>
-            <Button onPress={closeMenu}>Close</Button>
-          </ModalFooter>
         </ModalContent>
       </Modal>
     );
