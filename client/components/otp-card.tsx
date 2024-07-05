@@ -71,6 +71,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
   const dots = Array.from({ length: 5 }, (_, i) => i < filledDots);
 
   const handleContextMenu = (event: React.MouseEvent) => {
+    event.stopPropagation();
     event.preventDefault();
     setTimeout(() => {
       setActiveMenu(event.clientX, event.clientY);
@@ -78,13 +79,13 @@ const OTPCard: React.FC<OTPCardProps> = ({
   };
 
   return (
-    <div>
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events
+    <div role="button" onClick={handleCopy}>
       <Tooltip content={copied ? "Copied!" : "Click to copy"} placement="top">
         <Card
           isHoverable
           isPressable
           className="w-full max-w-[430px] transition-transform transform betterhover:hover:scale-105 active:scale-95 noselect"
-          onPress={handleCopy}
           onContextMenu={handleContextMenu}
         >
           <CardBody className="flex flex-row gap-5 justify-between items-center pt-3 pl-3 pr-3 pb-1">
