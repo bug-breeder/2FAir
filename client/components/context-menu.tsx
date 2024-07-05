@@ -34,7 +34,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
       <Modal isOpen={true} onClose={closeMenu} placement="bottom-center">
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">Actions</ModalHeader>
-          <ModalBody className="gap-4">
+          <ModalBody className="gap-4 mb-6">
             <Button
               onPress={() => {
                 setShowQR(true);
