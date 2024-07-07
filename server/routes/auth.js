@@ -1,14 +1,17 @@
-const express = require('express');
+const express = require("express");
+const authController = require("../controllers/authController");
+const authenticate = require("../middlewares/isAuthenticated");
+
 const router = express.Router();
-const authController = require('../controllers/authController');
 
-router.get('/google', authController.googleAuth);
-router.get('/google/callback', authController.googleAuthCallback, authController.googleAuthRedirect);
+router.get("/google", authController.googleLogin);
+router.get("/google/callback", authController.googleCallback);
 
-router.get('/microsoft', authController.microsoftAuth);
-router.get('/microsoft/callback', authController.microsoftAuthCallback, authController.microsoftAuthRedirect);
+router.get("/microsoft", authController.microsoftLogin);
+router.get("/microsoft/callback", authController.microsoftCallback);
 
-// router.get('/apple', authController.appleAuth);
-// router.get('/apple/callback', authController.appleAuthCallback, authController.appleAuthRedirect);
+router.post("/refresh-token", authController.refreshAccessToken);
+
+router.post("/logout", authenticate, authController.logout);
 
 module.exports = router;
