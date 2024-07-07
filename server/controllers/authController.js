@@ -31,28 +31,39 @@ const loginUser = async (req, res, next) => {
       REFRESH_TOKEN.cookie.options
     );
 
+    // Use req.session.returnTo to redirect to the original URL
+    const redirectUrl = req.session.returnTo || "/";
+    delete req.session.returnTo;
+
     res.json({
       success: true,
       user,
       accessToken,
+      redirectUrl,
     });
   } catch (error) {
     next(error);
   }
 };
 
-exports.googleLogin = passport.authenticate("google", {
-  scope: ["profile", "email"],
-});
+exports.googleLogin = (req, res, next) => {
+  req.session.returnTo = req.query.returnTo;
+  passport.authenticate("google", { scope: ["profile", "email"] })(
+    req,
+    res,
+    next
+  );
+};
 
 exports.googleCallback = [
   passport.authenticate("google", { failureRedirect: "/" }),
   loginUser,
 ];
 
-exports.microsoftLogin = passport.authenticate("microsoft", {
-  scope: ["user.read"],
-});
+exports.microsoftLogin = (req, res, next) => {
+  req.session.returnTo = req.query.returnTo;
+  passport.authenticate("microsoft", { scope: ["user.read"] })(req, res, next);
+};
 
 exports.microsoftCallback = [
   passport.authenticate("microsoft", { failureRedirect: "/" }),
