@@ -9,6 +9,7 @@
 		"lint": "eslint . --ext .ts,.tsx -c .eslintrc.json --fix"
 	},
 	"dependencies": {
+		"@iconify/react": "^5.0.1",
 		"@nextui-org/button": "2.0.34",
 		"@nextui-org/code": "2.0.29",
 		"@nextui-org/input": "2.2.2",
