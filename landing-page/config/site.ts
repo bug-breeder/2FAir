@@ -51,6 +51,6 @@ export const siteConfig = {
     github: "https://github.com/anh-ngn/2FAir-UI",
     email: "mailto://anhngzv@gmail.com",
     sponsor: "https://www.buymeacoffee.com/battle_beast",
-    login: "https://2fair.vip/login",
+    login: "https://app.2fair.vip/login",
   },
 };
