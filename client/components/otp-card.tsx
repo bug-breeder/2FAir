@@ -11,6 +11,7 @@ import {
   PiMouseLeftClickFill,
   PiHandTapBold,
   PiHandTapFill,
+  PiHandTapLight,
 } from "react-icons/pi";
 import { RxDividerVertical } from "react-icons/rx";
 
@@ -129,7 +130,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
                 "Copied!"
               ) : (
                 <span className="flex items-center">
-                  <PiHandTapBold />,
+                  <PiHandTapLight />,
                   <PiMouseLeftClickFill className="mr-1" />
                   <CgArrowRight />
                   <MdContentCopy className="ml-1" /> {/* Copy icon */}
