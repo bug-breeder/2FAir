@@ -130,12 +130,12 @@ const OTPCard: React.FC<OTPCardProps> = ({
               ) : (
                 <span className="flex items-center">
                   <PiHandTapBold />,
-                  <PiMouseLeftClickFill className="mx-1" />
+                  <PiMouseLeftClickFill className="mr-1" />
                   <CgArrowRight />
                   <MdContentCopy className="ml-1" /> {/* Copy icon */}
                   <RxDividerVertical className="mx-1" />
                   <PiHandTapFill />,
-                  <PiMouseRightClickFill className="mx-1" />
+                  <PiMouseRightClickFill className="mr-1" />
                   <CgArrowRight />
                   <FiMenu className="ml-1" /> {/* Menu icon */}
                 </span>
