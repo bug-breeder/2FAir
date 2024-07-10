@@ -3,6 +3,18 @@ import React, { useState, useEffect } from "react";
 import { Tooltip, Avatar } from "@nextui-org/react";
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import * as OTPAuth from "otpauth";
+import { MdContentCopy } from "react-icons/md";
+import { FiMenu } from "react-icons/fi";
+import {
+  PiMouseRightClickFill,
+  PiCursorClickBold,
+  PiMouseLeftClickFill,
+  PiHandTapBold,
+  PiHandTapFill,
+} from "react-icons/pi";
+import { RxDividerVertical } from "react-icons/rx";
+
+import { CgArrowRight } from "react-icons/cg";
 import ContextMenu from "@/components/context-menu";
 import QRModal from "@/components/qr-modal";
 
@@ -113,7 +125,21 @@ const OTPCard: React.FC<OTPCardProps> = ({
           </CardBody>
           <CardFooter className="flex items-center justify-between py-2">
             <p className="text-small text-default-300">
-              {copied ? "Copied!" : "Tap to copy, hold to open menu"}
+              {copied ? (
+                "Copied!"
+              ) : (
+                <span className="flex items-center">
+                  <PiHandTapBold />,
+                  <PiMouseLeftClickFill className="mx-1" />
+                  <CgArrowRight />
+                  <MdContentCopy className="ml-1" /> {/* Copy icon */}
+                  <RxDividerVertical className="mx-1" />
+                  <PiHandTapFill />,
+                  <PiMouseRightClickFill className="mx-1" />
+                  <CgArrowRight />
+                  <FiMenu className="ml-1" /> {/* Menu icon */}
+                </span>
+              )}
             </p>
             <div className="flex justify-center my-2">
               {dots.map((filled, index) => (
