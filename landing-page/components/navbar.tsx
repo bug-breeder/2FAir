@@ -15,7 +15,7 @@ import clsx from "clsx";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
-import { GithubIcon, DiscordIcon, Logo } from "@/components/icons";
+import { GithubIcon, FAir } from "@/components/icons";
 
 export const Navbar = () => {
   return (
@@ -23,7 +23,7 @@ export const Navbar = () => {
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand as="li" className="gap-3 max-w-fit">
           <NextLink className="flex justify-start items-center gap-1" href="/">
-            <Logo />
+            <FAir />
             <p className="font-bold text-inherit">2FAir</p>
           </NextLink>
         </NavbarBrand>

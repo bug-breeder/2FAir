@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Button, Link } from "@nextui-org/react";
+import { Button, Divider, Link } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
 
 import { FAir } from "@/components/icons";
@@ -14,7 +14,7 @@ export default function Login() {
   return (
     <div className="flex h-full  w-full flex-col items-center justify-center">
       <div className="mt-2 flex w-full max-w-sm flex-col gap-4 rounded-large bg-content1 px-8 py-6 shadow-small">
-        <div className="flex flex-col items-center pb-2">
+        <div className="flex flex-col items-center pb-1">
           <FAir size={60} />
           <p className="text-xl font-medium mt-4">Welcome Back</p>
           <p className="text-small text-default-500">
@@ -41,6 +41,12 @@ export default function Login() {
             Continue with Microsoft
           </Button>
         </div>
+        <div className="flex items-center gap-4 py-2">
+          <Divider className="flex-1" />
+          <p className="shrink-0 text-tiny text-default-500">OR</p>
+          <Divider className="flex-1" />
+        </div>
+
         <p className="text-center text-small">
           Can not access your account?&nbsp;
           <Link href="#" size="sm">
