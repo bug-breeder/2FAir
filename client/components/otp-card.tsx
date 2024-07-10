@@ -81,7 +81,10 @@ const OTPCard: React.FC<OTPCardProps> = ({
 
   return (
     <div>
-      <Tooltip content={copied ? "Copied!" : "Click to copy"} placement="top">
+      <Tooltip
+        content={copied ? "Copied!" : "Click to copy, right click to open menu"}
+        placement="top"
+      >
         <Card
           isHoverable
           isPressable
@@ -110,7 +113,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
           </CardBody>
           <CardFooter className="flex items-center justify-between py-2">
             <p className="text-small text-default-300">
-              {copied ? "Copied!" : "Tap to copy the OTP code"}
+              {copied ? "Copied!" : "Tap to copy, hold to open menu"}
             </p>
             <div className="flex justify-center my-2">
               {dots.map((filled, index) => (
