@@ -12,8 +12,8 @@ export default function Login() {
   const toggleVisibility = () => setIsVisible(!isVisible);
 
   return (
-    <div className="flex h-full  w-full flex-col items-center justify-center">
-      <div className="mt-2 flex w-full max-w-sm flex-col gap-4 rounded-large bg-content1 px-8 py-6 shadow-small">
+    <div className="flex h-full  w-full flex-col items-center justify-center px-6 sm:px-0">
+      <div className="mt-2 flex w-full max-w-sm flex-col gap-4 rounded-large bg-content1 px-4 sm:px-8 py-6 shadow-small">
         <div className="flex flex-col items-center pb-1">
           <FAir size={60} />
           <p className="text-xl font-medium mt-4">Welcome Back</p>

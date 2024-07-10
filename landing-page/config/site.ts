@@ -4,10 +4,6 @@ export const siteConfig = {
   name: "2FAir",
   description: "Lock down your logins with ease!",
   navItems: [
-    // {
-    //   label: "Home",
-    //   href: "/",
-    // },
     {
       label: "Docs",
       href: "/docs",
