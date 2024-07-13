@@ -7,7 +7,7 @@ import { useState } from "react";
 export default function Home() {
   const otps = [
     {
-      issuer: "Google",
+      issuer: "Steam",
       label: "abcdkmlkafnvnh@gmail.com",
       secret: "NB2W45DFOIZA",
       period: 30,
@@ -37,7 +37,7 @@ export default function Home() {
       period: 60,
     },
     {
-      issuer: "LinkedIn",
+      issuer: "Epic Games",
       label: "john@gmail.com",
       secret: "NB2W45DFOIZA",
       period: 30,

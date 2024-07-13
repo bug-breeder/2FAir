@@ -109,7 +109,9 @@ const OTPCard: React.FC<OTPCardProps> = ({
                 className="flex-shrink-0"
                 radius="full"
                 size="md"
-                src="https://nextui.org/avatars/avatar-1.png"
+                // set src = "/{icons/otp.issuer}.svg if it exists, otherwise set src = "/default.svg"
+                src={`/icons/${otp.issuer}.svg`}
+                alt={otp.issuer}
               />
               <div className="flex flex-col gap-1 items-start justify-center flex-grow overflow-hidden">
                 <h4 className="text-md leading-none">{otp.issuer}</h4>
