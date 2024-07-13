@@ -120,7 +120,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
                 </h5>
               </div>
             </div>
-            <div className="flex items-center font-bold text-xl my-1">
+            <div className="flex items-center font-bold text-xl mx-1">
               {currentCode}
             </div>
           </CardBody>
