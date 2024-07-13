@@ -1,20 +1,17 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Tooltip, Avatar } from "@nextui-org/react";
+import { Tooltip, Avatar, Progress } from "@nextui-org/react";
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import * as OTPAuth from "otpauth";
 import { MdContentCopy } from "react-icons/md";
 import { FiMenu } from "react-icons/fi";
 import {
   PiMouseRightClickFill,
-  PiCursorClickBold,
   PiMouseLeftClickFill,
-  PiHandTapBold,
   PiHandTapFill,
   PiHandTapLight,
 } from "react-icons/pi";
 import { RxDividerVertical } from "react-icons/rx";
-
 import { CgArrowRight } from "react-icons/cg";
 import ContextMenu from "@/components/context-menu";
 import QRModal from "@/components/qr-modal";
@@ -40,7 +37,9 @@ const OTPCard: React.FC<OTPCardProps> = ({
   closeMenu,
 }) => {
   const [copied, setCopied] = useState(false);
-  const [remainingTime, setRemainingTime] = useState(otp.period);
+  const [remainingTime, setRemainingTime] = useState(
+    otp.period - (Math.floor(Date.now() / 1000) % otp.period)
+  );
   const [currentCode, setCurrentCode] = useState("");
   const [showQR, setShowQR] = useState(false);
 
@@ -60,17 +59,18 @@ const OTPCard: React.FC<OTPCardProps> = ({
 
     generateCode();
 
-    const interval = setInterval(() => {
-      setRemainingTime((prev) => {
-        if (prev === 1) {
-          generateCode();
-          return otp.period;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const updateRemainingTime = () => {
+      const seconds = otp.period - (Math.floor(Date.now() / 1000) % otp.period);
+      setRemainingTime(seconds);
+    };
 
-    return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      updateRemainingTime();
+    }, 500);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, [otp.period, totp]);
 
   const handleCopy = () => {
@@ -80,11 +80,9 @@ const OTPCard: React.FC<OTPCardProps> = ({
     });
   };
 
-  const filledDots = Math.floor((remainingTime / otp.period) * 5);
-  const dots = Array.from({ length: 5 }, (_, i) => i < filledDots);
+  const progressValue = (remainingTime / otp.period) * 100;
 
   const handleContextMenu = (event: React.MouseEvent) => {
-    // event.stopPropagation();
     event.nativeEvent.stopImmediatePropagation();
     event.preventDefault();
     setTimeout(() => {
@@ -120,7 +118,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
                 </h5>
               </div>
             </div>
-            <div className="flex items-center font-bold text-xl">
+            <div className="flex items-center font-bold text-xl my-1">
               {currentCode}
             </div>
           </CardBody>
@@ -142,16 +140,14 @@ const OTPCard: React.FC<OTPCardProps> = ({
                 </span>
               )}
             </p>
-            <div className="flex justify-center my-2">
-              {dots.map((filled, index) => (
-                <div
-                  key={index}
-                  className={`h-2 w-2 ml-2 rounded-full ${
-                    filled ? "bg-green-500" : "bg-gray-300"
-                  }`}
-                />
-              ))}
-            </div>
+            <Progress
+              aria-label="Time remaining"
+              size="sm"
+              value={progressValue}
+              color="success"
+              showValueLabel={false}
+              className="w-20"
+            />
           </CardFooter>
         </Card>
       </Tooltip>
