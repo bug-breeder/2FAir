@@ -35,7 +35,7 @@ const FAB = () => {
                 isIconOnly
                 size="lg"
                 variant="shadow"
-                className="rounded-full"
+                className="rounded-full w-14 h-14"
                 onPress={() => setShowQRScanner(true)}
               >
                 <FaQrcode />
@@ -59,7 +59,7 @@ const FAB = () => {
               <Button
                 isIconOnly
                 size="lg"
-                className="rounded-full"
+                className="rounded-full w-14 h-14"
                 variant="shadow"
                 onPress={() => setShowModal(true)}
               >
@@ -71,7 +71,7 @@ const FAB = () => {
         <Button
           isIconOnly
           size="lg"
-          className="rounded-full transition-transform transform hover:rotate-45"
+          className="rounded-full transition-transform transform hover:rotate-45 w-14 h-14"
           variant="shadow"
           color="success"
           onPress={toggleExpand}
