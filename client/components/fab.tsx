@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { Button } from "@nextui-org/react";
+import { Button, Chip } from "@nextui-org/react";
 import { FaPlus, FaQrcode, FaEdit } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import AddOtpModal from "@/components/add-otp-modal";
@@ -24,7 +24,13 @@ const FAB = () => {
               exit={{ opacity: 0, y: 20 }}
               className="flex items-center space-x-2"
             >
-              <span className="text-sm text-default-500">Scan QR Code</span>
+              <Chip
+                className="text-sm text-default-500"
+                variant="solid"
+                radius="sm"
+              >
+                Scan QR Code
+              </Chip>
               <Button
                 isIconOnly
                 size="lg"
@@ -43,7 +49,13 @@ const FAB = () => {
               exit={{ opacity: 0, y: 20 }}
               className="flex items-center space-x-2"
             >
-              <span className="text-sm text-default-500">Add Manually</span>
+              <Chip
+                className="text-sm text-default-500"
+                variant="solid"
+                radius="sm"
+              >
+                Add Manually
+              </Chip>
               <Button
                 isIconOnly
                 size="lg"

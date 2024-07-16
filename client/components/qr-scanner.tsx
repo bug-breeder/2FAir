@@ -38,7 +38,7 @@ const QRScanner = ({
   return (
     <Modal isOpen={isOpen} onOpenChange={onClose}>
       <ModalContent>
-        <div id="qr-reader" style={{ width: "100%" }}></div>
+        <div id="qr-reader" style={{ width: "100%" }} />
       </ModalContent>
     </Modal>
   );
