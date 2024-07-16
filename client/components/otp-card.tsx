@@ -115,7 +115,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
               />
               <div className="flex flex-col gap-1 items-start justify-center flex-grow overflow-hidden">
                 <h4 className="text-md leading-none">{otp.issuer}</h4>
-                <h5 className="text-small tracking-tight truncate w-full">
+                <h5 className="text-small text-default-500 tracking-tight truncate w-full">
                   {otp.label}
                 </h5>
               </div>
