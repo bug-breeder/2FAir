@@ -146,7 +146,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
               aria-label="Time remaining"
               size="sm"
               value={progressValue}
-              color="primary"
+              color="success"
               showValueLabel={false}
               className="w-20"
             />
