@@ -20,12 +20,12 @@ const QRScanner = ({
 
       html5QrcodeScanner.render(
         (decodedText, decodedResult) => {
-          console.log(`QR Code detected: ${decodedText}`, decodedResult);
+          alert(`QR Code detected: ${decodedText}, ${decodedResult}`);
           html5QrcodeScanner.clear();
           onClose();
         },
         (errorMessage) => {
-          console.log(`QR Code no longer in front of camera. ${errorMessage}`);
+          alert(`QR Code no longer in front of camera. ${errorMessage}`);
         }
       );
 
@@ -35,13 +35,7 @@ const QRScanner = ({
     }
   }, [isOpen, onClose]);
 
-  return (
-    <Modal isOpen={isOpen} onOpenChange={onClose}>
-      <ModalContent>
-        <div id="qr-reader" style={{ width: "100%" }} />
-      </ModalContent>
-    </Modal>
-  );
+  return <div id="qr-reader" style={{ width: "100%" }} />;
 };
 
 export default QRScanner;
