@@ -1,53 +1,17 @@
 "use client";
 import React, { useState } from "react";
-import {
-  Button,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Input,
-  useDisclosure,
-} from "@nextui-org/react";
+import { Button } from "@nextui-org/react";
 import { FaPlus, FaQrcode, FaEdit } from "react-icons/fa";
-import { Html5QrcodeScanner } from "html5-qrcode";
 import { motion, AnimatePresence } from "framer-motion";
+import AddOtpModal from "@/components/add-otp-modal";
+import QRScanner from "@/components/qr-scanner";
 
 const FAB = () => {
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [newOtp, setNewOtp] = useState({
-    issuer: "",
-    label: "",
-    secret: "",
-    period: 30,
-  });
-
-  const handleAddOtp = () => {
-    console.log("New OTP:", newOtp);
-    onOpenChange();
-  };
+  const [showModal, setShowModal] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   const toggleExpand = () => setIsExpanded(!isExpanded);
-
-  const handleScanQR = () => {
-    const html5QrcodeScanner = new Html5QrcodeScanner(
-      "qr-reader",
-      { fps: 10, qrbox: 250 },
-      false
-    );
-
-    html5QrcodeScanner.render(
-      (decodedText, decodedResult) => {
-        console.log(`QR Code detected: ${decodedText}`, decodedResult);
-        html5QrcodeScanner.clear();
-      },
-      (errorMessage) => {
-        console.log(`QR Code no longer in front of camera. ${errorMessage}`);
-      }
-    );
-  };
 
   return (
     <>
@@ -64,10 +28,9 @@ const FAB = () => {
               <Button
                 isIconOnly
                 size="lg"
-                // color="primary"
                 variant="shadow"
                 className="rounded-full"
-                onPress={handleScanQR}
+                onPress={() => setShowQRScanner(true)}
               >
                 <FaQrcode />
               </Button>
@@ -86,7 +49,7 @@ const FAB = () => {
                 size="lg"
                 className="rounded-full"
                 variant="shadow"
-                onPress={onOpen}
+                onPress={() => setShowModal(true)}
               >
                 <FaEdit />
               </Button>
@@ -105,56 +68,11 @@ const FAB = () => {
         </Button>
       </div>
 
-      <div id="qr-reader" style={{ display: "none" }}></div>
-
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1">Add OTP</ModalHeader>
-              <ModalBody>
-                <Input
-                  label="Issuer"
-                  placeholder="Issuer"
-                  onChange={(e) =>
-                    setNewOtp({ ...newOtp, issuer: e.target.value })
-                  }
-                />
-                <Input
-                  label="Label"
-                  placeholder="Label"
-                  onChange={(e) =>
-                    setNewOtp({ ...newOtp, label: e.target.value })
-                  }
-                />
-                <Input
-                  label="Secret"
-                  placeholder="Secret"
-                  onChange={(e) =>
-                    setNewOtp({ ...newOtp, secret: e.target.value })
-                  }
-                />
-                <Input
-                  label="Period"
-                  placeholder="Period"
-                  type="number"
-                  onChange={(e) =>
-                    setNewOtp({ ...newOtp, period: Number(e.target.value) })
-                  }
-                />
-              </ModalBody>
-              <ModalFooter>
-                <Button color="danger" variant="light" onPress={onClose}>
-                  Close
-                </Button>
-                <Button color="success" onPress={handleAddOtp}>
-                  Add OTP
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
+      <QRScanner
+        isOpen={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+      />
+      <AddOtpModal isOpen={showModal} onClose={() => setShowModal(false)} />
     </>
   );
 };
