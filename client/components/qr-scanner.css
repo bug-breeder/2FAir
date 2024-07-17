@@ -110,3 +110,12 @@ button.scanapp-button.enticing:disabled
   justify-content: center;
   align-items: center;
 }
+
+span.html5-qrcode-element {
+  display: inline-block;
+  margin: 6px 0;
+}
+
+button#html5-qrcode-button-camera-start, button#html5-qrcode-button-camera-stop {
+  margin: 6px 6px;
+}

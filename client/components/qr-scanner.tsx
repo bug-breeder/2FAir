@@ -15,7 +15,12 @@ const QRScanner = ({
     if (isOpen) {
       const html5QrcodeScanner = new Html5QrcodeScanner(
         "qr-reader",
-        { fps: 10, qrbox: 250, rememberLastUsedCamera: false },
+        {
+          fps: 10,
+          qrbox: 250,
+          rememberLastUsedCamera: false,
+          showTorchButtonIfSupported: true,
+        },
         false
       );
 
@@ -37,10 +42,17 @@ const QRScanner = ({
   }, [isOpen, onClose]);
 
   return (
-    <Modal isOpen={isOpen} placement="center" onOpenChange={onClose}>
+    <Modal
+      isOpen={isOpen}
+      placement="center"
+      onOpenChange={onClose}
+      className="light text-foreground bg-background"
+    >
       <ModalContent>
-        <ModalHeader className="flex flex-col gap-1">Scan QR Code</ModalHeader>
-        <ModalBody className="px-6 pb-6">
+        <ModalHeader className="flex flex-col gap-1 py-2">
+          Scan QR Code
+        </ModalHeader>
+        <ModalBody className="px-3 pb-3 pt-0">
           <div className="light text-foreground bg-background" id="qr-reader" />
         </ModalBody>
       </ModalContent>
