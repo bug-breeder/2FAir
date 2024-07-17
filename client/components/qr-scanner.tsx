@@ -15,7 +15,7 @@ const QRScanner = ({
     if (isOpen) {
       const html5QrcodeScanner = new Html5QrcodeScanner(
         "qr-reader",
-        { fps: 10, qrbox: 250, rememberLastUsedCamera: true },
+        { fps: 10, qrbox: 250, rememberLastUsedCamera: false },
         false
       );
 
