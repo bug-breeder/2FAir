@@ -30,7 +30,7 @@ const AddOtpModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={onClose}>
+    <Modal isOpen={isOpen} placement="center" onOpenChange={onClose}>
       <ModalContent>
         <>
           <ModalHeader className="flex flex-col gap-1">Add OTP</ModalHeader>
