@@ -4,7 +4,7 @@ import { Button, Chip } from "@nextui-org/react";
 import { FaPlus, FaQrcode, FaEdit } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import AddOtpModal from "@/components/add-otp-modal";
-import QRScanner from "@/components/qr-scanner";
+import QrScannerModal from "@/components/qr-scanner";
 
 const FAB = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -80,7 +80,7 @@ const FAB = () => {
         </Button>
       </div>
 
-      <QRScanner
+      <QrScannerModal
         isOpen={showQRScanner}
         onClose={() => setShowQRScanner(false)}
       />
