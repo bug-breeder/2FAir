@@ -18,10 +18,16 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [qrResult, setQrResult] = useState<string>("None");
   const [qrTimestamp, setQrTimestamp] = useState<string>("");
+  const [hasFlash, setHasFlash] = useState<boolean>(false);
+  const [flashState, setFlashState] = useState<boolean>(false);
+  const [cameras, setCameras] = useState<QrScanner.Camera[]>([]);
+  const [currentCamera, setCurrentCamera] = useState<string>("");
 
   useEffect(() => {
+    let qrScanner: QrScanner;
+
     if (isOpen && videoRef.current) {
-      const qrScanner = new QrScanner(
+      qrScanner = new QrScanner(
         videoRef.current,
         (result) => {
           setQrResult(result.data);
@@ -33,7 +39,15 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
         }
       );
 
-      qrScanner.start();
+      qrScanner.start().then(() => {
+        qrScanner.hasFlash().then(setHasFlash);
+        QrScanner.listCameras(true).then((cameras) => {
+          setCameras(cameras);
+          if (cameras.length > 0) {
+            setCurrentCamera(cameras[0].id);
+          }
+        });
+      });
 
       return () => {
         qrScanner.stop();
@@ -42,6 +56,26 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
+  const toggleFlash = () => {
+    if (hasFlash && videoRef.current) {
+      QrScanner.toggleFlash().then(() => setFlashState((prev) => !prev));
+    }
+  };
+
+  const switchCamera = (deviceId: string) => {
+    setCurrentCamera(deviceId);
+    if (videoRef.current) {
+      const qrScanner = new QrScanner(videoRef.current, (result) => {
+        setQrResult(result.data);
+        setQrTimestamp(new Date().toString());
+      });
+      qrScanner.setCamera(deviceId).then(() => {
+        qrScanner.hasFlash().then(setHasFlash);
+        qrScanner.start();
+      });
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} onOpenChange={onClose}>
       <ModalContent>
@@ -49,15 +83,32 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
           <ModalHeader className="flex flex-col gap-1">QR Scanner</ModalHeader>
           <ModalBody>
             <div id="video-container">
-              <video ref={videoRef} id="qr-video">
-                <track kind="captions" />
-              </video>
+              <video id="qr-video" ref={videoRef}></video>
             </div>
             <b>Detected QR code: </b>
             <span>{qrResult}</span>
             <br />
             <b>Last detected at: </b>
             <span>{qrTimestamp}</span>
+            <br />
+            {hasFlash && (
+              <Button onPress={toggleFlash}>
+                {flashState ? "Turn off Flash" : "Turn on Flash"}
+              </Button>
+            )}
+            <br />
+            {cameras.length > 1 && (
+              <select
+                onChange={(e) => switchCamera(e.target.value)}
+                value={currentCamera}
+              >
+                {cameras.map((camera) => (
+                  <option key={camera.id} value={camera.id}>
+                    {camera.label || `Camera ${camera.id}`}
+                  </option>
+                ))}
+              </select>
+            )}
           </ModalBody>
           <ModalFooter>
             <Button color="danger" variant="light" onPress={onClose}>
