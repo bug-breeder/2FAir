@@ -7,7 +7,7 @@ import {
   ModalHeader,
   Button,
 } from "@nextui-org/react";
-import { Html5Qrcode } from "html5-qrcode";
+import QrScanner from "qr-scanner";
 import "./qr-scanner.css";
 
 const QRScanner = ({
@@ -17,38 +17,40 @@ const QRScanner = ({
   isOpen: boolean;
   onClose: () => void;
 }) => {
-  const [html5QrCode, setHtml5QrCode] = useState<Html5Qrcode | null>(null);
+  const [qrScanner, setQrScanner] = useState<QrScanner | null>(null);
   const [cameraId, setCameraId] = useState<string | null>(null);
   const [cameras, setCameras] = useState<Array<{ id: string; label: string }>>(
     []
   );
   const [showFileInput, setShowFileInput] = useState(false);
+  const [flashAvailable, setFlashAvailable] = useState(false);
+  const [flashOn, setFlashOn] = useState(false);
 
   useEffect(() => {
+    const videoElem = document.getElementById("qr-video") as HTMLVideoElement;
+
     if (isOpen) {
       const initScanner = async () => {
-        const qrCodeScanner = new Html5Qrcode("qr-reader", { verbose: true });
-        setHtml5QrCode(qrCodeScanner);
+        const qrCodeScanner = new QrScanner(
+          videoElem,
+          (result) => {
+            alert(`QR Code detected: ${result.data}`);
+            stopScanner();
+          },
+          {
+            highlightScanRegion: true,
+            highlightCodeOutline: true,
+          }
+        );
+        setQrScanner(qrCodeScanner);
 
         try {
-          const devices = await Html5Qrcode.getCameras();
+          const devices = await QrScanner.listCameras(true);
           setCameras(devices);
           if (devices && devices.length) {
             const initialCameraId = devices[0].id;
             setCameraId(initialCameraId);
-            await qrCodeScanner.start(
-              { deviceId: { exact: initialCameraId } },
-              { fps: 10, qrbox: { width: 250, height: 250 } },
-              (decodedText, decodedResult) => {
-                alert(`QR Code detected: ${decodedText}`);
-                stopScanner();
-              },
-              (errorMessage) => {
-                console.log(
-                  `QR Code no longer in front of camera. ${errorMessage}`
-                );
-              }
-            );
+            await startScanner(qrCodeScanner, initialCameraId);
           }
         } catch (err) {
           console.error("Error starting the scanner:", err);
@@ -59,42 +61,50 @@ const QRScanner = ({
     }
 
     return () => {
-      if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-          html5QrCode.clear();
-        });
+      if (qrScanner) {
+        qrScanner.stop();
+        qrScanner.destroy();
       }
     };
   }, [isOpen]);
 
-  const switchCamera = async () => {
-    if (html5QrCode && cameras.length > 1) {
-      const currentIndex = cameras.findIndex((cam) => cam.id === cameraId);
-      const nextIndex = (currentIndex + 1) % cameras.length;
-      const nextCameraId = cameras[nextIndex].id;
-      setCameraId(nextCameraId);
+  const startScanner = async (scanner: QrScanner, cameraId: string) => {
+    try {
+      await scanner.start();
+      const hasFlash = await scanner.hasFlash();
+      setFlashAvailable(hasFlash);
+    } catch (err) {
+      console.error("Error starting the scanner:", err);
+      stopScanner();
+    }
+  };
 
-      await html5QrCode.stop();
-      await html5QrCode.start(
-        { deviceId: { exact: nextCameraId } },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText, decodedResult) => {
-          alert(`QR Code detected: ${decodedText}`);
-          stopScanner();
-        },
-        (errorMessage) => {
-          console.log(`QR Code no longer in front of camera. ${errorMessage}`);
-        }
-      );
+  const switchCamera = async () => {
+    try {
+      if (qrScanner && cameras.length > 1) {
+        const currentIndex = cameras.findIndex((cam) => cam.id === cameraId);
+        const nextIndex = (currentIndex + 1) % cameras.length;
+        const nextCameraId = cameras[nextIndex].id;
+
+        setCameraId(nextCameraId);
+
+        await qrScanner.stop();
+        await startScanner(qrScanner, nextCameraId);
+      }
+    } catch (err) {
+      console.error("Error switching the camera:", err);
     }
   };
 
   const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0 && html5QrCode) {
+    if (e.target.files && e.target.files.length > 0 && qrScanner) {
       const file = e.target.files[0];
+
       try {
-        const decodedText = await html5QrCode.scanFile(file, true);
-        alert(`QR Code detected: ${decodedText}`);
+        const result = await QrScanner.scanImage(file, {
+          returnDetailedScanResult: true,
+        });
+        alert(`QR Code detected: ${result.data}`);
         stopScanner();
       } catch (err) {
         console.error(`Error scanning file. Reason: ${err}`);
@@ -102,33 +112,47 @@ const QRScanner = ({
     }
   };
 
+  const toggleFlash = async () => {
+    if (qrScanner) {
+      try {
+        await qrScanner.toggleFlash();
+        setFlashOn(qrScanner.isFlashOn());
+      } catch (err) {
+        console.error("Error toggling flash:", err);
+      }
+    }
+  };
+
   const stopScanner = () => {
-    if (html5QrCode) {
-      html5QrCode.stop().then(() => {
-        html5QrCode.clear();
-        onClose();
-      });
+    if (qrScanner) {
+      qrScanner.stop();
+      qrScanner.destroy();
+      onClose();
     }
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      placement="center"
-      onOpenChange={onClose}
-      className="light text-foreground bg-background"
-    >
+    <Modal isOpen={isOpen} placement="center" onOpenChange={onClose}>
       <ModalContent>
         <ModalHeader className="flex flex-col gap-1 py-2">
           Scan QR Code
         </ModalHeader>
         <ModalBody className="px-3 pb-3 pt-0">
-          <div className="light text-foreground bg-background" id="qr-reader" />
+          <div id="video-container">
+            <video id="qr-video">
+              <track kind="captions" />
+            </video>
+          </div>
           <div className="flex justify-center mt-4 space-x-4">
             <Button onPress={switchCamera}>Switch Camera</Button>
             <Button onPress={() => setShowFileInput(!showFileInput)}>
               Upload Image
             </Button>
+            {flashAvailable && (
+              <Button onPress={toggleFlash}>
+                Flash: {flashOn ? "On" : "Off"}
+              </Button>
+            )}
           </div>
           {showFileInput && (
             <div className="mt-4">
