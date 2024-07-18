@@ -8,6 +8,7 @@ import {
   Button,
 } from "@nextui-org/react";
 import QrScanner from "qr-scanner";
+import { FlashIcon, CameraSwitchIcon } from "./icon";
 
 interface QrScannerModalProps {
   isOpen: boolean;
@@ -16,18 +17,17 @@ interface QrScannerModalProps {
 
 const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const qrScannerRef = useRef<QrScanner | null>(null);
   const [qrResult, setQrResult] = useState<string>("None");
   const [qrTimestamp, setQrTimestamp] = useState<string>("");
   const [hasFlash, setHasFlash] = useState<boolean>(false);
-  const [flashState, setFlashState] = useState<boolean>(false);
+  const [isFlashOn, setIsFlashOn] = useState<boolean>(false);
   const [cameras, setCameras] = useState<QrScanner.Camera[]>([]);
-  const [currentCamera, setCurrentCamera] = useState<string>("");
+  const [currentCamera, setCurrentCamera] = useState<string>("environment");
 
   useEffect(() => {
-    let qrScanner: QrScanner;
-
     if (isOpen && videoRef.current) {
-      qrScanner = new QrScanner(
+      qrScannerRef.current = new QrScanner(
         videoRef.current,
         (result) => {
           setQrResult(result.data);
@@ -39,41 +39,34 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
         }
       );
 
-      qrScanner.start().then(() => {
-        qrScanner.hasFlash().then(setHasFlash);
-        QrScanner.listCameras(true).then((cameras) => {
-          setCameras(cameras);
-          if (cameras.length > 0) {
-            setCurrentCamera(cameras[0].id);
-          }
-        });
+      qrScannerRef.current.start().then(() => {
+        qrScannerRef.current?.hasFlash().then(setHasFlash);
+        QrScanner.listCameras(true).then(setCameras);
       });
 
       return () => {
-        qrScanner.stop();
-        qrScanner.destroy();
+        qrScannerRef.current?.stop();
+        qrScannerRef.current?.destroy();
       };
     }
   }, [isOpen]);
 
   const toggleFlash = () => {
-    if (hasFlash && videoRef.current) {
-      QrScanner.toggleFlash().then(() => setFlashState((prev) => !prev));
+    if (isFlashOn) {
+      qrScannerRef.current?.turnFlashOff().then(() => {
+        setIsFlashOn(false);
+      });
+    } else {
+      qrScannerRef.current?.turnFlashOn().then(() => {
+        setIsFlashOn(true);
+      });
     }
   };
 
   const switchCamera = (deviceId: string) => {
-    setCurrentCamera(deviceId);
-    if (videoRef.current) {
-      const qrScanner = new QrScanner(videoRef.current, (result) => {
-        setQrResult(result.data);
-        setQrTimestamp(new Date().toString());
-      });
-      qrScanner.setCamera(deviceId).then(() => {
-        qrScanner.hasFlash().then(setHasFlash);
-        qrScanner.start();
-      });
-    }
+    qrScannerRef.current
+      ?.setCamera(deviceId)
+      .then(() => setCurrentCamera(deviceId));
   };
 
   return (
@@ -83,32 +76,54 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
           <ModalHeader className="flex flex-col gap-1">QR Scanner</ModalHeader>
           <ModalBody>
             <div id="video-container">
-              <video id="qr-video" ref={videoRef}></video>
+              <video id="qr-video" ref={videoRef}>
+                <track kind="captions" />
+              </video>
             </div>
-            <b>Detected QR code: </b>
-            <span>{qrResult}</span>
-            <br />
-            <b>Last detected at: </b>
-            <span>{qrTimestamp}</span>
-            <br />
-            {hasFlash && (
-              <Button onPress={toggleFlash}>
-                {flashState ? "Turn off Flash" : "Turn on Flash"}
-              </Button>
-            )}
-            <br />
-            {cameras.length > 1 && (
+            <div
+              style={{
+                marginTop: "10px",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              {hasFlash && (
+                <Button
+                  isIconOnly
+                  color="warning"
+                  onPress={toggleFlash}
+                  aria-label="Toggle Flash"
+                >
+                  <FlashIcon />
+                </Button>
+              )}
               <select
                 onChange={(e) => switchCamera(e.target.value)}
                 value={currentCamera}
               >
                 {cameras.map((camera) => (
                   <option key={camera.id} value={camera.id}>
-                    {camera.label || `Camera ${camera.id}`}
+                    {camera.label}
                   </option>
                 ))}
               </select>
-            )}
+              <Button
+                isIconOnly
+                color="primary"
+                onPress={() => switchCamera(currentCamera)}
+                aria-label="Switch Camera"
+              >
+                <CameraSwitchIcon />
+              </Button>
+            </div>
+            <div style={{ marginTop: "10px" }}>
+              <b>Detected QR code: </b>
+              <span>{qrResult}</span>
+              <br />
+              <b>Last detected at: </b>
+              <span>{qrTimestamp}</span>
+            </div>
           </ModalBody>
           <ModalFooter>
             <Button color="danger" variant="light" onPress={onClose}>
