@@ -50,7 +50,8 @@ const QRScanner = ({
           if (devices && devices.length) {
             const initialCameraId = devices[0].id;
             setCameraId(initialCameraId);
-            await startScanner(qrCodeScanner, initialCameraId);
+            await qrCodeScanner.setCamera(initialCameraId);
+            await qrCodeScanner.start();
           }
         } catch (err) {
           console.error("Error starting the scanner:", err);
@@ -68,17 +69,6 @@ const QRScanner = ({
     };
   }, [isOpen]);
 
-  const startScanner = async (scanner: QrScanner, cameraId: string) => {
-    try {
-      await scanner.start();
-      const hasFlash = await scanner.hasFlash();
-      setFlashAvailable(hasFlash);
-    } catch (err) {
-      console.error("Error starting the scanner:", err);
-      stopScanner();
-    }
-  };
-
   const switchCamera = async () => {
     try {
       if (qrScanner && cameras.length > 1) {
@@ -88,8 +78,8 @@ const QRScanner = ({
 
         setCameraId(nextCameraId);
 
-        await qrScanner.stop();
-        await startScanner(qrScanner, nextCameraId);
+        await qrScanner.setCamera(nextCameraId);
+        await qrScanner.start();
       }
     } catch (err) {
       console.error("Error switching the camera:", err);
