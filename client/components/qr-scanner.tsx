@@ -40,6 +40,7 @@ const QRScanner = ({
           {
             highlightScanRegion: true,
             highlightCodeOutline: true,
+            preferredCamera: "environment",
           }
         );
         setQrScanner(qrCodeScanner);
@@ -52,9 +53,12 @@ const QRScanner = ({
             setCameraId(initialCameraId);
             await qrCodeScanner.setCamera(initialCameraId);
             await qrCodeScanner.start();
+            const hasFlash = await qrCodeScanner.hasFlash();
+            setFlashAvailable(hasFlash);
           }
         } catch (err) {
           console.error("Error starting the scanner:", err);
+          stopScanner();
         }
       };
 
