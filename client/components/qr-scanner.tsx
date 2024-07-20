@@ -8,8 +8,7 @@ import {
   Button,
 } from "@nextui-org/react";
 import QrScanner from "qr-scanner";
-
-import { FlashIcon, CameraSwitchIcon } from "./icon";
+import { FlashIcon, CameraSwitchIcon } from "./Icons";
 
 interface QrScannerModalProps {
   isOpen: boolean;
@@ -24,7 +23,7 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
   const [hasFlash, setHasFlash] = useState<boolean>(false);
   const [isFlashOn, setIsFlashOn] = useState<boolean>(false);
   const [cameras, setCameras] = useState<QrScanner.Camera[]>([]);
-  const [currentCamera, setCurrentCamera] = useState<string>("environment");
+  const [currentCameraIndex, setCurrentCameraIndex] = useState<number>(0);
 
   useEffect(() => {
     if (isOpen && videoRef.current) {
@@ -64,10 +63,14 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const switchCamera = (deviceId: string) => {
-    qrScannerRef.current
-      ?.setCamera(deviceId)
-      .then(() => setCurrentCamera(deviceId));
+  const switchCamera = () => {
+    if (cameras.length > 0) {
+      const nextCameraIndex = (currentCameraIndex + 1) % cameras.length;
+      const nextCamera = cameras[nextCameraIndex];
+      qrScannerRef.current?.setCamera(nextCamera.id).then(() => {
+        setCurrentCameraIndex(nextCameraIndex);
+      });
+    }
   };
 
   return (
@@ -99,20 +102,10 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
                   <FlashIcon />
                 </Button>
               )}
-              <select
-                onChange={(e) => switchCamera(e.target.value)}
-                value={currentCamera}
-              >
-                {cameras.map((camera) => (
-                  <option key={camera.id} value={camera.id}>
-                    {camera.label}
-                  </option>
-                ))}
-              </select>
               <Button
                 isIconOnly
                 color="primary"
-                onPress={() => switchCamera(currentCamera)}
+                onPress={switchCamera}
                 aria-label="Switch Camera"
               >
                 <CameraSwitchIcon />
