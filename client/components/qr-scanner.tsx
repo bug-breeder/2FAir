@@ -8,6 +8,7 @@ import {
   Button,
 } from "@nextui-org/react";
 import QrScanner from "qr-scanner";
+
 import { FlashIcon, CameraSwitchIcon } from "./icon";
 
 interface QrScannerModalProps {
