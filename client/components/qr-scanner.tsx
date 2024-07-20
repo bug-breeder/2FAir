@@ -7,8 +7,9 @@ import {
   ModalFooter,
   Button,
 } from "@nextui-org/react";
+import { IoFlash } from "react-icons/io5";
+import { LuSwitchCamera } from "react-icons/lu";
 import QrScanner from "qr-scanner";
-import { FlashIcon, CameraSwitchIcon } from "./Icons";
 
 interface QrScannerModalProps {
   isOpen: boolean;
@@ -99,7 +100,7 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
                   onPress={toggleFlash}
                   aria-label="Toggle Flash"
                 >
-                  <FlashIcon />
+                  <IoFlash />
                 </Button>
               )}
               <Button
@@ -108,7 +109,7 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
                 onPress={switchCamera}
                 aria-label="Switch Camera"
               >
-                <CameraSwitchIcon />
+                <LuSwitchCamera />
               </Button>
             </div>
             <div style={{ marginTop: "10px" }}>
