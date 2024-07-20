@@ -9,6 +9,8 @@
 		"lint": "eslint . --ext .ts,.tsx -c .eslintrc.json --fix"
 	},
 	"dependencies": {
+		"@adobe/react-spectrum": "^3.35.1",
+		"@bytescale/upload-widget-react": "^4.19.0",
 		"@iconify/react": "^5.0.1",
 		"@nextui-org/button": "^2.0.37",
 		"@nextui-org/code": "^2.0.32",
