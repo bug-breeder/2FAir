@@ -23,8 +23,8 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
   const [qrTimestamp, setQrTimestamp] = useState<string>("");
   const [hasFlash, setHasFlash] = useState<boolean>(false);
   const [isFlashOn, setIsFlashOn] = useState<boolean>(false);
-  const [cameras, setCameras] = useState<QrScanner.Camera[]>([]);
-  const [currentCameraIndex, setCurrentCameraIndex] = useState<number>(0);
+  const [currentFacingMode, setCurrentFacingMode] =
+    useState<QrScanner.FacingMode>("environment");
 
   useEffect(() => {
     if (isOpen && videoRef.current) {
@@ -42,7 +42,6 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
 
       qrScannerRef.current.start().then(() => {
         qrScannerRef.current?.hasFlash().then(setHasFlash);
-        QrScanner.listCameras(true).then(setCameras);
       });
 
       return () => {
@@ -65,14 +64,12 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
   };
 
   const switchCamera = () => {
-    if (cameras.length > 0) {
-      const nextCameraIndex = (currentCameraIndex + 1) % cameras.length;
-      const nextCamera = cameras[nextCameraIndex];
-      qrScannerRef.current?.setCamera(nextCamera.id).then(() => {
-        setCurrentCameraIndex(nextCameraIndex);
-        qrScannerRef.current?.hasFlash().then(setHasFlash);
-      });
-    }
+    const newFacingMode =
+      currentFacingMode === "environment" ? "user" : "environment";
+    qrScannerRef.current?.setCamera(newFacingMode).then(() => {
+      setCurrentFacingMode(newFacingMode);
+      qrScannerRef.current?.hasFlash().then(setHasFlash);
+    });
   };
 
   return (
