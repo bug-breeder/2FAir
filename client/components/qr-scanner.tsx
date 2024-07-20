@@ -7,9 +7,9 @@ import {
   ModalFooter,
   Button,
 } from "@nextui-org/react";
+import QrScanner from "qr-scanner";
 import { IoFlash } from "react-icons/io5";
 import { LuSwitchCamera } from "react-icons/lu";
-import QrScanner from "qr-scanner";
 
 interface QrScannerModalProps {
   isOpen: boolean;
@@ -70,6 +70,7 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
       const nextCamera = cameras[nextCameraIndex];
       qrScannerRef.current?.setCamera(nextCamera.id).then(() => {
         setCurrentCameraIndex(nextCameraIndex);
+        qrScannerRef.current?.hasFlash().then(setHasFlash);
       });
     }
   };
@@ -80,37 +81,44 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
         <>
           <ModalHeader className="flex flex-col gap-1">QR Scanner</ModalHeader>
           <ModalBody>
-            <div id="video-container">
-              <video id="qr-video" ref={videoRef}>
+            <div id="video-container" style={{ position: "relative" }}>
+              <video id="qr-video" ref={videoRef} style={{ width: "100%" }}>
                 <track kind="captions" />
               </video>
-            </div>
-            <div
-              style={{
-                marginTop: "10px",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-              }}
-            >
-              {hasFlash && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "10px",
+                  left: "10px",
+                }}
+              >
+                {hasFlash && (
+                  <Button
+                    isIconOnly
+                    color="warning"
+                    onPress={toggleFlash}
+                    aria-label="Toggle Flash"
+                  >
+                    <IoFlash />
+                  </Button>
+                )}
+              </div>
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "10px",
+                  right: "10px",
+                }}
+              >
                 <Button
                   isIconOnly
-                  color="warning"
-                  onPress={toggleFlash}
-                  aria-label="Toggle Flash"
+                  color="primary"
+                  onPress={switchCamera}
+                  aria-label="Switch Camera"
                 >
-                  <IoFlash />
+                  <LuSwitchCamera />
                 </Button>
-              )}
-              <Button
-                isIconOnly
-                color="primary"
-                onPress={switchCamera}
-                aria-label="Switch Camera"
-              >
-                <LuSwitchCamera />
-              </Button>
+              </div>
             </div>
             <div style={{ marginTop: "10px" }}>
               <b>Detected QR code: </b>
