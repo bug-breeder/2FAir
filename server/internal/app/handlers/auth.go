@@ -8,6 +8,7 @@ import (
 
 	"github.com/bug-breeder/2fair/server/configs"
 	"github.com/bug-breeder/2fair/server/internal/app/models"
+	"github.com/bug-breeder/2fair/server/internal/pkg/auth"
 	"github.com/bug-breeder/2fair/server/internal/pkg/db"
 	"github.com/gorilla/sessions"
 
@@ -15,7 +16,7 @@ import (
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/google"
-	microsoft "github.com/markbates/goth/providers/microsoftonline"
+	"github.com/markbates/goth/providers/microsoftonline"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -26,12 +27,13 @@ func SetupRoutes(router *gin.Engine) {
 
 	goth.UseProviders(
 		google.New(configs.GetEnv("GOOGLE_CLIENT_ID"), configs.GetEnv("GOOGLE_CLIENT_SECRET"), "http://localhost:8080/auth/google/callback"),
-		microsoft.New(configs.GetEnv("MICROSOFT_CLIENT_ID"), configs.GetEnv("MICROSOFT_CLIENT_SECRET"), "http://localhost:8080/auth/microsoft/callback"),
+		microsoftonline.New(configs.GetEnv("MICROSOFT_CLIENT_ID"), configs.GetEnv("MICROSOFT_CLIENT_SECRET"), "http://localhost:8080/auth/microsoft/callback"),
 		// apple.New(configs.GetEnv("APPLE_CLIENT_ID"), configs.GetEnv("APPLE_CLIENT_SECRET"), "http://localhost:8080/auth/apple/callback"),
 	)
 
 	router.GET("/auth/:provider", authHandler)
 	router.GET("/auth/:provider/callback", authCallback)
+	router.POST("/auth/refresh", RefreshToken)
 }
 
 func authHandler(c *gin.Context) {
@@ -65,6 +67,8 @@ func authCallback(c *gin.Context) {
 		return
 	}
 
+	var accessToken, refreshToken string
+
 	if err == mongo.ErrNoDocuments {
 		// No existing user found, create a new one
 		newUser := models.User{
@@ -82,9 +86,55 @@ func authCallback(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, newUser)
+		accessToken, err = auth.GenerateAccessToken(newUser.Email)
+		if err != nil {
+			log.Printf("Failed to generate access token: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate access token"})
+			return
+		}
+
+		refreshToken, err = auth.GenerateRefreshToken(newUser.Email)
+		if err != nil {
+			log.Printf("Failed to generate refresh token: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
+			return
+		}
+
 	} else {
 		// Existing user found, return the user info without updating
-		c.JSON(http.StatusOK, existingUser)
+		accessToken, err = auth.GenerateAccessToken(existingUser.Email)
+		if err != nil {
+			log.Printf("Failed to generate access token: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate access token"})
+			return
+		}
+
+		refreshToken, err = auth.GenerateRefreshToken(existingUser.Email)
+		if err != nil {
+			log.Printf("Failed to generate refresh token: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
+			return
+		}
 	}
+
+	// Set tokens in cookies
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+	})
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+	})
+
+	c.JSON(http.StatusOK, gin.H{
+		"user": user,
+	})
 }
