@@ -2,25 +2,31 @@ package handlers
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/bug-breeder/2fair/server/configs"
-	database "github.com/bug-breeder/2fair/server/internal/pkg/db"
+	"github.com/bug-breeder/2fair/server/internal/app/models"
+	"github.com/bug-breeder/2fair/server/internal/pkg/db"
+	"github.com/gorilla/sessions"
 
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/google"
-	"github.com/markbates/goth/providers/microsoftonline"
+	microsoft "github.com/markbates/goth/providers/microsoftonline"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func SetupRoutes(router *gin.Engine) {
+	// Ensure SESSION_SECRET is set
+	gothic.Store = sessions.NewCookieStore([]byte(configs.GetEnv("SESSION_SECRET")))
+
 	goth.UseProviders(
 		google.New(configs.GetEnv("GOOGLE_CLIENT_ID"), configs.GetEnv("GOOGLE_CLIENT_SECRET"), "http://localhost:8080/auth/google/callback"),
-		microsoftonline.New(configs.GetEnv("MICROSOFT_CLIENT_ID"), configs.GetEnv("MICROSOFT_CLIENT_SECRET"), "http://localhost:8080/auth/microsoft/callback"),
+		microsoft.New(configs.GetEnv("MICROSOFT_CLIENT_ID"), configs.GetEnv("MICROSOFT_CLIENT_SECRET"), "http://localhost:8080/auth/microsoft/callback"),
 		// apple.New(configs.GetEnv("APPLE_CLIENT_ID"), configs.GetEnv("APPLE_CLIENT_SECRET"), "http://localhost:8080/auth/apple/callback"),
 	)
 
@@ -42,30 +48,43 @@ func authHandler(c *gin.Context) {
 func authCallback(c *gin.Context) {
 	user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
 	if err != nil {
-		c.Redirect(http.StatusTemporaryRedirect, "/")
+		log.Printf("Failed to complete user auth: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to complete user auth"})
 		return
 	}
 
 	// Store user information in MongoDB
-	usersCollection := database.GetCollection("users")
+	usersCollection := db.GetCollection("users")
 
-	filter := bson.M{"provider_id": user.UserID, "provider": user.Provider}
-	update := bson.M{
-		"$set": bson.M{
-			"name":        user.Name,
-			"email":       user.Email,
-			"provider":    user.Provider,
-			"provider_id": user.UserID,
-			"created_at":  time.Now(),
-		},
-	}
-	opts := options.Update().SetUpsert(true)
-
-	_, err = usersCollection.UpdateOne(context.Background(), filter, update, opts)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store user information"})
+	// Check if a user with the same email already exists
+	existingUser := models.User{}
+	err = usersCollection.FindOne(context.Background(), bson.M{"email": user.Email}).Decode(&existingUser)
+	if err != nil && err != mongo.ErrNoDocuments {
+		log.Printf("Failed to check existing user: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check existing user"})
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	if err == mongo.ErrNoDocuments {
+		// No existing user found, create a new one
+		newUser := models.User{
+			Name:       user.Name,
+			Email:      user.Email,
+			Provider:   user.Provider,
+			ProviderID: user.UserID,
+			CreatedAt:  time.Now(),
+		}
+
+		_, err = usersCollection.InsertOne(context.Background(), newUser)
+		if err != nil {
+			log.Printf("Failed to create new user: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create new user"})
+			return
+		}
+
+		c.JSON(http.StatusOK, newUser)
+	} else {
+		// Existing user found, return the user info without updating
+		c.JSON(http.StatusOK, existingUser)
+	}
 }

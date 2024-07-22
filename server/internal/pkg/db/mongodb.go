@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -15,7 +14,6 @@ import (
 var Client *mongo.Client
 
 func ConnectDB() error {
-	fmt.Print(configs.GetEnv("MONGO_URI"))
 	clientOptions := options.Client().ApplyURI(configs.GetEnv("MONGO_URI"))
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
