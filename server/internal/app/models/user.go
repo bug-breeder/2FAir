@@ -13,4 +13,5 @@ type User struct {
 	Provider   string             `bson:"provider"`
 	ProviderID string             `bson:"provider_id"`
 	CreatedAt  time.Time          `bson:"created_at"`
+	OTPs       []OTP              `bson:"otps"`
 }

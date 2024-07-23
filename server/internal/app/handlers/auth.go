@@ -18,6 +18,7 @@ import (
 	"github.com/markbates/goth/providers/google"
 	"github.com/markbates/goth/providers/microsoftonline"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -34,6 +35,13 @@ func SetupRoutes(router *gin.Engine) {
 	router.GET("/auth/:provider", authHandler)
 	router.GET("/auth/:provider/callback", authCallback)
 	router.POST("/auth/refresh", RefreshToken)
+
+	protected := router.Group("/")
+	protected.Use(auth.Authenticate())
+	protected.POST("/otps", AddOTP)
+	protected.PUT("/otps/:otpID/inactivate", InactivateOTP)
+	protected.PUT("/otps/:otpID", EditOTP)
+	protected.GET("/otps", ListOTPs)
 }
 
 func authHandler(c *gin.Context) {
@@ -79,21 +87,22 @@ func authCallback(c *gin.Context) {
 			CreatedAt:  time.Now(),
 		}
 
-		_, err = usersCollection.InsertOne(context.Background(), newUser)
+		result, err := usersCollection.InsertOne(context.Background(), newUser)
 		if err != nil {
 			log.Printf("Failed to create new user: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create new user"})
 			return
 		}
 
-		accessToken, err = auth.GenerateAccessToken(newUser.Email)
+		userID := result.InsertedID.(primitive.ObjectID).Hex()
+		accessToken, err = auth.GenerateAccessToken(userID, newUser.Email)
 		if err != nil {
 			log.Printf("Failed to generate access token: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate access token"})
 			return
 		}
 
-		refreshToken, err = auth.GenerateRefreshToken(newUser.Email)
+		refreshToken, err = auth.GenerateRefreshToken(userID, newUser.Email)
 		if err != nil {
 			log.Printf("Failed to generate refresh token: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
@@ -102,14 +111,15 @@ func authCallback(c *gin.Context) {
 
 	} else {
 		// Existing user found, return the user info without updating
-		accessToken, err = auth.GenerateAccessToken(existingUser.Email)
+		userID := existingUser.ID.Hex()
+		accessToken, err = auth.GenerateAccessToken(userID, existingUser.Email)
 		if err != nil {
 			log.Printf("Failed to generate access token: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate access token"})
 			return
 		}
 
-		refreshToken, err = auth.GenerateRefreshToken(existingUser.Email)
+		refreshToken, err = auth.GenerateRefreshToken(userID, existingUser.Email)
 		if err != nil {
 			log.Printf("Failed to generate refresh token: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
@@ -119,14 +129,6 @@ func authCallback(c *gin.Context) {
 
 	// Set tokens in cookies
 	http.SetCookie(c.Writer, &http.Cookie{
-		Name:     "access_token",
-		Value:    accessToken,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   true,
-	})
-
-	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
 		Path:     "/",
@@ -135,6 +137,7 @@ func authCallback(c *gin.Context) {
 	})
 
 	c.JSON(http.StatusOK, gin.H{
-		"user": user,
+		"user":         user,
+		"access_token": accessToken,
 	})
 }

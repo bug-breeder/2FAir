@@ -21,27 +21,19 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	accessToken, err := auth.GenerateAccessToken(claims.Email)
+	accessToken, err := auth.GenerateAccessToken(claims.UserID, claims.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate access token"})
 		return
 	}
 
-	newRefreshToken, err := auth.GenerateRefreshToken(claims.Email)
+	newRefreshToken, err := auth.GenerateRefreshToken(claims.UserID, claims.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
 		return
 	}
 
 	// Set tokens in cookies
-	http.SetCookie(c.Writer, &http.Cookie{
-		Name:     "access_token",
-		Value:    accessToken,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   true,
-	})
-
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    newRefreshToken,
@@ -51,7 +43,6 @@ func RefreshToken(c *gin.Context) {
 	})
 
 	c.JSON(http.StatusOK, gin.H{
-		"access_token":  accessToken,
-		"refresh_token": newRefreshToken,
+		"access_token": accessToken,
 	})
 }
