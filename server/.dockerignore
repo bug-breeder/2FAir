@@ -1,0 +1,11 @@
+# Build directory
+build
+
+# Local env files
+.env
+
+# Other files to ignore
+*.log
+*.md
+.git
+fly.toml

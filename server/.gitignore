@@ -20,3 +20,9 @@ go.work.sum
 
 # Environment variable
 .env
+
+# build directory
+build/
+
+# Fly deployment file
+fly.toml

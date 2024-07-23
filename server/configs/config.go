@@ -8,12 +8,12 @@ import (
 )
 
 func LoadEnv() {
-    err := godotenv.Load()
-    if err != nil {
-        log.Fatalf("Error loading .env file")
-    }
+	err := godotenv.Load()
+	if err != nil {
+		log.Printf("Could not load .env file: %v", err)
+	}
 }
 
 func GetEnv(key string) string {
-    return os.Getenv(key)
+	return os.Getenv(key)
 }
