@@ -71,13 +71,13 @@ definitions:
 host: localhost:8080
 info:
   contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
+    email: anhngw@gmail.com
+    name: Andy Nguyen
+    url: http://www.2fair.vip/support
   description: This is the API documentation for the 2FAir application.
   license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
+    name: GNU General Public License v3.0
+    url: https://www.gnu.org/licenses/gpl-3.0.en.html
   termsOfService: http://swagger.io/terms/
   title: 2FAir API
   version: "1.0"

@@ -67,3 +67,9 @@ build: ## Build the Go application
 deploy: ## Deploy the application to fly.io
 	@echo "Deploying to fly.io..."
 	fly deploy
+
+# Generate API documentation
+.PHONY: docs
+docs: ## Generate API documentation
+	@echo "Generating API documentation..."
+	swag init -g cmd/server/main.go

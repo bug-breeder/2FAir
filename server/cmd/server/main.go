@@ -10,12 +10,12 @@ import (
 // @description This is the API documentation for the 2FAir application.
 // @termsOfService http://swagger.io/terms/
 
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
+// @contact.name Andy Nguyen
+// @contact.url http://www.2fair.vip/support
+// @contact.email anhngw@gmail.com
 
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @license.name GNU General Public License v3.0
+// @license.url https://www.gnu.org/licenses/gpl-3.0.en.html
 
 // @host localhost:8080
 // @BasePath /
