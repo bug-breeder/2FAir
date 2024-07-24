@@ -62,3 +62,8 @@ build: ## Build the Go application
 	@echo "Building the application..."
 	go build -o build/main cmd/main.go
 
+# Deploy to fly.io
+.PHONY: deploy
+deploy: ## Deploy the application to fly.io
+	@echo "Deploying to fly.io..."
+	fly deploy

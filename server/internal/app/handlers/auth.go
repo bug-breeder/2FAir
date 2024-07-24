@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/bug-breeder/2fair/server/configs"
@@ -26,9 +27,11 @@ func SetupRoutes(router *gin.Engine) {
 	// Ensure SESSION_SECRET is set
 	gothic.Store = sessions.NewCookieStore([]byte(configs.GetEnv("SESSION_SECRET")))
 
+	redirectURI := os.Getenv("REDIRECT_URI")
+
 	goth.UseProviders(
-		google.New(configs.GetEnv("GOOGLE_CLIENT_ID"), configs.GetEnv("GOOGLE_CLIENT_SECRET"), "http://localhost:8080/auth/google/callback"),
-		microsoftonline.New(configs.GetEnv("MICROSOFT_CLIENT_ID"), configs.GetEnv("MICROSOFT_CLIENT_SECRET"), "http://localhost:8080/auth/microsoft/callback"),
+		google.New(configs.GetEnv("GOOGLE_CLIENT_ID"), configs.GetEnv("GOOGLE_CLIENT_SECRET"), redirectURI+"/auth/google/callback"),
+		microsoftonline.New(configs.GetEnv("MICROSOFT_CLIENT_ID"), configs.GetEnv("MICROSOFT_CLIENT_SECRET"), redirectURI+"/auth/microsoft/callback"),
 		// apple.New(configs.GetEnv("APPLE_CLIENT_ID"), configs.GetEnv("APPLE_CLIENT_SECRET"), "http://localhost:8080/auth/apple/callback"),
 	)
 
