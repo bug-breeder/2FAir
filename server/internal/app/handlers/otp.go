@@ -16,11 +16,22 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// AddOTP godoc
+// @Summary Add a new OTP
+// @Description Add a new OTP for the user
+// @Tags otps
+// @Accept json
+// @Produce json
+// @Param otp body models.OTP true "OTP"
+// @Success 200 {object} models.OTP
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /otps [post]
 func AddOTP(c *gin.Context) {
 	userID := c.MustGet("userID").(string)
 	var otp models.OTP
 	if err := c.ShouldBindJSON(&otp); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -36,15 +47,24 @@ func AddOTP(c *gin.Context) {
 
 	_, err := usersCollection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		// log the error
 		log.Printf("Failed to add OTP: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add OTP"})
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to add OTP"})
 		return
 	}
 
 	c.JSON(http.StatusOK, otp)
 }
 
+// InactivateOTP godoc
+// @Summary Inactivate an OTP
+// @Description Inactivate an OTP for the user
+// @Tags otps
+// @Accept json
+// @Produce json
+// @Param otpID path string true "OTP ID"
+// @Success 200 {object} dtos.MessageResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /otps/{otpID}/inactivate [put]
 func InactivateOTP(c *gin.Context) {
 	userID := c.MustGet("userID").(string)
 	otpID := c.Param("otpID")
@@ -58,19 +78,31 @@ func InactivateOTP(c *gin.Context) {
 
 	_, err := usersCollection.UpdateOne(context.Background(), userFilter, otpUpdate)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to inactivate OTP"})
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to inactivate OTP"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "OTP inactivated"})
+	c.JSON(http.StatusOK, dtos.MessageResponse{Message: "OTP inactivated"})
 }
 
+// EditOTP godoc
+// @Summary Edit an OTP
+// @Description Edit an existing OTP for the user
+// @Tags otps
+// @Accept json
+// @Produce json
+// @Param otpID path string true "OTP ID"
+// @Param otp body models.OTP true "OTP"
+// @Success 200 {object} dtos.MessageResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /otps/{otpID} [put]
 func EditOTP(c *gin.Context) {
 	userID := c.MustGet("userID").(string)
 	otpID := c.Param("otpID")
 	var updatedOTP models.OTP
 	if err := c.ShouldBindJSON(&updatedOTP); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -93,13 +125,24 @@ func EditOTP(c *gin.Context) {
 
 	_, err := usersCollection.UpdateOne(context.Background(), userFilter, otpUpdate)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to edit OTP"})
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to edit OTP"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "OTP updated"})
+	c.JSON(http.StatusOK, dtos.MessageResponse{Message: "OTP updated"})
 }
 
+// ListOTPs godoc
+// @Summary List OTPs
+// @Description List all OTPs for the user excluding the secret
+// @Tags otps
+// @Accept json
+// @Produce json
+// @Success 200 {array} dtos.ListOTPsResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 404 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /otps [get]
 func ListOTPs(c *gin.Context) {
 	userID := c.MustGet("userID").(string)
 
@@ -110,10 +153,10 @@ func ListOTPs(c *gin.Context) {
 	err := usersCollection.FindOne(context.Background(), bson.M{"_id": userObjectID}).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			c.JSON(http.StatusNotFound, dtos.ErrorResponse{Error: "User not found"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch OTPs"})
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to fetch OTPs"})
 		return
 	}
 	// Filter out inactive OTPs
@@ -142,6 +185,17 @@ func ListOTPs(c *gin.Context) {
 	c.JSON(http.StatusOK, otpsResponse)
 }
 
+// GenerateOTPCodes godoc
+// @Summary Generate OTP codes
+// @Description Generate current and next OTP codes for the user
+// @Tags otps
+// @Accept json
+// @Produce json
+// @Success 200 {array} dtos.GenerateOTPCodesResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 404 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /otps/codes [get]
 func GenerateOTPCodes(c *gin.Context) {
 	userID := c.MustGet("userID").(string)
 
@@ -152,10 +206,10 @@ func GenerateOTPCodes(c *gin.Context) {
 	err := usersCollection.FindOne(context.Background(), bson.M{"_id": userObjectID}).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			c.JSON(http.StatusNotFound, dtos.ErrorResponse{Error: "User not found"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch OTPs"})
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to fetch OTPs"})
 		return
 	}
 
@@ -179,7 +233,7 @@ func GenerateOTPCodes(c *gin.Context) {
 
 		currentCode, err := totp.GenerateCode(otp.Secret, time.Now())
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate current OTP code"})
+			c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to generate current OTP code"})
 			return
 		}
 
@@ -187,7 +241,7 @@ func GenerateOTPCodes(c *gin.Context) {
 		nextTime := time.Now().Add(time.Duration(otp.Period) * time.Second)
 		nextCode, err := totp.GenerateCode(otp.Secret, nextTime)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate next OTP code"})
+			c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to generate next OTP code"})
 			return
 		}
 

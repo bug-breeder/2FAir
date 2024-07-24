@@ -13,6 +13,7 @@ import (
 	"github.com/bug-breeder/2fair/server/internal/pkg/db"
 	"github.com/gorilla/sessions"
 
+	"github.com/bug-breeder/2fair/server/internal/app/dtos"
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
@@ -48,10 +49,20 @@ func SetupRoutes(router *gin.Engine) {
 	protected.GET("/otps/codes", GenerateOTPCodes)
 }
 
+// authHandler godoc
+// @Summary Start authentication process
+// @Description Start the authentication process with the specified provider
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param provider path string true "Provider"
+// @Success 200 {object} dtos.MessageResponse
+// @Failure 400 {object} dtos.ErrorResponse
+// @Router /auth/{provider} [get]
 func authHandler(c *gin.Context) {
 	provider := c.Param("provider")
 	if provider == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Provider is required"})
+		c.JSON(http.StatusBadRequest, dtos.ErrorResponse{Error: "Provider is required"})
 		return
 	}
 
@@ -59,11 +70,20 @@ func authHandler(c *gin.Context) {
 	gothic.BeginAuthHandler(c.Writer, c.Request)
 }
 
+// authCallback godoc
+// @Summary Authentication callback
+// @Description Handle the callback from the authentication provider
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} dtos.AuthResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /auth/{provider}/callback [get]
 func authCallback(c *gin.Context) {
 	user, err := gothic.CompleteUserAuth(c.Writer, c.Request)
 	if err != nil {
 		log.Printf("Failed to complete user auth: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to complete user auth"})
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to complete user auth"})
 		return
 	}
 
@@ -75,7 +95,7 @@ func authCallback(c *gin.Context) {
 	err = usersCollection.FindOne(context.Background(), bson.M{"email": user.Email}).Decode(&existingUser)
 	if err != nil && err != mongo.ErrNoDocuments {
 		log.Printf("Failed to check existing user: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check existing user"})
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to check existing user"})
 		return
 	}
 
@@ -95,7 +115,7 @@ func authCallback(c *gin.Context) {
 		result, err := usersCollection.InsertOne(context.Background(), newUser)
 		if err != nil {
 			log.Printf("Failed to create new user: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create new user"})
+			c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to create new user"})
 			return
 		}
 
@@ -103,14 +123,14 @@ func authCallback(c *gin.Context) {
 		accessToken, err = auth.GenerateAccessToken(userID, newUser.Email)
 		if err != nil {
 			log.Printf("Failed to generate access token: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate access token"})
+			c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to generate access token"})
 			return
 		}
 
 		refreshToken, err = auth.GenerateRefreshToken(userID, newUser.Email)
 		if err != nil {
 			log.Printf("Failed to generate refresh token: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
+			c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to generate refresh token"})
 			return
 		}
 
@@ -120,14 +140,14 @@ func authCallback(c *gin.Context) {
 		accessToken, err = auth.GenerateAccessToken(userID, existingUser.Email)
 		if err != nil {
 			log.Printf("Failed to generate access token: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate access token"})
+			c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to generate access token"})
 			return
 		}
 
 		refreshToken, err = auth.GenerateRefreshToken(userID, existingUser.Email)
 		if err != nil {
 			log.Printf("Failed to generate refresh token: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
+			c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to generate refresh token"})
 			return
 		}
 	}
@@ -141,8 +161,7 @@ func authCallback(c *gin.Context) {
 		Secure:   true,
 	})
 
-	c.JSON(http.StatusOK, gin.H{
-		// "user":         user,
-		"access_token": accessToken,
+	c.JSON(http.StatusOK, dtos.AuthResponse{
+		AccessToken: accessToken,
 	})
 }

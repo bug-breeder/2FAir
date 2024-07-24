@@ -1,0 +1,276 @@
+basePath: /
+definitions:
+  dtos.AuthResponse:
+    properties:
+      access_token:
+        type: string
+    type: object
+  dtos.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  dtos.GenerateOTPCodesResponse:
+    properties:
+      current_code:
+        type: string
+      current_expire_at:
+        type: string
+      id:
+        type: string
+      next_code:
+        type: string
+      next_expire_at:
+        type: string
+    type: object
+  dtos.ListOTPsResponse:
+    properties:
+      algorithm:
+        type: string
+      counter:
+        type: integer
+      digits:
+        type: integer
+      id:
+        type: string
+      label:
+        type: string
+      method:
+        type: string
+      period:
+        type: integer
+    type: object
+  dtos.MessageResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  models.OTP:
+    properties:
+      active:
+        type: boolean
+      algorithm:
+        type: string
+      counter:
+        type: integer
+      createdAt:
+        type: string
+      digits:
+        type: integer
+      id:
+        type: string
+      label:
+        type: string
+      method:
+        type: string
+      period:
+        type: integer
+      secret:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is the API documentation for the 2FAir application.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: 2FAir API
+  version: "1.0"
+paths:
+  /auth/{provider}:
+    get:
+      consumes:
+      - application/json
+      description: Start the authentication process with the specified provider
+      parameters:
+      - description: Provider
+        in: path
+        name: provider
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Start authentication process
+      tags:
+      - auth
+  /auth/{provider}/callback:
+    get:
+      consumes:
+      - application/json
+      description: Handle the callback from the authentication provider
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.AuthResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Authentication callback
+      tags:
+      - auth
+  /otps:
+    get:
+      consumes:
+      - application/json
+      description: List all OTPs for the user excluding the secret
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dtos.ListOTPsResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: List OTPs
+      tags:
+      - otps
+    post:
+      consumes:
+      - application/json
+      description: Add a new OTP for the user
+      parameters:
+      - description: OTP
+        in: body
+        name: otp
+        required: true
+        schema:
+          $ref: '#/definitions/models.OTP'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.OTP'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Add a new OTP
+      tags:
+      - otps
+  /otps/{otpID}:
+    put:
+      consumes:
+      - application/json
+      description: Edit an existing OTP for the user
+      parameters:
+      - description: OTP ID
+        in: path
+        name: otpID
+        required: true
+        type: string
+      - description: OTP
+        in: body
+        name: otp
+        required: true
+        schema:
+          $ref: '#/definitions/models.OTP'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Edit an OTP
+      tags:
+      - otps
+  /otps/{otpID}/inactivate:
+    put:
+      consumes:
+      - application/json
+      description: Inactivate an OTP for the user
+      parameters:
+      - description: OTP ID
+        in: path
+        name: otpID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.MessageResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Inactivate an OTP
+      tags:
+      - otps
+  /otps/codes:
+    get:
+      consumes:
+      - application/json
+      description: Generate current and next OTP codes for the user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dtos.GenerateOTPCodesResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorResponse'
+      summary: Generate OTP codes
+      tags:
+      - otps
+swagger: "2.0"

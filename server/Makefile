@@ -14,7 +14,7 @@ help: ## Show this help message
 .PHONY: run
 run: ## Run the server locally
 	@echo "Running server locally..."
-	go run cmd/main.go
+	go run cmd/server/main.go
 
 # Build Docker image
 .PHONY: docker-build
@@ -60,7 +60,7 @@ clean: ## Clean the build environment
 .PHONY: build
 build: ## Build the Go application
 	@echo "Building the application..."
-	go build -o build/main cmd/main.go
+	go build -o build/main cmd/server/main.go
 
 # Deploy to fly.io
 .PHONY: deploy
