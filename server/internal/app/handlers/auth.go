@@ -45,6 +45,7 @@ func SetupRoutes(router *gin.Engine) {
 	protected.PUT("/otps/:otpID/inactivate", InactivateOTP)
 	protected.PUT("/otps/:otpID", EditOTP)
 	protected.GET("/otps", ListOTPs)
+	protected.GET("/otps/codes", GenerateOTPCodes)
 }
 
 func authHandler(c *gin.Context) {
@@ -88,6 +89,7 @@ func authCallback(c *gin.Context) {
 			Provider:   user.Provider,
 			ProviderID: user.UserID,
 			CreatedAt:  time.Now(),
+			OTPs:       []models.OTP{},
 		}
 
 		result, err := usersCollection.InsertOne(context.Background(), newUser)
