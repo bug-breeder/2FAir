@@ -140,7 +140,7 @@ func authCallback(c *gin.Context) {
 	})
 
 	c.JSON(http.StatusOK, gin.H{
-		"user":         user,
+		// "user":         user,
 		"access_token": accessToken,
 	})
 }
