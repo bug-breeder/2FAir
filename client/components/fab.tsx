@@ -12,10 +12,22 @@ const FAB = () => {
   const [showQRScanner, setShowQRScanner] = useState(false);
 
   const toggleExpand = () => setIsExpanded(!isExpanded);
+  const closeExpand = () => setIsExpanded(false);
 
   return (
     <>
-      <div className="fixed bottom-5 sm:bottom-10 right-5 sm:right-10 flex flex-col items-end space-y-4">
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.5 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-10"
+            onClick={closeExpand}
+          />
+        )}
+      </AnimatePresence>
+      <div className="fixed bottom-5 sm:bottom-10 right-5 sm:right-10 flex flex-col items-end space-y-4 z-20">
         <AnimatePresence>
           {isExpanded && (
             <motion.div
@@ -29,14 +41,17 @@ const FAB = () => {
                 variant="solid"
                 radius="sm"
               >
-                Scan QR Code
+                QR Code
               </Chip>
               <Button
                 isIconOnly
                 size="lg"
                 variant="shadow"
                 className="rounded-full w-14 h-14"
-                onPress={() => setShowQRScanner(true)}
+                onPress={() => {
+                  setShowQRScanner(true);
+                  closeExpand();
+                }}
               >
                 <FaQrcode />
               </Button>
@@ -61,7 +76,10 @@ const FAB = () => {
                 size="lg"
                 className="rounded-full w-14 h-14"
                 variant="shadow"
-                onPress={() => setShowModal(true)}
+                onPress={() => {
+                  setShowModal(true);
+                  closeExpand();
+                }}
               >
                 <FaEdit />
               </Button>
