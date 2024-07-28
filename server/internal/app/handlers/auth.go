@@ -39,6 +39,7 @@ func SetupRoutes(router *gin.Engine) {
 	router.GET("/auth/:provider", authHandler)
 	router.GET("/auth/:provider/callback", authCallback)
 	router.POST("/auth/refresh", RefreshToken)
+	router.DELETE("/auth/refresh", Logout)
 
 	protected := router.Group("/")
 	protected.Use(auth.Authenticate())
@@ -47,6 +48,7 @@ func SetupRoutes(router *gin.Engine) {
 	protected.PUT("/otps/:otpID", EditOTP)
 	protected.GET("/otps", ListOTPs)
 	protected.GET("/otps/codes", GenerateOTPCodes)
+	protected.GET("/login-history", GetLoginHistory)
 }
 
 // authHandler godoc
@@ -76,7 +78,7 @@ func authHandler(c *gin.Context) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Success 200 {object} dtos.AuthResponse
+// @Success 200 {object} dtos.MessageResponse
 // @Failure 500 {object} dtos.ErrorResponse
 // @Router /auth/{provider}/callback [get]
 func authCallback(c *gin.Context) {
@@ -99,17 +101,21 @@ func authCallback(c *gin.Context) {
 		return
 	}
 
-	var accessToken, refreshToken string
+	var (
+		accessToken, refreshToken string
+		userID                    primitive.ObjectID
+	)
 
 	if err == mongo.ErrNoDocuments {
 		// No existing user found, create a new one
 		newUser := models.User{
-			Name:       user.Name,
-			Email:      user.Email,
-			Provider:   user.Provider,
-			ProviderID: user.UserID,
-			CreatedAt:  time.Now(),
-			OTPs:       []models.OTP{},
+			Name:         user.Name,
+			Email:        user.Email,
+			Provider:     user.Provider,
+			ProviderID:   user.UserID,
+			CreatedAt:    time.Now(),
+			OTPs:         []models.OTP{},
+			LoginHistory: []models.LoginEvent{},
 		}
 
 		result, err := usersCollection.InsertOne(context.Background(), newUser)
@@ -119,15 +125,15 @@ func authCallback(c *gin.Context) {
 			return
 		}
 
-		userID := result.InsertedID.(primitive.ObjectID).Hex()
-		accessToken, err = auth.GenerateAccessToken(userID, newUser.Email)
+		userID = result.InsertedID.(primitive.ObjectID)
+		accessToken, err = auth.GenerateAccessToken(userID.Hex(), newUser.Email)
 		if err != nil {
 			log.Printf("Failed to generate access token: %v", err)
 			c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to generate access token"})
 			return
 		}
 
-		refreshToken, err = auth.GenerateRefreshToken(userID, newUser.Email)
+		refreshToken, err = auth.GenerateRefreshToken(userID.Hex(), newUser.Email)
 		if err != nil {
 			log.Printf("Failed to generate refresh token: %v", err)
 			c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to generate refresh token"})
@@ -136,15 +142,15 @@ func authCallback(c *gin.Context) {
 
 	} else {
 		// Existing user found, return the user info without updating
-		userID := existingUser.ID.Hex()
-		accessToken, err = auth.GenerateAccessToken(userID, existingUser.Email)
+		userID = existingUser.ID
+		accessToken, err = auth.GenerateAccessToken(userID.Hex(), existingUser.Email)
 		if err != nil {
 			log.Printf("Failed to generate access token: %v", err)
 			c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to generate access token"})
 			return
 		}
 
-		refreshToken, err = auth.GenerateRefreshToken(userID, existingUser.Email)
+		refreshToken, err = auth.GenerateRefreshToken(userID.Hex(), existingUser.Email)
 		if err != nil {
 			log.Printf("Failed to generate refresh token: %v", err)
 			c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to generate refresh token"})
@@ -152,16 +158,215 @@ func authCallback(c *gin.Context) {
 		}
 	}
 
+	// Log the login event
+	loginEvent := models.LoginEvent{
+		Timestamp:    time.Now(),
+		IPAddress:    c.ClientIP(),
+		UserAgent:    c.Request.UserAgent(),
+		RefreshToken: refreshToken,
+	}
+
+	filter := bson.M{"_id": userID}
+	update := bson.M{"$push": bson.M{"login_history": loginEvent}}
+	updateResult, err := usersCollection.UpdateOne(
+		context.Background(),
+		filter,
+		update,
+	)
+	if err != nil {
+		log.Printf("Failed to log login event: %v", err)
+	} else {
+		log.Printf("Login event logged: %+v, result: %+v", loginEvent, updateResult)
+		log.Printf("User event: %+v", existingUser.LoginHistory)
+	}
+
 	// Set tokens in cookies
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
+		Path:     "/auth/refresh",
+		HttpOnly: true,
+		Secure:   true,
+	})
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   true,
 	})
 
-	c.JSON(http.StatusOK, dtos.AuthResponse{
-		AccessToken: accessToken,
+	c.JSON(http.StatusOK, dtos.MessageResponse{Message: "Authentication successful"})
+}
+
+// RefreshToken godoc
+// @Summary Refresh access token
+// @Description Refresh the access token using the refresh token cookie
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} dtos.MessageResponse
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /auth/refresh [post]
+func RefreshToken(c *gin.Context) {
+	refreshTokenCookie, err := c.Request.Cookie("refresh_token")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{Error: "Refresh token is missing"})
+		return
+	}
+
+	refreshToken := refreshTokenCookie.Value
+	claims, err := auth.ValidateToken(refreshToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{Error: "Invalid refresh token"})
+		return
+	}
+
+	usersCollection := db.GetCollection("users")
+	userID := claims.UserID
+	userObjectID, _ := primitive.ObjectIDFromHex(userID)
+
+	// Check if the refresh token exists in the login history
+	var user models.User
+	err = usersCollection.FindOne(context.Background(), bson.M{"_id": userObjectID, "login_history.refresh_token": refreshToken}).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{Error: "Invalid refresh token"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to validate refresh token"})
+		return
+	}
+
+	accessToken, err := auth.GenerateAccessToken(userID, claims.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to generate access token"})
+		return
+	}
+
+	newRefreshToken, err := auth.GenerateRefreshToken(userID, claims.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to generate refresh token"})
+		return
+	}
+
+	// Update the login event with the new refresh token
+	_, err = usersCollection.UpdateOne(
+		context.Background(),
+		bson.M{"_id": userObjectID, "login_history.refresh_token": refreshToken},
+		bson.M{"$set": bson.M{"login_history.$.refresh_token": newRefreshToken}},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to update refresh token"})
+		return
+	}
+
+	// Set tokens in cookies
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    newRefreshToken,
+		Path:     "/auth/refresh",
+		HttpOnly: true,
+		Secure:   true,
 	})
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+	})
+
+	c.JSON(http.StatusOK, dtos.MessageResponse{Message: "Access token refreshed"})
+}
+
+// Logout godoc
+// @Summary Logout
+// @Description Clear the authentication cookies
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} dtos.MessageResponse
+// @Router /auth/logout [post]
+func Logout(c *gin.Context) {
+	refreshTokenCookie, err := c.Request.Cookie("refresh_token")
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{Error: "Refresh token is missing"})
+		return
+	}
+
+	refreshToken := refreshTokenCookie.Value
+	claims, err := auth.ValidateToken(refreshToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, dtos.ErrorResponse{Error: "Invalid refresh token"})
+		return
+	}
+
+	usersCollection := db.GetCollection("users")
+	userID := claims.UserID
+	userObjectID, _ := primitive.ObjectIDFromHex(userID)
+
+	// Remove the login event with the refresh token
+	_, err = usersCollection.UpdateOne(
+		context.Background(),
+		bson.M{"_id": userObjectID},
+		bson.M{"$pull": bson.M{"login_history": bson.M{"refresh_token": refreshToken}}},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to log out"})
+		return
+	}
+
+	// Clear the cookies
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Path:     "/auth/refresh",
+		HttpOnly: true,
+		Secure:   true,
+		MaxAge:   -1,
+	})
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		MaxAge:   -1,
+	})
+
+	c.JSON(http.StatusOK, dtos.MessageResponse{Message: "Successfully logged out"})
+}
+
+// GetLoginHistory godoc
+// @Summary Get login history
+// @Description Get the login history for the authenticated user
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.LoginEvent
+// @Failure 401 {object} dtos.ErrorResponse
+// @Failure 500 {object} dtos.ErrorResponse
+// @Router /login-history [get]
+func GetLoginHistory(c *gin.Context) {
+	userID := c.MustGet("userID").(string)
+	usersCollection := db.GetCollection("users")
+
+	userObjectID, _ := primitive.ObjectIDFromHex(userID)
+	var user models.User
+	err := usersCollection.FindOne(context.Background(), bson.M{"_id": userObjectID}).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, dtos.ErrorResponse{Error: "User not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, dtos.ErrorResponse{Error: "Failed to fetch login history"})
+		return
+	}
+
+	c.JSON(http.StatusOK, user.LoginHistory)
 }
