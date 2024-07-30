@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"github.com/bug-breeder/2fair/server/internal/domain/auth"
 	"github.com/bug-breeder/2fair/server/internal/interface/controller"
+	"github.com/bug-breeder/2fair/server/internal/interface/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,7 +13,7 @@ func SetupRoutes(router *gin.Engine, authController *controller.AuthController, 
 	router.DELETE("/auth/refresh", authController.Logout)
 
 	protected := router.Group("/")
-	protected.Use(auth.Authenticate())
+	protected.Use(middleware.Authenticate())
 	protected.POST("/otps", otpController.AddOTP)
 	protected.PUT("/otps/:otpID/inactivate", otpController.InactivateOTP)
 	protected.PUT("/otps/:otpID", otpController.EditOTP)
