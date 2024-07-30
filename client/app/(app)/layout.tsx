@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/navbar";
-import { Link } from "@nextui-org/link";
-import { FAir, HeartFilledIcon } from "@/components/icons";
-import { GiBuffaloHead } from "react-icons/gi";
+// import { Link } from "@nextui-org/link";
+// import { FAir, HeartFilledIcon } from "@/components/icons";
+// import { GiBuffaloHead } from "react-icons/gi";
 
 export default function GeneralLayout({
   children,
@@ -11,7 +11,7 @@ export default function GeneralLayout({
   return (
     <>
       <Navbar />
-      <main className="container mx-auto max-w-7xl sm:pt-6 px-2 sm:px-6 flex-grow">
+      <main className="container mx-auto max-w-7xl pt-2 pb-2 sm:pt-6 px-2 sm:px-6 flex-grow">
         {children}
       </main>
       {/* <footer className="w-full flex items-center justify-center py-3">
