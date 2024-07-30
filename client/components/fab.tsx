@@ -133,7 +133,7 @@ const FAB = () => {
         isOpen={showQRScanner}
         onClose={() => setShowQRScanner(false)}
       />
-      <QrScannerModal
+      <QrUploaderModal
         isOpen={showQRSUploader}
         onClose={() => setShowQRUploader(false)}
       />
