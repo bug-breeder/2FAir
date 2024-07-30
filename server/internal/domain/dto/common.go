@@ -1,4 +1,4 @@
-package dtos
+package dto
 
 // AuthResponse represents the structure of the authentication response
 type AuthResponse struct {

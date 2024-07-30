@@ -3,21 +3,16 @@ package auth
 import (
 	"time"
 
+	"github.com/bug-breeder/2fair/server/internal/domain/models"
 	"github.com/dgrijalva/jwt-go"
 )
 
 var jwtSecret = []byte("your_secret_key")
 
-type Claims struct {
-	UserID string `json:"user_id"`
-	Email  string `json:"email"`
-	jwt.StandardClaims
-}
-
 // GenerateAccessToken generates a JWT access token
 func GenerateAccessToken(userID, email string) (string, error) {
 	expirationTime := time.Now().Add(15 * time.Minute)
-	claims := &Claims{
+	claims := &models.Claims{
 		UserID: userID,
 		Email:  email,
 		StandardClaims: jwt.StandardClaims{
@@ -31,7 +26,7 @@ func GenerateAccessToken(userID, email string) (string, error) {
 // GenerateRefreshToken generates a JWT refresh token
 func GenerateRefreshToken(userID, email string) (string, error) {
 	expirationTime := time.Now().Add(7 * 24 * time.Hour)
-	claims := &Claims{
+	claims := &models.Claims{
 		UserID: userID,
 		Email:  email,
 		StandardClaims: jwt.StandardClaims{
@@ -43,8 +38,8 @@ func GenerateRefreshToken(userID, email string) (string, error) {
 }
 
 // ValidateToken validates a JWT token and returns the claims
-func ValidateToken(tokenStr string) (*Claims, error) {
-	claims := &Claims{}
+func ValidateToken(tokenStr string) (*models.Claims, error) {
+	claims := &models.Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtSecret, nil
 	})

@@ -2,7 +2,8 @@ package main
 
 import (
 	"github.com/bug-breeder/2fair/server/configs"
-	"github.com/bug-breeder/2fair/server/internal/server"
+
+	_ "github.com/bug-breeder/2fair/server/docs" // This is important for the Swagger docs to be generated
 )
 
 // @title 2FAir API
@@ -21,5 +22,5 @@ import (
 // @BasePath /
 func main() {
 	configs.LoadEnv()
-	server.Run()
+	Run()
 }
