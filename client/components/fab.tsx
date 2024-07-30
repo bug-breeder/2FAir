@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LuFileImage, LuCamera } from "react-icons/lu";
 import AddOtpModal from "@/components/add-otp-modal";
 import QrScannerModal from "@/components/qr-scanner";
+import QrUploaderModal from "@/components/qr-uploader";
 
 const FAB = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -79,7 +80,7 @@ const FAB = () => {
                 variant="shadow"
                 className="rounded-full w-14 h-14"
                 onPress={() => {
-                  setShowQRScanner(true);
+                  setShowQRUploader(true);
                   closeExpand();
                 }}
               >
@@ -131,6 +132,10 @@ const FAB = () => {
       <QrScannerModal
         isOpen={showQRScanner}
         onClose={() => setShowQRScanner(false)}
+      />
+      <QrScannerModal
+        isOpen={showQRSUploader}
+        onClose={() => setShowQRUploader(false)}
       />
       <AddOtpModal isOpen={showModal} onClose={() => setShowModal(false)} />
     </>
