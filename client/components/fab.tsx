@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button, Chip } from "@nextui-org/react";
 import { FaPlus, FaQrcode, FaEdit } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
+import { LuFileImage, LuCamera } from "react-icons/lu";
 import AddOtpModal from "@/components/add-otp-modal";
 import QrScannerModal from "@/components/qr-scanner";
 
@@ -10,6 +11,7 @@ const FAB = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showQRSUploader, setShowQRUploader] = useState(false);
 
   const toggleExpand = () => setIsExpanded(!isExpanded);
   const closeExpand = () => setIsExpanded(false);
@@ -41,7 +43,7 @@ const FAB = () => {
                 variant="solid"
                 radius="sm"
               >
-                QR Code
+                Scan QR Code
               </Chip>
               <Button
                 isIconOnly
@@ -53,7 +55,35 @@ const FAB = () => {
                   closeExpand();
                 }}
               >
-                <FaQrcode />
+                <LuCamera />
+              </Button>
+            </motion.div>
+          )}
+          {isExpanded && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="flex items-center space-x-2"
+            >
+              <Chip
+                className="text-sm text-default-500"
+                variant="solid"
+                radius="sm"
+              >
+                Read QR Image
+              </Chip>
+              <Button
+                isIconOnly
+                size="lg"
+                variant="shadow"
+                className="rounded-full w-14 h-14"
+                onPress={() => {
+                  setShowQRScanner(true);
+                  closeExpand();
+                }}
+              >
+                <LuFileImage />
               </Button>
             </motion.div>
           )}

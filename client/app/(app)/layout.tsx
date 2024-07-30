@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/navbar";
 import { Link } from "@nextui-org/link";
-import { FAir, GithubIcon, HeartFilledIcon } from "@/components/icons";
+import { FAir, HeartFilledIcon } from "@/components/icons";
+import { GiBuffaloHead } from "react-icons/gi";
 
 export default function GeneralLayout({
   children,
@@ -13,20 +14,19 @@ export default function GeneralLayout({
       <main className="container mx-auto max-w-7xl sm:pt-6 px-2 sm:px-6 flex-grow">
         {children}
       </main>
-      <footer className="w-full flex items-center justify-center py-3">
+      {/* <footer className="w-full flex items-center justify-center py-3">
         <Link
           isExternal
           className="flex items-center gap-1 text-current"
           href="https://github.com/anh-ngn/2FAir"
           title="anh-ngn"
         >
-          {/* <FAir size={30} /> */}
           <span className="text-default-600">Made with </span>
           <HeartFilledIcon className="text-danger" />
-          <span className="text-default-600">Join us on </span>
-          <GithubIcon />
+          <span className="text-default-600"> by Yak3 </span>
+          <GiBuffaloHead />
         </Link>
-      </footer>
+      </footer> */}
     </>
   );
 }

@@ -18,11 +18,6 @@ import NextLink from "next/link";
 import clsx from "clsx";
 import {
   Avatar,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   useDisclosure,
   Dropdown,
   DropdownTrigger,
@@ -33,6 +28,7 @@ import {
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { FAir, HeartFilledIcon, SearchIcon } from "@/components/icons";
+import { RiVipCrown2Fill } from "react-icons/ri";
 
 export const Navbar = () => {
   const searchRef = useRef<HTMLInputElement>(null);
@@ -109,7 +105,7 @@ export const Navbar = () => {
           <ThemeSwitch />
           <Link
             isExternal
-            aria-label="Sponsor"
+            aria-label="Upgrade"
             className="hidden md:flex lg:hidden"
             href={siteConfig.links.sponsor}
           >
@@ -122,10 +118,10 @@ export const Navbar = () => {
             as={Link}
             className="text-sm font-normal text-default-600 bg-default-100"
             href={siteConfig.links.sponsor}
-            startContent={<HeartFilledIcon className="text-danger" />}
+            startContent={<RiVipCrown2Fill />}
             variant="flat"
           >
-            Sponsor
+            Upgrade
           </Button>
         </NavbarItem>
         <NavbarItem className="hidden md:flex">{searchInput}</NavbarItem>
