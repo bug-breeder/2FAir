@@ -10,11 +10,11 @@ import (
 var jwtSecret = []byte("your_secret_key")
 
 // GenerateAccessToken generates a JWT access token
-func GenerateAccessToken(userID, email string) (string, error) {
+func GenerateAccessToken(userID string) (string, error) {
 	expirationTime := time.Now().Add(15 * time.Minute)
 	claims := &models.Claims{
-		UserID: userID,
-		Email:  email,
+		UserID:    userID,
+		SessionID: "",
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},
@@ -24,11 +24,11 @@ func GenerateAccessToken(userID, email string) (string, error) {
 }
 
 // GenerateRefreshToken generates a JWT refresh token
-func GenerateRefreshToken(userID, email string) (string, error) {
+func GenerateRefreshToken(userID, sessionID string) (string, error) {
 	expirationTime := time.Now().Add(7 * 24 * time.Hour)
 	claims := &models.Claims{
-		UserID: userID,
-		Email:  email,
+		UserID:    userID,
+		SessionID: sessionID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},

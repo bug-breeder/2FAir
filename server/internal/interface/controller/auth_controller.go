@@ -43,7 +43,7 @@ func (ctrl *AuthController) AuthCallback(c *gin.Context) {
 		Provider: user.Provider,
 	}
 
-	accessToken, refreshToken, err := ctrl.authUseCase.CompleteUserAuth(c, newUser)
+	accessToken, refreshToken, err := ctrl.authUseCase.CompleteUserAuth(c, newUser, c.ClientIP(), c.Request.UserAgent())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to complete user auth"})
 		return
@@ -92,19 +92,11 @@ func (ctrl *AuthController) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	accessToken, newRefreshToken, err := ctrl.authUseCase.RefreshTokens(c, claims)
+	accessToken, err := ctrl.authUseCase.RefreshTokens(c, claims)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to refresh tokens"})
 		return
 	}
-
-	http.SetCookie(c.Writer, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    newRefreshToken,
-		Path:     "/auth/refresh",
-		HttpOnly: true,
-		Secure:   true,
-	})
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "access_token",
@@ -126,25 +118,26 @@ func (ctrl *AuthController) RefreshToken(c *gin.Context) {
 // @Success 200 {object} dto.MessageResponse
 // @Router /auth/logout [post]
 func (ctrl *AuthController) Logout(c *gin.Context) {
-	refreshTokenCookie, err := c.Request.Cookie("refresh_token")
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Refresh token is missing"})
-		return
-	}
+	go func() {
+		refreshTokenCookie, err := c.Request.Cookie("refresh_token")
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Refresh token is missing"})
+			return
+		}
 
-	refreshToken := refreshTokenCookie.Value
-	claims, err := ctrl.authUseCase.ValidateToken(refreshToken)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Invalid refresh token"})
-		return
-	}
-	claims.Token = refreshToken
+		refreshToken := refreshTokenCookie.Value
+		claims, err := ctrl.authUseCase.ValidateToken(refreshToken)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: "Invalid refresh token"})
+			return
+		}
 
-	err = ctrl.authUseCase.Logout(c, claims)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to log out"})
-		return
-	}
+		err = ctrl.authUseCase.Logout(c, claims)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to log out"})
+			return
+		}
+	}()
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "refresh_token",

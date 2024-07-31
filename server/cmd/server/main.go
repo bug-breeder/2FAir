@@ -22,5 +22,5 @@ import (
 // @BasePath /
 func main() {
 	configs.LoadEnv()
-	Run()
+	runServer()
 }

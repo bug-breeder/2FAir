@@ -15,7 +15,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func Run() {
+func runServer() {
 	// Setup router
 	router := gin.Default()
 	// CORS configuration

@@ -68,10 +68,21 @@ func (repo *MongoUserRepository) UpdateLoginHistory(ctx context.Context, userID 
 	return err
 }
 
-func (repo *MongoUserRepository) RemoveLoginEvent(ctx context.Context, userID primitive.ObjectID, token string) error {
+func (repo *MongoUserRepository) RemoveLoginEvent(ctx context.Context, userID primitive.ObjectID, sessionID primitive.ObjectID) error {
 	collection := repo.client.Database("myapp").Collection("users")
-	_, err := collection.UpdateOne(ctx, bson.M{"_id": userID}, bson.M{"$pull": bson.M{"login_history": bson.M{"refresh_token": token}}})
+	_, err := collection.UpdateOne(ctx, bson.M{"_id": userID}, bson.M{"$pull": bson.M{"login_history": bson.M{"_id": sessionID}}})
 	return err
+}
+
+// FindLoginEventByID check if the login event exists in the user's login history
+func (repo *MongoUserRepository) FindLoginEventByID(ctx context.Context, userID primitive.ObjectID, sessionID primitive.ObjectID) error {
+	collection := repo.client.Database("myapp").Collection("users")
+	var user models.User
+	err := collection.FindOne(ctx, bson.M{"_id": userID, "login_history._id": sessionID}).Decode(&user)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func GetMongoClient() *mongo.Client {

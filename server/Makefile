@@ -14,7 +14,7 @@ help: ## Show this help message
 .PHONY: run
 run: ## Run the server locally
 	@echo "Running server locally..."
-	go run cmd/server/main.go
+	go run cmd/server/*.go
 
 # Build Docker image
 .PHONY: docker-build
@@ -60,7 +60,7 @@ clean: ## Clean the build environment
 .PHONY: build
 build: ## Build the Go application
 	@echo "Building the application..."
-	go build -o build/main cmd/server/main.go
+	go build -o build/main cmd/server/*.go
 
 # Deploy to fly.io
 .PHONY: deploy
@@ -73,3 +73,9 @@ deploy: ## Deploy the application to fly.io
 docs: ## Generate API documentation
 	@echo "Generating API documentation..."
 	swag init -g cmd/server/main.go
+
+# Run database migrations
+.PHONY: migrate
+migrate: ## Run database migrations
+	@echo "Running database migrations..."
+	go run cmd/db/migrate.go

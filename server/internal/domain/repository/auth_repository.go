@@ -12,5 +12,6 @@ type UserRepository interface {
 	FindByEmail(ctx context.Context, email string) (*models.User, error)
 	CreateUser(ctx context.Context, user *models.User) (primitive.ObjectID, error)
 	UpdateLoginHistory(ctx context.Context, userID primitive.ObjectID, loginEvent models.LoginEvent) error
-	RemoveLoginEvent(ctx context.Context, userID primitive.ObjectID, token string) error
+	RemoveLoginEvent(ctx context.Context, userID primitive.ObjectID, sessionID primitive.ObjectID) error
+	FindLoginEventByID(ctx context.Context, userID primitive.ObjectID, sessionID primitive.ObjectID) error
 }

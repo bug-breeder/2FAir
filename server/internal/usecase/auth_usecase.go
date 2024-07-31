@@ -19,7 +19,7 @@ func NewAuthUseCase(userRepo repository.UserRepository) *AuthUseCase {
 	return &AuthUseCase{userRepo: userRepo}
 }
 
-func (uc *AuthUseCase) CompleteUserAuth(ctx context.Context, user *models.User) (string, string, error) {
+func (uc *AuthUseCase) CompleteUserAuth(ctx context.Context, user *models.User, ipAddress, userAgent string) (string, string, error) {
 	existingUser, err := uc.userRepo.FindByEmail(ctx, user.Email)
 	if err != nil {
 		log.Printf("Failed to check existing user: %v", err)
@@ -42,46 +42,34 @@ func (uc *AuthUseCase) CompleteUserAuth(ctx context.Context, user *models.User) 
 			log.Printf("Failed to create new user: %v", err)
 			return "", "", err
 		}
-
-		accessToken, err = auth.GenerateAccessToken(userID.Hex(), user.Email)
-		if err != nil {
-			log.Printf("Failed to generate access token: %v", err)
-			return "", "", err
-		}
-
-		refreshToken, err = auth.GenerateRefreshToken(userID.Hex(), user.Email)
-		if err != nil {
-			log.Printf("Failed to generate refresh token: %v", err)
-			return "", "", err
-		}
-
 	} else {
 		// Existing user found, return the user info without updating
 		userID = existingUser.ID
-		accessToken, err = auth.GenerateAccessToken(userID.Hex(), existingUser.Email)
-		if err != nil {
-			log.Printf("Failed to generate access token: %v", err)
-			return "", "", err
-		}
-
-		refreshToken, err = auth.GenerateRefreshToken(userID.Hex(), existingUser.Email)
-		if err != nil {
-			log.Printf("Failed to generate refresh token: %v", err)
-			return "", "", err
-		}
 	}
 
 	// Log the login event
 	loginEvent := models.LoginEvent{
-		Timestamp:    time.Now(),
-		IPAddress:    "", // Set IP address
-		UserAgent:    "", // Set User agent
-		RefreshToken: refreshToken,
+		ID:        primitive.NewObjectID(),
+		Timestamp: time.Now(),
+		IPAddress: ipAddress, // Set IP address
+		UserAgent: userAgent, // Set User agent
 	}
 
 	err = uc.userRepo.UpdateLoginHistory(ctx, userID, loginEvent)
 	if err != nil {
 		log.Printf("Failed to log login event: %v", err)
+		return "", "", err
+	}
+
+	accessToken, err = auth.GenerateAccessToken(userID.Hex())
+	if err != nil {
+		log.Printf("Failed to generate access token: %v", err)
+		return "", "", err
+	}
+
+	refreshToken, err = auth.GenerateRefreshToken(userID.Hex(), loginEvent.ID.Hex())
+	if err != nil {
+		log.Printf("Failed to generate refresh token: %v", err)
 		return "", "", err
 	}
 
@@ -92,43 +80,32 @@ func (uc *AuthUseCase) ValidateToken(token string) (*models.Claims, error) {
 	return auth.ValidateToken(token)
 }
 
-func (uc *AuthUseCase) RefreshTokens(ctx context.Context, claims *models.Claims) (string, string, error) {
+func (uc *AuthUseCase) RefreshTokens(ctx context.Context, claims *models.Claims) (string, error) {
 	userID := claims.UserID
+	sessionID := claims.SessionID
 	userObjectID, _ := primitive.ObjectIDFromHex(userID)
+	sessionObjectID, _ := primitive.ObjectIDFromHex(sessionID)
 
-	_, err := uc.userRepo.FindByEmail(ctx, claims.Email)
+	// validate sessionID
+	err := uc.userRepo.FindLoginEventByID(ctx, userObjectID, sessionObjectID)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
-	accessToken, err := auth.GenerateAccessToken(userID, claims.Email)
+	accessToken, err := auth.GenerateAccessToken(userID)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
-	newRefreshToken, err := auth.GenerateRefreshToken(userID, claims.Email)
-	if err != nil {
-		return "", "", err
-	}
-
-	err = uc.userRepo.UpdateLoginHistory(ctx, userObjectID, models.LoginEvent{
-		Timestamp:    time.Now(),
-		IPAddress:    "", // Set IP address
-		UserAgent:    "", // Set User agent
-		RefreshToken: newRefreshToken,
-	})
-	if err != nil {
-		return "", "", err
-	}
-
-	return accessToken, newRefreshToken, nil
+	return accessToken, nil
 }
 
 func (uc *AuthUseCase) Logout(ctx context.Context, claims *models.Claims) error {
 	userID := claims.UserID
 	userObjectID, _ := primitive.ObjectIDFromHex(userID)
 
-	err := uc.userRepo.RemoveLoginEvent(ctx, userObjectID, claims.Token)
+	sessionObjectID, _ := primitive.ObjectIDFromHex(claims.SessionID)
+	err := uc.userRepo.RemoveLoginEvent(ctx, userObjectID, sessionObjectID)
 	if err != nil {
 		return err
 	}
