@@ -72,7 +72,7 @@ deploy: ## Deploy the application to fly.io
 .PHONY: docs
 docs: ## Generate API documentation
 	@echo "Generating API documentation..."
-	swag init -g cmd/server/main.go
+	swag init -g cmd/server/*.go
 
 # Run database migrations
 .PHONY: migrate
