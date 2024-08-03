@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Tooltip, Avatar, Progress } from "@nextui-org/react";
+import { Tooltip, Avatar } from "@nextui-org/react";
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import * as OTPAuth from "otpauth";
 import { MdContentCopy } from "react-icons/md";
@@ -15,6 +15,7 @@ import { RxDividerVertical } from "react-icons/rx";
 import { CgArrowRight } from "react-icons/cg";
 import ContextMenu from "@/components/context-menu";
 import QRModal from "@/components/qr-modal";
+import OTPProgress from "@/components/progress-bar";
 
 interface OTPCardProps {
   otp: {
@@ -37,9 +38,6 @@ const OTPCard: React.FC<OTPCardProps> = ({
   closeMenu,
 }) => {
   const [copied, setCopied] = useState(false);
-  const [remainingTime, setRemainingTime] = useState(
-    otp.period - (Math.floor(Date.now() / 1000) % otp.period)
-  );
   const [currentCode, setCurrentCode] = useState("");
   const [showQR, setShowQR] = useState(false);
 
@@ -59,14 +57,9 @@ const OTPCard: React.FC<OTPCardProps> = ({
 
     generateCode();
 
-    const updateRemainingTime = () => {
-      const seconds = otp.period - (Math.floor(Date.now() / 1000) % otp.period);
-      setRemainingTime(seconds);
-    };
-
     const interval = setInterval(() => {
-      updateRemainingTime();
-    }, 500);
+      generateCode();
+    }, otp.period * 1000);
 
     return () => {
       clearInterval(interval);
@@ -79,8 +72,6 @@ const OTPCard: React.FC<OTPCardProps> = ({
       setTimeout(() => setCopied(false), 2000);
     });
   };
-
-  const progressValue = (remainingTime / otp.period) * 100;
 
   const handleContextMenu = (event: React.MouseEvent) => {
     event.nativeEvent.stopImmediatePropagation();
@@ -109,7 +100,6 @@ const OTPCard: React.FC<OTPCardProps> = ({
                 className="flex-shrink-0"
                 radius="full"
                 size="md"
-                // set src = "/{icons/otp.issuer}.svg if it exists, otherwise set src = "/default.svg"
                 src={`/providers/SVG/${otp.issuer}.svg`}
                 alt={otp.issuer}
               />
@@ -142,14 +132,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
                 </span>
               )}
             </p>
-            <Progress
-              aria-label="Time remaining"
-              size="sm"
-              value={progressValue}
-              color="success"
-              showValueLabel={false}
-              className="w-20"
-            />
+            <OTPProgress period={otp.period} updateInterval={200} />
           </CardFooter>
         </Card>
       </Tooltip>
