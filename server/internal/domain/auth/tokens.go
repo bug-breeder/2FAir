@@ -12,7 +12,7 @@ var jwtSecret = []byte(configs.GetEnv("AUTH_ACCESS_TOKEN_SECRET"))
 
 // GenerateAccessToken generates a JWT access token
 func GenerateAccessToken(userID string) (string, error) {
-	expirationTime := time.Now().Add(15 * time.Minute)
+	expirationTime := time.Now().Add(15 * time.Minute) // 15 minutes
 	claims := &models.Claims{
 		UserID:    userID,
 		SessionID: "",
@@ -26,7 +26,7 @@ func GenerateAccessToken(userID string) (string, error) {
 
 // GenerateRefreshToken generates a JWT refresh token
 func GenerateRefreshToken(userID, sessionID string) (string, error) {
-	expirationTime := time.Now().Add(7 * 24 * time.Hour)
+	expirationTime := time.Now().Add(180 * 24 * time.Hour) // 180 days
 	claims := &models.Claims{
 		UserID:    userID,
 		SessionID: sessionID,
