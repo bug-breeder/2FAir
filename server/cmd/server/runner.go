@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bug-breeder/2fair/server/configs"
 	"log"
 
 	_ "github.com/bug-breeder/2fair/server/docs" // This is important for the Swagger docs to be generated
@@ -32,8 +33,8 @@ func runServer() {
 
 	// Setup database connection
 	client := db.GetMongoClient()
-	userRepo := db.NewMongoUserRepository(client)
-	otpRepo := db.NewMongoOTPRepository(client)
+	userRepo := db.NewMongoUserRepository(client, configs.GetEnv("DATABASE_NAME"), "users")
+	otpRepo := db.NewMongoOTPRepository(client, configs.GetEnv("DATABASE_NAME"), "users")
 
 	// Setup use cases
 	authUseCase := usecase.NewAuthUseCase(userRepo)

@@ -3,11 +3,12 @@ package auth
 import (
 	"time"
 
+	"github.com/bug-breeder/2fair/server/configs"
 	"github.com/bug-breeder/2fair/server/internal/domain/models"
 	"github.com/dgrijalva/jwt-go"
 )
 
-var jwtSecret = []byte("your_secret_key")
+var jwtSecret = []byte(configs.GetEnv("AUTH_ACCESS_TOKEN_SECRET"))
 
 // GenerateAccessToken generates a JWT access token
 func GenerateAccessToken(userID string) (string, error) {

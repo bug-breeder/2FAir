@@ -11,31 +11,30 @@ import (
 )
 
 type MongoOTPRepository struct {
-	client *mongo.Client
+	collection *mongo.Collection
 }
 
-func NewMongoOTPRepository(client *mongo.Client) repository.OTPRepository {
-	return &MongoOTPRepository{client: client}
+func NewMongoOTPRepository(client *mongo.Client, database, collection string) repository.OTPRepository {
+	return &MongoOTPRepository{
+		collection: client.Database(database).Collection(collection),
+	}
 }
 
 func (repo *MongoOTPRepository) AddOTP(ctx context.Context, userID primitive.ObjectID, otp *models.OTP) error {
-	collection := repo.client.Database("myapp").Collection("users")
 	filter := bson.M{"_id": userID}
 	update := bson.M{"$push": bson.M{"otps": otp}}
-	_, err := collection.UpdateOne(ctx, filter, update)
+	_, err := repo.collection.UpdateOne(ctx, filter, update)
 	return err
 }
 
 func (repo *MongoOTPRepository) InactivateOTP(ctx context.Context, userID, otpID primitive.ObjectID) error {
-	collection := repo.client.Database("myapp").Collection("users")
 	filter := bson.M{"_id": userID, "otps._id": otpID}
 	update := bson.M{"$set": bson.M{"otps.$.active": false}}
-	_, err := collection.UpdateOne(ctx, filter, update)
+	_, err := repo.collection.UpdateOne(ctx, filter, update)
 	return err
 }
 
 func (repo *MongoOTPRepository) EditOTP(ctx context.Context, userID, otpID primitive.ObjectID, otp *models.OTP) error {
-	collection := repo.client.Database("myapp").Collection("users")
 	filter := bson.M{"_id": userID, "otps._id": otpID}
 	update := bson.M{
 		"$set": bson.M{
@@ -48,19 +47,17 @@ func (repo *MongoOTPRepository) EditOTP(ctx context.Context, userID, otpID primi
 			"otps.$.method":    otp.Method,
 		},
 	}
-	_, err := collection.UpdateOne(ctx, filter, update)
+	_, err := repo.collection.UpdateOne(ctx, filter, update)
 	return err
 }
 
 func (repo *MongoOTPRepository) ListOTPs(ctx context.Context, userID primitive.ObjectID) ([]models.OTP, error) {
-	collection := repo.client.Database("myapp").Collection("users")
 	var user models.User
-	err := collection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
+	err := repo.collection.FindOne(ctx, bson.M{"_id": userID}).Decode(&user)
 	if err != nil {
 		return nil, err
 	}
 
-	// Filter out inactive OTPs
 	var activeOTPs []models.OTP
 	for _, otp := range user.OTPs {
 		if otp.Active {
