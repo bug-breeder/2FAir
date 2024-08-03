@@ -59,7 +59,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
 
     const interval = setInterval(() => {
       generateCode();
-    }, otp.period * 1000);
+    }, 500);
 
     return () => {
       clearInterval(interval);
