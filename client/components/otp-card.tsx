@@ -110,7 +110,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
                 radius="full"
                 size="md"
                 // set src = "/{icons/otp.issuer}.svg if it exists, otherwise set src = "/default.svg"
-                src={`/icons/${otp.issuer}.svg`}
+                src={`/providers/SVG/${otp.issuer}.svg`}
                 alt={otp.issuer}
               />
               <div className="flex flex-col gap-1 items-start justify-center flex-grow overflow-hidden">
