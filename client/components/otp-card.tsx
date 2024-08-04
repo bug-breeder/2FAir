@@ -132,7 +132,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
                 </span>
               )}
             </p>
-            <OTPProgress period={otp.period} updateInterval={200} />
+            <OTPProgress period={otp.period} updateInterval={100} />
           </CardFooter>
         </Card>
       </Tooltip>

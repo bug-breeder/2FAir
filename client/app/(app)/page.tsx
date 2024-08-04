@@ -31,9 +31,9 @@ export default function Home() {
       period: 30,
     },
     {
-      issuer: "X",
+      issuer: "Heroku",
       label: "john@gmail.com",
-      secret: "NB2W45DFOIZA",
+      secret: "2DA5MQB5DCAKEPZBOUGKVNBT3RKHGQOB",
       period: 60,
     },
     {
