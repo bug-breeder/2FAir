@@ -38,4 +38,4 @@ next-env.d.ts
 /.vscode/
 
 # raw svg
-/utils/aegis-simple-icons-gen/icons/SVG/
+/libs/icons-generator/icons/SVG/
