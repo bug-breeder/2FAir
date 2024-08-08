@@ -27,10 +27,13 @@
 		"@react-aria/ssr": "3.9.4",
 		"@react-aria/visually-hidden": "3.8.12",
 		"@react-hook/media-query": "^1.1.1",
+		"@reduxjs/toolkit": "^2.2.7",
 		"@uidotdev/usehooks": "^2.4.1",
+		"axios": "^1.7.3",
 		"clsx": "^2.1.1",
 		"framer-motion": "~11.1.1",
 		"html5-qrcode": "^2.3.8",
+		"idb": "^8.0.0",
 		"intl-messageformat": "^10.5.0",
 		"next": "14.2.4",
 		"next-themes": "^0.2.1",
@@ -43,6 +46,7 @@
 		"react-dom": "18.3.1",
 		"react-hot-toast": "^2.4.1",
 		"react-icons": "^5.2.1",
+		"react-redux": "^9.1.2",
 		"react-toastify": "^10.0.5"
 	},
 	"devDependencies": {
