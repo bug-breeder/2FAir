@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/bug-breeder/2fair/server/configs"
 	"log"
+
+	"github.com/bug-breeder/2fair/server/configs"
 
 	_ "github.com/bug-breeder/2fair/server/docs" // This is important for the Swagger docs to be generated
 	"github.com/bug-breeder/2fair/server/internal/infrastructure/db"
@@ -21,8 +22,8 @@ func runServer() {
 	router := gin.Default()
 	// CORS configuration
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://2fair.vip"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowOrigins:     []string{"https://2fair.vip", "http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Authorization", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
