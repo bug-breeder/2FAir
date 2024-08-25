@@ -4,15 +4,31 @@ import React from "react";
 import { Button, Divider, Link } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
 
+import { useStartAuthProcess } from "@/hooks/auth"; // Import the custom hook
 import { FAir } from "@/components/icons";
 
 export default function Login() {
-  const [isVisible, setIsVisible] = React.useState(false);
+  const startGoogleAuth = useStartAuthProcess("google");
+  const startMicrosoftAuth = useStartAuthProcess("microsoftonline");
 
-  const toggleVisibility = () => setIsVisible(!isVisible);
+  const handleGoogleLogin = async () => {
+    try {
+      await startGoogleAuth.refetch();
+    } catch (error) {
+      console.error("Google Login failed", error);
+    }
+  };
+
+  const handleMicrosoftLogin = async () => {
+    try {
+      await startMicrosoftAuth.refetch();
+    } catch (error) {
+      console.error("Microsoft Login failed", error);
+    }
+  };
 
   return (
-    <div className="flex h-full  w-full flex-col items-center justify-center px-6 sm:px-0">
+    <div className="flex h-full w-full flex-col items-center justify-center px-6 sm:px-0">
       <div className="mt-2 flex w-full max-w-sm flex-col gap-4 rounded-large bg-content1 px-4 sm:px-8 py-6 shadow-small">
         <div className="flex flex-col items-center pb-1">
           <FAir size={60} />
@@ -25,6 +41,7 @@ export default function Login() {
           <Button
             startContent={<Icon icon="logos:google-icon" width={24} />}
             variant="bordered"
+            onPress={handleGoogleLogin}
           >
             Continue with Google
           </Button>
@@ -37,6 +54,7 @@ export default function Login() {
               />
             }
             variant="bordered"
+            onPress={handleMicrosoftLogin}
           >
             Continue with Microsoft
           </Button>
