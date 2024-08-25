@@ -1,5 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "react-query";
-
+import { useMutation, useQueryClient } from "react-query";
 import {
   startAuthProcess,
   authCallback,
@@ -8,18 +7,22 @@ import {
   deleteAccount,
 } from "@/libs/api/auth";
 
-export const useStartAuthProcess = (provider: string) => {
-  return useQuery(["startAuth", provider], () => startAuthProcess(provider));
+// Start Authentication Process Hook
+export const useStartAuthProcess = () => {
+  return useMutation((provider: string) => startAuthProcess(provider));
 };
 
-export const useAuthCallback = (provider: string) => {
-  return useQuery(["authCallback", provider], () => authCallback(provider));
+// Authentication Callback Hook
+export const useAuthCallback = () => {
+  return useMutation((provider: string) => authCallback(provider));
 };
 
+// Refresh Access Token Hook
 export const useRefreshAccessToken = () => {
   return useMutation(refreshAccessToken);
 };
 
+// Logout Hook
 export const useLogout = () => {
   const queryClient = useQueryClient();
 
@@ -30,6 +33,7 @@ export const useLogout = () => {
   });
 };
 
+// Delete Account Hook
 export const useDeleteAccount = () => {
   return useMutation(deleteAccount);
 };

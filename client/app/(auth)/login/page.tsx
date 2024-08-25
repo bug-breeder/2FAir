@@ -3,28 +3,24 @@
 import React from "react";
 import { Button, Divider, Link } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
-
-import { useStartAuthProcess } from "@/hooks/auth"; // Import the custom hook
+import { useStartAuthProcess } from "@/hooks/auth"; // Import the correct hook
 import { FAir } from "@/components/icons";
 
 export default function Login() {
-  const startGoogleAuth = useStartAuthProcess("google");
-  const startMicrosoftAuth = useStartAuthProcess("microsoftonline");
+  const startAuthProcess = useStartAuthProcess();
 
-  const handleGoogleLogin = async () => {
-    try {
-      await startGoogleAuth.refetch();
-    } catch (error) {
-      console.error("Google Login failed", error);
-    }
-  };
-
-  const handleMicrosoftLogin = async () => {
-    try {
-      await startMicrosoftAuth.refetch();
-    } catch (error) {
-      console.error("Microsoft Login failed", error);
-    }
+  const handleLogin = (provider: string) => {
+    startAuthProcess.mutate(provider, {
+      onSuccess: (data) => {
+        // Redirect the user to the authentication page (this typically happens via window.location)
+        if (data?.url) {
+          window.location.href = data.url;
+        }
+      },
+      onError: (error) => {
+        console.error(`Login with ${provider} failed`, error);
+      },
+    });
   };
 
   return (
@@ -41,7 +37,7 @@ export default function Login() {
           <Button
             startContent={<Icon icon="logos:google-icon" width={24} />}
             variant="bordered"
-            onPress={handleGoogleLogin}
+            onPress={() => handleLogin("google")}
           >
             Continue with Google
           </Button>
@@ -54,7 +50,7 @@ export default function Login() {
               />
             }
             variant="bordered"
-            onPress={handleMicrosoftLogin}
+            onPress={() => handleLogin("microsoft")}
           >
             Continue with Microsoft
           </Button>
