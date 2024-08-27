@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: "https://2fair-server.fly.dev/",
+  baseURL: process.env.SERVER_DOMAIN,
   withCredentials: true,
 });
 

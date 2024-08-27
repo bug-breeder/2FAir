@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/bug-breeder/2fair/server/configs"
 	"github.com/bug-breeder/2fair/server/internal/domain/dto"
 	"github.com/bug-breeder/2fair/server/internal/domain/models"
 	"github.com/bug-breeder/2fair/server/internal/usecase"
@@ -49,10 +50,13 @@ func (ctrl *AuthController) AuthCallback(c *gin.Context) {
 		return
 	}
 
+	client_domain := configs.GetEnv("CLIENT_DOMAIN")
+
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
 		Path:     "/auth/refresh",
+		Domain:   client_domain,
 		HttpOnly: true,
 		Secure:   true,
 	})
@@ -61,11 +65,12 @@ func (ctrl *AuthController) AuthCallback(c *gin.Context) {
 		Name:     "access_token",
 		Value:    accessToken,
 		Path:     "/",
+		Domain:   client_domain,
 		HttpOnly: true,
 		Secure:   true,
 	})
 
-	c.JSON(http.StatusOK, gin.H{"message": "Authentication successful"})
+	c.Redirect(http.StatusFound, client_domain)
 }
 
 // RefreshToken godoc

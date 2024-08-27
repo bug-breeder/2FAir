@@ -3,24 +3,12 @@
 import React from "react";
 import { Button, Divider, Link } from "@nextui-org/react";
 import { Icon } from "@iconify/react";
-import { useStartAuthProcess } from "@/hooks/auth"; // Import the correct hook
 import { FAir } from "@/components/icons";
 
 export default function Login() {
-  const startAuthProcess = useStartAuthProcess();
-
   const handleLogin = (provider: string) => {
-    startAuthProcess.mutate(provider, {
-      onSuccess: (data) => {
-        // Redirect the user to the authentication page (this typically happens via window.location)
-        if (data?.url) {
-          window.location.href = data.url;
-        }
-      },
-      onError: (error) => {
-        console.error(`Login with ${provider} failed`, error);
-      },
-    });
+    // Redirect the user to the provider's OAuth URL
+    window.location.href = `http://localhost:8080/auth/${provider}`;
   };
 
   return (
