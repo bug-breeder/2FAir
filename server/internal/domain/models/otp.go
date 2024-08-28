@@ -8,6 +8,7 @@ import (
 
 type OTP struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty"`
+	Issuer    string             `bson:"issuer"`
 	Label     string             `bson:"label"`
 	Secret    string             `bson:"secret"`
 	Algorithm string             `bson:"algorithm"`

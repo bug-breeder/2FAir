@@ -7,10 +7,10 @@ interface QRModalProps {
   showQR: boolean;
   closeQR: () => void;
   otp: {
-    issuer: string;
-    label: string;
-    secret: string;
-    period: number;
+    Issuer: string;
+    Label: string;
+    Secret: string;
+    Period: number;
   };
 }
 
@@ -19,7 +19,7 @@ const QRModal: React.FC<QRModalProps> = ({ showQR, closeQR, otp }) => {
     <Modal isOpen={showQR} onClose={closeQR} placement="center">
       <ModalContent>
         <QRCode
-          value={`otpauth://totp/${otp.issuer}:${otp.label}?secret=${otp.secret}&issuer=${otp.issuer}&algorithm=SHA1&digits=6&period=${otp.period}`}
+          value={`otpauth://totp/${otp.Issuer}:${otp.Label}?secret=${otp.Secret}&issuer=${otp.Issuer}&algorithm=SHA1&digits=6&period=${otp.Period}`}
         />
       </ModalContent>
     </Modal>

@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { Tooltip, Avatar } from "@nextui-org/react";
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
-import * as OTPAuth from "otpauth";
 import { MdContentCopy } from "react-icons/md";
 import { FiMenu } from "react-icons/fi";
 import {
@@ -16,14 +15,10 @@ import { CgArrowRight } from "react-icons/cg";
 import ContextMenu from "@/components/context-menu";
 import QRModal from "@/components/qr-modal";
 import OTPProgress from "@/components/progress-bar";
+import { OTP } from "@/types/otp";
 
 interface OTPCardProps {
-  otp: {
-    issuer: string;
-    label: string;
-    secret: string;
-    period: number;
-  };
+  otp: OTP;
   isActive: boolean;
   setActiveMenu: (x: number, y: number) => void;
   activeMenu: { idx: number; x: number; y: number } | null;
@@ -38,36 +33,10 @@ const OTPCard: React.FC<OTPCardProps> = ({
   closeMenu,
 }) => {
   const [copied, setCopied] = useState(false);
-  const [currentCode, setCurrentCode] = useState("");
   const [showQR, setShowQR] = useState(false);
 
-  const totp = new OTPAuth.TOTP({
-    issuer: otp.issuer,
-    label: otp.label,
-    algorithm: "SHA1",
-    digits: 6,
-    period: otp.period,
-    secret: OTPAuth.Secret.fromBase32(otp.secret),
-  });
-
-  useEffect(() => {
-    const generateCode = () => {
-      setCurrentCode(totp.generate());
-    };
-
-    generateCode();
-
-    const interval = setInterval(() => {
-      generateCode();
-    }, 500);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [otp.period, totp]);
-
   const handleCopy = () => {
-    navigator.clipboard.writeText(currentCode).then(() => {
+    navigator.clipboard.writeText(otp.Secret).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -80,6 +49,8 @@ const OTPCard: React.FC<OTPCardProps> = ({
       setActiveMenu(event.clientX, event.clientY);
     }, 50); // Add a slight delay to prevent immediate triggering
   };
+
+  console.log(otp);
 
   return (
     <div>
@@ -100,18 +71,18 @@ const OTPCard: React.FC<OTPCardProps> = ({
                 className="flex-shrink-0"
                 radius="full"
                 size="md"
-                src={`/providers/SVG/${otp.issuer}.svg`}
-                alt={otp.issuer}
+                src={`/providers/SVG/${otp.Issuer}.svg`}
+                alt={otp.Issuer}
               />
               <div className="flex flex-col gap-1 items-start justify-center flex-grow overflow-hidden">
-                <h4 className="text-md leading-none">{otp.issuer}</h4>
+                <h4 className="text-md leading-none">{otp.Issuer}</h4>
                 <h5 className="text-small text-default-500 tracking-tight truncate w-full">
-                  {otp.label}
+                  {otp.Label}
                 </h5>
               </div>
             </div>
             <div className="flex items-center font-bold text-xl mx-1">
-              {currentCode}
+              {otp.Secret}
             </div>
           </CardBody>
           <CardFooter className="flex items-center justify-between py-2">
@@ -132,7 +103,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
                 </span>
               )}
             </p>
-            <OTPProgress period={otp.period} updateInterval={100} />
+            <OTPProgress period={otp.Period} updateInterval={100} />
           </CardFooter>
         </Card>
       </Tooltip>
@@ -144,7 +115,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
         />
       )}
       {showQR && (
-        <QRModal showQR={showQR} closeQR={() => setShowQR(false)} otp={otp} />
+        <QRModal closeQR={() => setShowQR(false)} otp={otp} showQR={showQR} />
       )}
     </div>
   );

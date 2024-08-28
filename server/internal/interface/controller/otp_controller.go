@@ -127,6 +127,7 @@ func (ctrl *OTPController) ListOTPs(c *gin.Context) {
 	for _, otp := range otps {
 		otpsResponse = append(otpsResponse, dto.ListOTPsResponse{
 			ID:        otp.ID,
+			Issuer:    otp.Issuer,
 			Label:     otp.Label,
 			Algorithm: otp.Algorithm,
 			Digits:    otp.Digits,

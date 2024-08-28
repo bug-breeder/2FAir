@@ -7,19 +7,20 @@ import (
 )
 
 type ListOTPsResponse struct {
-	ID        primitive.ObjectID `json:"id"`
-	Label     string             `json:"label"`
-	Algorithm string             `json:"algorithm"`
-	Digits    int                `json:"digits"`
-	Period    int                `json:"period"`
-	Counter   int                `json:"counter"`
-	Method    string             `json:"method"`
+	ID        primitive.ObjectID `json:"Id"`
+	Issuer    string             `bson:"Issuer"`
+	Label     string             `json:"Label"`
+	Algorithm string             `json:"Algorithm"`
+	Digits    int                `json:"Digits"`
+	Period    int                `json:"Period"`
+	Counter   int                `json:"Counter"`
+	Method    string             `json:"Method"`
 }
 
 type GenerateOTPCodesResponse struct {
-	ID              primitive.ObjectID `json:"id"`
-	CurrentCode     string             `json:"current_code"`
-	CurrentExpireAt time.Time          `json:"current_expire_at"`
-	NextCode        string             `json:"next_code"`
-	NextExpireAt    time.Time          `json:"next_expire_at"`
+	ID              primitive.ObjectID `json:"Id"`
+	CurrentCode     string             `json:"CurrentCode"`
+	CurrentExpireAt time.Time          `json:"CurrentExpireAt"`
+	NextCode        string             `json:"NextCode"`
+	NextExpireAt    time.Time          `json:"NextExpireAt"`
 }

@@ -1,66 +1,63 @@
 "use client";
-import Backdrop from "@/components/backdrop";
+
+import React, { useState, useEffect } from "react";
 import FAB from "@/components/fab";
 import OTPCard from "@/components/otp-card";
-import { useState } from "react";
+import { useListOtps, useGenerateOtpCodes } from "@/hooks/otp";
+import { OTP, OTPSecret } from "@/types/otp";
+import { getServerDate } from "@/libs/time-sync/server-date";
+import { off } from "process";
 
 export default function Home() {
-  const otps = [
-    {
-      issuer: "LinkedIn",
-      label: "abcdkmlkafnvnh@gmail.com",
-      secret: "NB2W45DFOIZA",
-      period: 30,
-    },
-    {
-      issuer: "Google",
-      label: "jane@gmail.com",
-      secret: "NB2W45DFOIZA",
-      period: 30,
-    },
-    {
-      issuer: "Facebook",
-      label: "john@gmail.com",
-      secret: "NB2W45DFOIZA",
-      period: 30,
-    },
-    {
-      issuer: "Amazon",
-      label: "john@gmail.com",
-      secret: "NB2W45DFOIZA",
-      period: 30,
-    },
-    {
-      issuer: "Heroku",
-      label: "john@gmail.com",
-      secret: "2DA5MQB5DCAKEPZBOUGKVNBT3RKHGQOB",
-      period: 60,
-    },
-    {
-      issuer: "Epic Games",
-      label: "john@gmail.com",
-      secret: "NB2W45DFOIZA",
-      period: 30,
-    },
-    {
-      issuer: "Apple",
-      label: "john@gmail.com",
-      secret: "NB2W45DFOIZA",
-      period: 30,
-    },
-    {
-      issuer: "GitHub",
-      label: "john@gmail.com",
-      secret: "NB2W45DFOIZA",
-      period: 30,
-    },
-  ];
+  const {
+    data: otps,
+    isLoading: isLoadingOtps,
+    isError: isErrorOtps,
+  } = useListOtps();
+  const {
+    data: otpCodes,
+    isLoading: isLoadingOtpCodes,
+    isError: isErrorOtpCodes,
+  } = useGenerateOtpCodes();
+  const [combinedData, setCombinedData] = useState<any[]>([]);
+  const [serverOffset, setServerOffset] = useState<number | undefined>(
+    undefined
+  );
+
+  const fetchServerTimeOffset = async () => {
+    try {
+      const { date, offset, uncertainty } = await getServerDate();
+
+      console.log(offset);
+      setServerOffset(offset);
+    } catch (err) {
+      console.log("Failed to fetch network time:", err);
+    }
+  };
 
   const [activeMenu, setActiveMenu] = useState<{
     idx: number;
     x: number;
     y: number;
   } | null>(null);
+
+  useEffect(() => {
+    if (otps && otpCodes) {
+      // fetchServerTimeOffset();
+      // console.log("Server time offset:", serverOffset);
+      const combined = otps.map((otp: OTP) => {
+        const codeData = otpCodes.find((code: OTPSecret) => code.Id === otp.Id);
+
+        return {
+          ...otp,
+          Secret: codeData?.CurrentCode || "",
+        };
+      });
+
+      setCombinedData(combined);
+      console.log(combined);
+    }
+  }, [otpCodes]);
 
   const handleOpenMenu = (idx: number, x: number, y: number) => {
     setActiveMenu({ idx, x, y });
@@ -70,18 +67,25 @@ export default function Home() {
     setActiveMenu(null);
   };
 
+  if (isLoadingOtps || isLoadingOtpCodes) {
+    return <div>Loading...</div>; // Optionally replace with a skeleton loader or spinner
+  }
+
+  if (isErrorOtps || isErrorOtpCodes) {
+    return <div>Error loading OTPs</div>;
+  }
+
   return (
     <section className="flex flex-col items-center justify-center">
-      {/* {activeMenu && <Backdrop onClick={handleCloseMenu} />}{" "} */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-2 sm:gap-5">
-        {otps.map((otp, index) => (
+        {combinedData.map((otp, index) => (
           <OTPCard
             key={index}
-            otp={otp}
-            isActive={activeMenu?.idx === index}
             activeMenu={activeMenu}
-            setActiveMenu={(x, y) => handleOpenMenu(index, x, y)}
             closeMenu={handleCloseMenu}
+            isActive={activeMenu?.idx === index}
+            otp={otp}
+            setActiveMenu={(x, y) => handleOpenMenu(index, x, y)}
           />
         ))}
       </div>

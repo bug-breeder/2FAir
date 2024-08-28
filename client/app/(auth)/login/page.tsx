@@ -8,7 +8,7 @@ import { FAir } from "@/components/icons";
 export default function Login() {
   const handleLogin = (provider: string) => {
     // Redirect the user to the provider's OAuth URL
-    window.location.href = `http://localhost:8080/auth/${provider}`;
+    window.location.href = `${process.env.NEXT_PUBLIC_SERVER_URL}/auth/${provider}`;
   };
 
   return (
