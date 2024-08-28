@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import {
   Navbar as NextUINavbar,
   NavbarContent,
@@ -29,9 +29,24 @@ import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { FAir, HeartFilledIcon, SearchIcon } from "@/components/icons";
 import { RiVipCrown2Fill } from "react-icons/ri";
+import { useLogout } from "@/hooks/auth"; // Import the useLogout hook
 
 export const Navbar = () => {
   const searchRef = useRef<HTMLInputElement>(null);
+  const logoutMutation = useLogout(); // Initialize the logout mutation
+
+  const handleLogout = () => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        // Redirect to the login page or any other page after logout
+        window.location.href = "/auth/login";
+      },
+      onError: (error) => {
+        console.error("Logout failed:", error);
+        // Optionally handle the error, e.g., show a notification
+      },
+    });
+  };
 
   const searchInput = (
     <Input
@@ -109,12 +124,6 @@ export const Navbar = () => {
           </Button>
         </NavbarItem>
         <NavbarItem className="hidden md:flex">{searchInput}</NavbarItem>
-        {/* <Button
-          onPress={onOpen}
-          className="text-sm font-normal text-default-600 bg-default-100"
-        >
-          <FaPlus />
-        </Button> */}
         <Dropdown>
           <DropdownTrigger className="min-w-160">
             <Avatar
@@ -122,12 +131,11 @@ export const Navbar = () => {
               size="md"
             />
           </DropdownTrigger>
-          <DropdownMenu
-            aria-label="User menu"
-            onAction={(key) => console.log(key)}
-          >
+          <DropdownMenu aria-label="User menu">
             <DropdownItem key="settings">Settings</DropdownItem>
-            <DropdownItem key="logout">Logout</DropdownItem>
+            <DropdownItem key="logout" onClick={handleLogout}>
+              Logout
+            </DropdownItem>
           </DropdownMenu>
         </Dropdown>
       </NavbarContent>
@@ -149,7 +157,7 @@ export const Navbar = () => {
         {searchInput}
         <div className="mx-4 mt-2 flex flex-col gap-2">
           {siteConfig.navMenuItems.map((item, index) => (
-            <NavbarMenuItem key={`${item}-${index}`}>
+            <NavbarMenuItem key={`${item.label}-${index}`}>
               <Link
                 color={
                   index === 2
@@ -158,7 +166,7 @@ export const Navbar = () => {
                       ? "danger"
                       : "foreground"
                 }
-                href="#"
+                href={item.href}
                 size="lg"
               >
                 {item.label}
@@ -170,4 +178,3 @@ export const Navbar = () => {
     </NextUINavbar>
   );
 };
-NextUINavbar;

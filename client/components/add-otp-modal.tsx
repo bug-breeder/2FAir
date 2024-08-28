@@ -9,6 +9,7 @@ import {
   Input,
   Button,
 } from "@nextui-org/react";
+import { useAddOtp, useListOtps } from "@/hooks/otp"; // Ensure these paths are correct
 
 const AddOtpModal = ({
   isOpen,
@@ -24,9 +25,33 @@ const AddOtpModal = ({
     period: 30,
   });
 
+  const addOtpMutation = useAddOtp();
+  const { refetch } = useListOtps(); // Hook to refetch the OTP list
+
   const handleAddOtp = () => {
-    console.log("New OTP:", newOtp);
-    onClose();
+    const otpData = {
+      active: true,
+      algorithm: "SHA1", // Assuming SHA1 is the default algorithm
+      counter: 0, // Assuming it's a TOTP, so counter is not used
+      createdAt: new Date().toISOString(),
+      digits: 6, // Assuming 6 digits is standard
+      label: newOtp.label,
+      issuer: newOtp.issuer,
+      method: "TOTP", // Assuming method is TOTP
+      period: newOtp.period,
+      secret: newOtp.secret,
+    };
+
+    addOtpMutation.mutate(otpData, {
+      onSuccess: () => {
+        refetch(); // Refetch the OTP list
+        onClose(); // Close the modal on success
+      },
+      onError: (error) => {
+        console.error("Error adding OTP:", error);
+        // Handle error accordingly, e.g., show a notification
+      },
+    });
   };
 
   return (
@@ -55,8 +80,12 @@ const AddOtpModal = ({
             <Button color="danger" variant="light" onPress={onClose}>
               Close
             </Button>
-            <Button color="success" onPress={handleAddOtp}>
-              Add OTP
+            <Button
+              color="success"
+              isDisabled={addOtpMutation.isLoading}
+              onPress={handleAddOtp}
+            >
+              {addOtpMutation.isLoading ? "Adding..." : "Add OTP"}
             </Button>
           </ModalFooter>
         </>

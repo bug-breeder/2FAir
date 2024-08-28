@@ -6,9 +6,11 @@ import OTPCard from "@/components/otp-card";
 import { useListOtps, useGenerateOtpCodes } from "@/hooks/otp";
 import { OTP, OTPSecret } from "@/types/otp";
 import { getServerDate } from "@/libs/time-sync/server-date";
-import { off } from "process";
+import { Spinner } from "@nextui-org/react";
+import { useSetupAxiosInterceptors } from "@/libs/api/axios";
 
 export default function Home() {
+  useSetupAxiosInterceptors();
   const {
     data: otps,
     isLoading: isLoadingOtps,
@@ -68,7 +70,7 @@ export default function Home() {
   };
 
   if (isLoadingOtps || isLoadingOtpCodes) {
-    return <div>Loading...</div>; // Optionally replace with a skeleton loader or spinner
+    return <Spinner />; // Optionally replace with a skeleton loader or spinner
   }
 
   if (isErrorOtps || isErrorOtpCodes) {

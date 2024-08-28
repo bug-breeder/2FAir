@@ -111,6 +111,7 @@ const OTPCard: React.FC<OTPCardProps> = ({
         <ContextMenu
           activeMenu={activeMenu}
           closeMenu={closeMenu}
+          otpID={otp.Id}
           setShowQR={setShowQR}
         />
       )}

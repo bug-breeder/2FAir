@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Modal,
@@ -9,6 +10,7 @@ import {
 } from "@nextui-org/react";
 import QrScanner from "qr-scanner";
 import { MdCameraswitch, MdOutlineFlashOn } from "react-icons/md";
+import { useAddOtp } from "@/hooks/otp"; // Adjust the path as needed
 
 interface QrScannerModalProps {
   isOpen: boolean;
@@ -25,6 +27,8 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
   const [currentFacingMode, setCurrentFacingMode] =
     useState<QrScanner.FacingMode>("environment");
 
+  const addOtpMutation = useAddOtp();
+
   useEffect(() => {
     if (isOpen && videoRef.current) {
       qrScannerRef.current = new QrScanner(
@@ -32,6 +36,7 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
         (result) => {
           setQrResult(result.data);
           setQrTimestamp(new Date().toString());
+          handleQrCodeScan(result.data);
         },
         {
           highlightScanRegion: true,
@@ -69,6 +74,46 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
       setCurrentFacingMode(newFacingMode);
       qrScannerRef.current?.hasFlash().then(setHasFlash);
     });
+  };
+
+  const handleQrCodeScan = (data: string) => {
+    try {
+      if (data.startsWith("otpauth://totp/")) {
+        const url = new URL(data);
+        const issuer = url.searchParams.get("issuer") || "";
+        const label = url.pathname.split(":")[1];
+        const secret = url.searchParams.get("secret") || "";
+        const period = parseInt(url.searchParams.get("period") || "30", 10);
+
+        const otpData = {
+          active: true,
+          algorithm: "SHA1", // Assuming SHA1 is the default algorithm
+          counter: 0, // Assuming it's a TOTP, so counter is not used
+          createdAt: new Date().toISOString(),
+          digits: 6, // Assuming 6 digits is standard
+          label: label,
+          issuer: issuer,
+          method: "TOTP", // Assuming method is TOTP
+          period: period,
+          secret: secret,
+        };
+
+        // Add the OTP using the mutation
+        addOtpMutation.mutate(otpData, {
+          onSuccess: () => {
+            onClose(); // Close the modal on success
+          },
+          onError: (error) => {
+            console.error("Error adding OTP:", error);
+            // Handle error accordingly, e.g., show a notification
+          },
+        });
+      } else {
+        console.error("Invalid OTP QR Code format.");
+      }
+    } catch (error) {
+      console.error("Error parsing OTP QR Code:", error);
+    }
   };
 
   return (
