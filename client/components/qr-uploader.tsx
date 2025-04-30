@@ -6,7 +6,7 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import QrScanner from "qr-scanner";
 import { MdFileUpload } from "react-icons/md";
 

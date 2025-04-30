@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Button, Divider, Link } from "@nextui-org/react";
+import { Button, Divider, Link } from "@heroui/react";
 import { Icon } from "@iconify/react";
 
 import { FAir } from "@/components/icons";

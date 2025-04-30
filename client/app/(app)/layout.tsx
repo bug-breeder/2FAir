@@ -1,5 +1,5 @@
 import { Navbar } from "@/components/navbar";
-// import { Link } from "@nextui-org/link";
+// import { Link } from "@heroui/link";
 // import { FAir, HeartFilledIcon } from "@/components/icons";
 // import { GiBuffaloHead } from "react-icons/gi";
 

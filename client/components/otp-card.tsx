@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Tooltip, Avatar } from "@nextui-org/react";
-import { Card, CardBody, CardFooter } from "@nextui-org/card";
+import { Tooltip, Avatar, Card, CardBody, CardFooter } from "@heroui/react";
 import { MdContentCopy } from "react-icons/md";
 import { FiMenu } from "react-icons/fi";
 import {

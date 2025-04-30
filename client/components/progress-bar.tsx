@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Progress } from "@nextui-org/react";
+import { Progress } from "@heroui/react";
 
 interface ProgressProps {
   period: number;

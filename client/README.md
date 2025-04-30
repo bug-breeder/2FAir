@@ -1,53 +1,73 @@
-# Next.js & NextUI Template
+# 2FAir Client Application
 
-This is a template for creating applications using Next.js 14 (app directory) and NextUI (v2).
+The 2FAir client application provides a secure and user-friendly interface for managing two-factor authentication (2FA) codes. This web application allows users to add, manage, and use OTP (One-Time Password) codes for various online services.
 
-[Try it on CodeSandbox](https://githubbox.com/nextui-org/next-app-template)
+## Features
+
+- **Secure Authentication**: Login securely to access your OTP codes
+- **OTP Management**: Add, edit, and remove OTP configurations
+- **QR Code Support**: Scan or upload QR codes to easily add new services
+- **Automatic Time Synchronization**: Ensures accurate OTP generation
+- **Responsive Design**: Works on desktop and mobile devices
 
 ## Technologies Used
 
-- [Next.js 14](https://nextjs.org/docs/getting-started)
-- [NextUI v2](https://nextui.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Tailwind Variants](https://tailwind-variants.org)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Framer Motion](https://www.framer.com/motion/)
-- [next-themes](https://github.com/pacocoursey/next-themes)
+- [Next.js 14](https://nextjs.org/docs/getting-started) - React framework for building the UI
+- [HeroUI](https://heroui.org/) - Modern UI component library
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
+- [TypeScript](https://www.typescriptlang.org/) - Type-safe JavaScript
+- [Framer Motion](https://www.framer.com/motion/) - Animation library
 
-## How to Use
+## Getting Started
 
-### Use the template with create-next-app
+### Prerequisites
 
-To create a new project based on this template using `create-next-app`, run the following command:
+- Node.js (v18 or newer)
+- Yarn package manager
 
-```bash
-npx create-next-app -e https://github.com/nextui-org/next-app-template
-```
+### Installation
 
-### Install dependencies
-
-You can use one of them `npm`, `yarn`, `pnpm`, `bun`, Example using `npm`:
+1. Clone the repository
+2. Navigate to the client directory
+3. Install dependencies:
 
 ```bash
-npm install
+yarn install
 ```
 
-### Run the development server
+### Development
+
+Run the development server:
 
 ```bash
-npm run dev
+yarn dev
 ```
 
-### Setup pnpm (optional)
+The application will be available at [http://localhost:3000](http://localhost:3000)
 
-If you are using `pnpm`, you need to add the following code to your `.npmrc` file:
+### Build for Production
 
 ```bash
-public-hoist-pattern[]=*@nextui-org/*
+yarn build
 ```
 
-After modifying the `.npmrc` file, you need to run `pnpm install` again to ensure that the dependencies are installed correctly.
+### Run Production Build
+
+```bash
+yarn start
+```
+
+## Project Structure
+
+- `app/` - Next.js application routes
+- `components/` - Reusable UI components
+- `config/` - Configuration files
+- `hooks/` - Custom React hooks
+- `libs/` - Utility functions and API clients
+- `public/` - Static assets and images
+- `styles/` - Global CSS styles
+- `types/` - TypeScript type definitions
 
 ## License
 
-Licensed under the [MIT license](https://github.com/nextui-org/next-app-template/blob/main/LICENSE).
+Licensed under the [MIT license](LICENSE).

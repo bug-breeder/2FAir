@@ -7,7 +7,7 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import QrScanner from "qr-scanner";
 import { MdCameraswitch, MdOutlineFlashOn } from "react-icons/md";
 import { useAddOtp } from "@/hooks/otp"; // Adjust the path as needed

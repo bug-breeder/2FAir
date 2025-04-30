@@ -10,7 +10,7 @@ import {
   ModalHeader,
   ModalBody,
   Button,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { MdDeleteSweep, MdQrCode } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
 import { useMediaQuery } from "@react-hook/media-query";

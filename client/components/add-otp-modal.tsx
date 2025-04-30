@@ -8,7 +8,7 @@ import {
   ModalFooter,
   Input,
   Button,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { useAddOtp, useListOtps } from "@/hooks/otp"; // Ensure these paths are correct
 
 const AddOtpModal = ({

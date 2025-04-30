@@ -6,7 +6,7 @@ import OTPCard from "@/components/otp-card";
 import { useListOtps, useGenerateOtpCodes } from "@/hooks/otp";
 import { OTP, OTPSecret } from "@/types/otp";
 import { getServerDate } from "@/libs/time-sync/server-date";
-import { Spinner } from "@nextui-org/react";
+import { Spinner } from "@heroui/react";
 import { useSetupAxiosInterceptors } from "@/libs/api/axios";
 
 export default function Home() {

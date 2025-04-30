@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { Button, Chip } from "@nextui-org/react";
+import { Button, Chip } from "@heroui/react";
 import { FaPlus, FaQrcode, FaEdit } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { LuFileImage, LuCamera } from "react-icons/lu";

@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Modal, ModalContent } from "@nextui-org/react";
+import { Modal, ModalContent } from "@heroui/react";
 import QRCode from "qrcode.react";
 
 interface QRModalProps {
