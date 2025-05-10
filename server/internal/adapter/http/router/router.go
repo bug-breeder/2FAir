@@ -3,18 +3,23 @@ package routes
 import (
 	"os"
 
-	"github.com/bug-breeder/2fair/server/configs"
-	"github.com/bug-breeder/2fair/server/internal/interface/controller"
-	"github.com/bug-breeder/2fair/server/internal/interface/middleware"
+	"github.com/bug-breeder/2fair/server/internal/adapter/http/controller"
+	"github.com/bug-breeder/2fair/server/internal/adapter/http/middleware"
+	"github.com/bug-breeder/2fair/server/internal/infrastructure/configs"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/google"
 	"github.com/markbates/goth/providers/microsoftonline"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func SetupRoutes(router *gin.Engine, authController *controller.AuthController, otpController *controller.OTPController) {
+	// Swagger documentation
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	// Ensure SESSION_SECRET is set
 	gothic.Store = sessions.NewCookieStore([]byte(configs.GetEnv("SESSION_SECRET")))
 
@@ -26,17 +31,17 @@ func SetupRoutes(router *gin.Engine, authController *controller.AuthController, 
 		// apple.New(configs.GetEnv("APPLE_CLIENT_ID"), configs.GetEnv("APPLE_CLIENT_SECRET"), "http://localhost:8080/auth/apple/callback"),
 	)
 
-	router.GET("/auth/:provider", authController.AuthHandler)
-	router.GET("/auth/:provider/callback", authController.AuthCallback)
+	router.GET("/auth/:provider", authController.GoogleLogin)
+	router.GET("/auth/:provider/callback", authController.GoogleCallback)
 	router.POST("/auth/refresh", authController.RefreshToken)
 	router.DELETE("/auth/refresh", authController.Logout)
 
 	protected := router.Group("/")
 	protected.Use(middleware.Authenticate())
-	protected.POST("/otps", otpController.AddOTP)
-	protected.PUT("/otps/:otpID/inactivate", otpController.InactivateOTP)
-	protected.PUT("/otps/:otpID", otpController.EditOTP)
-	protected.GET("/otps", otpController.ListOTPs)
-	protected.GET("/otps/codes", otpController.GenerateOTPCodes)
+	protected.POST("/otp", otpController.AddOTP)
+	protected.PUT("/otp/:id/inactivate", otpController.InactivateOTP)
+	protected.PUT("/otp/:id", otpController.EditOTP)
+	protected.GET("/otp", otpController.ListOTPs)
+	protected.GET("/otp/codes", otpController.GenerateOTPCodes)
 	protected.GET("/login-history", authController.GetLoginHistory)
 }

@@ -1,18 +1,14 @@
 package models
 
-import (
-	"go.mongodb.org/mongo-driver/bson/primitive"
-)
-
 type Issuer struct {
-	ID             primitive.ObjectID `bson:"_id,omitempty"`
-	Name           string             `bson:"name"`
-	Website        string             `bson:"website"`
-	HelpURL        string             `bson:"help_url"`
-	ImageURI       string             `bson:"image_uri"`
-	Digits         int                `bson:"digits"`
-	Period         int                `bson:"period"`
-	DefaultCounter int                `bson:"default_counter"`
-	Algorithm      string             `bson:"algorithm"`
-	Method         string             `bson:"method"`
+	ID             int    `json:"id"`
+	Name           string `json:"name"`
+	Website        string `json:"website"`
+	HelpURL        string `json:"help_url"`
+	ImageURI       string `json:"image_uri"`
+	Digits         int    `json:"digits"`
+	Period         int    `json:"period"`
+	DefaultCounter int    `json:"default_counter"`
+	Algorithm      string `json:"algorithm"`
+	Method         string `json:"method"`
 }

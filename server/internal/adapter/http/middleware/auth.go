@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/bug-breeder/2fair/server/internal/domain/auth"
+	"github.com/bug-breeder/2fair/server/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,7 +17,7 @@ func Authenticate() gin.HandlerFunc {
 		}
 
 		accessToken := cookie.Value
-		claims, err := auth.ValidateToken(accessToken)
+		claims, err := utils.ValidateToken(accessToken)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid access token"})
 			c.Abort()

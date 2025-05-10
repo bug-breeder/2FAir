@@ -10,25 +10,28 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// OTPController handles OTP-related HTTP requests
 type OTPController struct {
 	otpUseCase *usecase.OTPUseCase
 }
 
+// NewOTPController creates a new OTP controller instance
 func NewOTPController(otpUseCase *usecase.OTPUseCase) *OTPController {
 	return &OTPController{otpUseCase: otpUseCase}
 }
 
-// AddOTP godoc
-// @Summary Add a new OTP
-// @Description Add a new OTP for the user
-// @Tags otps
+// @Summary Add OTP
+// @Description Add a new OTP for the authenticated user
+// @Tags otp
 // @Accept json
 // @Produce json
-// @Param otp body models.OTP true "OTP"
-// @Success 200 {object} models.OTP
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /otps [post]
+// @Security BearerAuth
+// @Param otp body models.OTP true "OTP details"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /otp [post]
 func (ctrl *OTPController) AddOTP(c *gin.Context) {
 	userID := c.MustGet("userID").(string)
 	var otp models.OTP
@@ -46,70 +49,16 @@ func (ctrl *OTPController) AddOTP(c *gin.Context) {
 	c.JSON(http.StatusOK, otp)
 }
 
-// InactivateOTP godoc
-// @Summary Inactivate an OTP
-// @Description Inactivate an OTP for the user
-// @Tags otps
-// @Accept json
-// @Produce json
-// @Param otpID path string true "OTP ID"
-// @Success 200 {object} dto.MessageResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /otps/{otpID}/inactivate [put]
-func (ctrl *OTPController) InactivateOTP(c *gin.Context) {
-	userID := c.MustGet("userID").(string)
-	otpID := c.Param("otpID")
-
-	err := ctrl.otpUseCase.InactivateOTP(c, userID, otpID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to inactivate OTP"})
-		return
-	}
-
-	c.JSON(http.StatusOK, dto.MessageResponse{Message: "OTP inactivated"})
-}
-
-// EditOTP godoc
-// @Summary Edit an OTP
-// @Description Edit an existing OTP for the user
-// @Tags otps
-// @Accept json
-// @Produce json
-// @Param otpID path string true "OTP ID"
-// @Param otp body models.OTP true "OTP"
-// @Success 200 {object} dto.MessageResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /otps/{otpID} [put]
-func (ctrl *OTPController) EditOTP(c *gin.Context) {
-	userID := c.MustGet("userID").(string)
-	otpID := c.Param("otpID")
-	var updatedOTP models.OTP
-	if err := c.ShouldBindJSON(&updatedOTP); err != nil {
-		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: err.Error()})
-		return
-	}
-
-	err := ctrl.otpUseCase.EditOTP(c, userID, otpID, &updatedOTP)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to edit OTP"})
-		return
-	}
-
-	c.JSON(http.StatusOK, dto.MessageResponse{Message: "OTP updated"})
-}
-
-// ListOTPs godoc
 // @Summary List OTPs
-// @Description List all OTPs for the user excluding the secret
-// @Tags otps
+// @Description Get all OTPs for the authenticated user
+// @Tags otp
 // @Accept json
 // @Produce json
-// @Success 200 {array} dto.ListOTPsResponse
-// @Failure 401 {object} dto.ErrorResponse
-// @Failure 404 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
-// @Router /otps [get]
+// @Security BearerAuth
+// @Success 200 {array} models.OTP
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /otp [get]
 func (ctrl *OTPController) ListOTPs(c *gin.Context) {
 	userID := c.MustGet("userID").(string)
 
@@ -138,6 +87,62 @@ func (ctrl *OTPController) ListOTPs(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, otpsResponse)
+}
+
+// @Summary Edit OTP
+// @Description Edit an existing OTP
+// @Tags otp
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "OTP ID"
+// @Param otp body models.OTP true "Updated OTP details"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /otp/{id} [put]
+func (ctrl *OTPController) EditOTP(c *gin.Context) {
+	userID := c.MustGet("userID").(string)
+	otpID := c.Param("otpID")
+	var updatedOTP models.OTP
+	if err := c.ShouldBindJSON(&updatedOTP); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	err := ctrl.otpUseCase.EditOTP(c, userID, otpID, &updatedOTP)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to edit OTP"})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.MessageResponse{Message: "OTP updated"})
+}
+
+// @Summary Inactivate OTP
+// @Description Mark an OTP as inactive
+// @Tags otp
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "OTP ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /otp/{id}/inactivate [post]
+func (ctrl *OTPController) InactivateOTP(c *gin.Context) {
+	userID := c.MustGet("userID").(string)
+	otpID := c.Param("otpID")
+
+	err := ctrl.otpUseCase.InactivateOTP(c, userID, otpID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to inactivate OTP"})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.MessageResponse{Message: "OTP inactivated"})
 }
 
 // GenerateOTPCodes godoc

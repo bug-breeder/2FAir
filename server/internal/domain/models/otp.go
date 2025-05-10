@@ -2,20 +2,19 @@ package models
 
 import (
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type OTP struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty"`
-	Issuer    string             `bson:"issuer"`
-	Label     string             `bson:"label"`
-	Secret    string             `bson:"secret"`
-	Algorithm string             `bson:"algorithm"`
-	Digits    int                `bson:"digits"`
-	Period    int                `bson:"period"`
-	Counter   int                `bson:"counter"`
-	Method    string             `bson:"method"`
-	Active    bool               `bson:"active"`
-	CreatedAt time.Time          `bson:"created_at"`
+	ID        int       `json:"id"`
+	UserID    int       `json:"user_id"`
+	Issuer    string    `json:"issuer"`
+	Label     string    `json:"label"`
+	Secret    string    `json:"secret"`
+	Algorithm string    `json:"algorithm"`
+	Digits    int       `json:"digits"`
+	Period    int       `json:"period"`
+	Counter   int       `json:"counter"`
+	Method    string    `json:"method"`
+	Active    bool      `json:"active"`
+	CreatedAt time.Time `json:"created_at"`
 }

@@ -1,49 +1,40 @@
 basePath: /
 definitions:
-  dtos.AuthResponse:
-    properties:
-      access_token:
-        type: string
-    type: object
-  dtos.ErrorResponse:
+  dto.ErrorResponse:
     properties:
       error:
         type: string
     type: object
-  dtos.GenerateOTPCodesResponse:
+  dto.GenerateOTPCodesResponse:
     properties:
-      current_code:
+      CurrentCode:
         type: string
-      current_expire_at:
+      CurrentExpireAt:
         type: string
-      id:
+      Id:
+        type: integer
+      NextCode:
         type: string
-      next_code:
-        type: string
-      next_expire_at:
+      NextExpireAt:
         type: string
     type: object
-  dtos.ListOTPsResponse:
-    properties:
-      algorithm:
-        type: string
-      counter:
-        type: integer
-      digits:
-        type: integer
-      id:
-        type: string
-      label:
-        type: string
-      method:
-        type: string
-      period:
-        type: integer
-    type: object
-  dtos.MessageResponse:
+  dto.MessageResponse:
     properties:
       message:
         type: string
+    type: object
+  models.LoginEvent:
+    properties:
+      id:
+        type: integer
+      ip_address:
+        type: string
+      timestamp:
+        type: string
+      user_agent:
+        type: string
+      user_id:
+        type: integer
     type: object
   models.OTP:
     properties:
@@ -53,11 +44,13 @@ definitions:
         type: string
       counter:
         type: integer
-      createdAt:
+      created_at:
         type: string
       digits:
         type: integer
       id:
+        type: integer
+      issuer:
         type: string
       label:
         type: string
@@ -67,12 +60,29 @@ definitions:
         type: integer
       secret:
         type: string
+      user_id:
+        type: integer
+    type: object
+  models.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      provider:
+        type: string
+      provider_id:
+        type: string
     type: object
 host: localhost:8080
 info:
   contact:
     email: anhngw@gmail.com
-    name: Andy Nguyen
+    name: Alan Nguyen
     url: http://www.2fair.vip/support
   description: This is the API documentation for the 2FAir application.
   license:
@@ -82,55 +92,150 @@ info:
   title: 2FAir API
   version: "1.0"
 paths:
-  /auth/{provider}:
+  /auth/google:
     get:
       consumes:
       - application/json
-      description: Start the authentication process with the specified provider
-      parameters:
-      - description: Provider
-        in: path
-        name: provider
-        required: true
-        type: string
+      description: Authenticate a user using Google OAuth
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dtos.MessageResponse'
+            $ref: '#/definitions/models.User'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/dtos.ErrorResponse'
-      summary: Start authentication process
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login with Google
       tags:
       - auth
-  /auth/{provider}/callback:
+  /auth/google/callback:
     get:
       consumes:
       - application/json
-      description: Handle the callback from the authentication provider
+      description: Handle the callback from Google OAuth
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dtos.AuthResponse'
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dtos.ErrorResponse'
-      summary: Authentication callback
+            additionalProperties:
+              type: string
+            type: object
+      summary: Google OAuth callback
       tags:
       - auth
-  /otps:
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Log out the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Logout
+      tags:
+      - auth
+  /auth/me:
     get:
       consumes:
       - application/json
-      description: List all OTPs for the user excluding the secret
+      description: Get the currently authenticated user's information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh the access token using the refresh token cookie
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MessageResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Refresh access token
+      tags:
+      - auth
+  /login-history:
+    get:
+      consumes:
+      - application/json
+      description: Get the login history for the authenticated user
       produces:
       - application/json
       responses:
@@ -138,29 +243,56 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/dtos.ListOTPsResponse'
+              $ref: '#/definitions/models.LoginEvent'
             type: array
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/dtos.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/dtos.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dtos.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get login history
+      tags:
+      - auth
+  /otp:
+    get:
+      consumes:
+      - application/json
+      description: Get all OTPs for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.OTP'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
       summary: List OTPs
       tags:
-      - otps
+      - otp
     post:
       consumes:
       - application/json
-      description: Add a new OTP for the user
+      description: Add a new OTP for the authenticated user
       parameters:
-      - description: OTP
+      - description: OTP details
         in: body
         name: otp
         required: true
@@ -172,30 +304,44 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.OTP'
+            additionalProperties:
+              type: string
+            type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/dtos.ErrorResponse'
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dtos.ErrorResponse'
-      summary: Add a new OTP
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add OTP
       tags:
-      - otps
-  /otps/{otpID}:
+      - otp
+  /otp/{id}:
     put:
       consumes:
       - application/json
-      description: Edit an existing OTP for the user
+      description: Edit an existing OTP
       parameters:
       - description: OTP ID
         in: path
-        name: otpID
+        name: id
         required: true
-        type: string
-      - description: OTP
+        type: integer
+      - description: Updated OTP details
         in: body
         name: otp
         required: true
@@ -207,43 +353,75 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dtos.MessageResponse'
+            additionalProperties:
+              type: string
+            type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/dtos.ErrorResponse'
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dtos.ErrorResponse'
-      summary: Edit an OTP
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Edit OTP
       tags:
-      - otps
-  /otps/{otpID}/inactivate:
-    put:
+      - otp
+  /otp/{id}/inactivate:
+    post:
       consumes:
       - application/json
-      description: Inactivate an OTP for the user
+      description: Mark an OTP as inactive
       parameters:
       - description: OTP ID
         in: path
-        name: otpID
+        name: id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dtos.MessageResponse'
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dtos.ErrorResponse'
-      summary: Inactivate an OTP
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Inactivate OTP
       tags:
-      - otps
+      - otp
   /otps/codes:
     get:
       consumes:
@@ -256,20 +434,20 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/dtos.GenerateOTPCodesResponse'
+              $ref: '#/definitions/dto.GenerateOTPCodesResponse'
             type: array
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/dtos.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/dtos.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/dtos.ErrorResponse'
+            $ref: '#/definitions/dto.ErrorResponse'
       summary: Generate OTP codes
       tags:
       - otps

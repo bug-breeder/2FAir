@@ -1,0 +1,32 @@
+services:
+  app:
+    build: .
+    env_file:
+      - .env          # will be overridden
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      - migrate
+    networks:
+      - backend
+
+  migrate:
+    image: migrate/migrate
+    env_file:
+      - .env
+    volumes:
+      - ./internal/infrastructure/postgres/migrations:/migrations
+    command:
+      [
+        "-path", "/migrations",
+        "-database", "${DATABASE_URL}",
+        "up"
+      ]
+    networks:
+      - backend
+    restart: on-failure
+
+networks:
+  backend:

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/bug-breeder/2fair/server/configs"
+	"github.com/bug-breeder/2fair/server/internal/infrastructure/configs"
 
 	_ "github.com/bug-breeder/2fair/server/docs" // This is important for the Swagger docs to be generated
 )
@@ -11,7 +11,7 @@ import (
 // @description This is the API documentation for the 2FAir application.
 // @termsOfService http://swagger.io/terms/
 
-// @contact.name Andy Nguyen
+// @contact.name Alan Nguyen
 // @contact.url http://www.2fair.vip/support
 // @contact.email anhngw@gmail.com
 

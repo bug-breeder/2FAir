@@ -3,18 +3,14 @@ package main
 import (
 	"log"
 
-	"github.com/bug-breeder/2fair/server/configs"
-
 	_ "github.com/bug-breeder/2fair/server/docs" // This is important for the Swagger docs to be generated
-	"github.com/bug-breeder/2fair/server/internal/infrastructure/db"
-	"github.com/bug-breeder/2fair/server/internal/interface/controller"
-	"github.com/bug-breeder/2fair/server/internal/routes"
+	"github.com/bug-breeder/2fair/server/internal/adapter/http/controller"
+	route "github.com/bug-breeder/2fair/server/internal/adapter/http/router"
+	"github.com/bug-breeder/2fair/server/internal/adapter/repository/postgres" // Updated to postgres package
+	"github.com/bug-breeder/2fair/server/internal/infrastructure/configs"
 	"github.com/bug-breeder/2fair/server/internal/usecase"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func runServer() {
@@ -33,12 +29,26 @@ func runServer() {
 	router.Use(gin.Recovery())
 
 	// Setup database connection
-	client := db.GetMongoClient()
-	userRepo := db.NewMongoUserRepository(client, configs.GetEnv("DATABASE_NAME"), "users")
-	otpRepo := db.NewMongoOTPRepository(client, configs.GetEnv("DATABASE_NAME"), "users")
+	db, err := postgres.NewPostgresConnection(
+		configs.GetEnv("DB_HOST"),
+		configs.GetEnv("DB_PORT"),
+		configs.GetEnv("DB_USER"),
+		configs.GetEnv("DB_PASSWORD"),
+		configs.GetEnv("DB_NAME"),
+		configs.GetEnv("DB_SSL_MODE"),
+	)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	log.Printf("Successfully connected to database at %s:%s", configs.GetEnv("DB_HOST"), configs.GetEnv("DB_PORT"))
+
+	// Setup repositories with PostgreSQL
+	userRepo := postgres.NewPostgresUserRepository(db)
+	otpRepo := postgres.NewPostgresOTPRepository(db)
+	loginEventRepo := postgres.NewPostgresLoginEventRepository(db)
 
 	// Setup use cases
-	authUseCase := usecase.NewAuthUseCase(userRepo)
+	authUseCase := usecase.NewAuthUseCase(userRepo, loginEventRepo)
 	otpUseCase := usecase.NewOTPUseCase(otpRepo)
 
 	// Setup controllers
@@ -46,10 +56,9 @@ func runServer() {
 	otpController := controller.NewOTPController(otpUseCase)
 
 	// Setup routes
-	routes.SetupRoutes(router, authController, otpController)
+	route.SetupRoutes(router, authController, otpController)
 
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
+	log.Printf("Server starting on :8080")
 	if err := router.Run(); err != nil {
 		log.Fatalf("Failed to run server: %v", err)
 	}

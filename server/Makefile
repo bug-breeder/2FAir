@@ -74,8 +74,14 @@ docs: ## Generate API documentation
 	@echo "Generating API documentation..."
 	swag init -g cmd/server/*.go
 
-# Run database migrations
-.PHONY: migrate
-migrate: ## Run database migrations
-	@echo "Running database migrations..."
-	go run cmd/db/migrate.go
+sqlc:
+	sqlc generate
+
+migrate-up:
+	migrate -path db/migrations -database "${DB_URL}" -verbose up
+
+migrate-down:
+	migrate -path db/migrations -database "${DB_URL}" -verbose down
+
+migrate-create:
+	migrate create -ext sql -dir db/migrations -seq $(name)

@@ -2,17 +2,13 @@ package models
 
 import (
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type User struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty"`
-	Name         string             `bson:"name"`
-	Email        string             `bson:"email"`
-	Provider     string             `bson:"provider"`
-	ProviderID   string             `bson:"provider_id"`
-	CreatedAt    time.Time          `bson:"created_at"`
-	OTPs         []OTP              `bson:"otps"`
-	LoginHistory []LoginEvent       `bson:"login_history"`
+	ID         int       `json:"id"`
+	Name       string    `json:"name"`
+	Email      string    `json:"email"`
+	Provider   string    `json:"provider"`
+	ProviderID string    `json:"provider_id"`
+	CreatedAt  time.Time `json:"created_at"`
 }

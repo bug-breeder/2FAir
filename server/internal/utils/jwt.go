@@ -1,10 +1,10 @@
-package auth
+package utils
 
 import (
 	"time"
 
-	"github.com/bug-breeder/2fair/server/configs"
 	"github.com/bug-breeder/2fair/server/internal/domain/models"
+	"github.com/bug-breeder/2fair/server/internal/infrastructure/configs"
 	"github.com/dgrijalva/jwt-go"
 )
 

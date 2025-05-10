@@ -3,20 +3,24 @@ package usecase
 import (
 	"context"
 	"log"
+	"strconv"
 	"time"
 
-	"github.com/bug-breeder/2fair/server/internal/domain/auth"
+	"github.com/bug-breeder/2fair/server/internal/adapter/repository"
 	"github.com/bug-breeder/2fair/server/internal/domain/models"
-	"github.com/bug-breeder/2fair/server/internal/domain/repository"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/bug-breeder/2fair/server/internal/utils"
 )
 
 type AuthUseCase struct {
-	userRepo repository.UserRepository
+	userRepo       repository.UserRepository
+	loginEventRepo repository.LoginEventRepository
 }
 
-func NewAuthUseCase(userRepo repository.UserRepository) *AuthUseCase {
-	return &AuthUseCase{userRepo: userRepo}
+func NewAuthUseCase(userRepo repository.UserRepository, loginEventRepo repository.LoginEventRepository) *AuthUseCase {
+	return &AuthUseCase{
+		userRepo:       userRepo,
+		loginEventRepo: loginEventRepo,
+	}
 }
 
 func (uc *AuthUseCase) CompleteUserAuth(ctx context.Context, user *models.User, ipAddress, userAgent string) (string, string, error) {
@@ -28,15 +32,11 @@ func (uc *AuthUseCase) CompleteUserAuth(ctx context.Context, user *models.User, 
 
 	var (
 		accessToken, refreshToken string
-		userID                    primitive.ObjectID
+		userID                    int
 	)
 
 	if existingUser == nil {
 		// No existing user found, create a new one
-		user.CreatedAt = time.Now()
-		user.OTPs = []models.OTP{}
-		user.LoginHistory = []models.LoginEvent{}
-
 		userID, err = uc.userRepo.CreateUser(ctx, user)
 		if err != nil {
 			log.Printf("Failed to create new user: %v", err)
@@ -49,25 +49,29 @@ func (uc *AuthUseCase) CompleteUserAuth(ctx context.Context, user *models.User, 
 
 	// Log the login event
 	loginEvent := models.LoginEvent{
-		ID:        primitive.NewObjectID(),
+		UserID:    userID,
 		Timestamp: time.Now(),
-		IPAddress: ipAddress, // Set IP address
-		UserAgent: userAgent, // Set User agent
+		IPAddress: ipAddress,
+		UserAgent: userAgent,
 	}
 
-	err = uc.userRepo.UpdateLoginHistory(ctx, userID, loginEvent)
+	sessionID, err := uc.loginEventRepo.AddLoginEvent(ctx, &loginEvent)
 	if err != nil {
 		log.Printf("Failed to log login event: %v", err)
 		return "", "", err
 	}
 
-	accessToken, err = auth.GenerateAccessToken(userID.Hex())
+	// Convert IDs to strings for token generation
+	userIDStr := strconv.Itoa(userID)
+	sessionIDStr := strconv.Itoa(sessionID)
+
+	accessToken, err = utils.GenerateAccessToken(userIDStr)
 	if err != nil {
 		log.Printf("Failed to generate access token: %v", err)
 		return "", "", err
 	}
 
-	refreshToken, err = auth.GenerateRefreshToken(userID.Hex(), loginEvent.ID.Hex())
+	refreshToken, err = utils.GenerateRefreshToken(userIDStr, sessionIDStr)
 	if err != nil {
 		log.Printf("Failed to generate refresh token: %v", err)
 		return "", "", err
@@ -77,22 +81,31 @@ func (uc *AuthUseCase) CompleteUserAuth(ctx context.Context, user *models.User, 
 }
 
 func (uc *AuthUseCase) ValidateToken(token string) (*models.Claims, error) {
-	return auth.ValidateToken(token)
+	return utils.ValidateToken(token)
 }
 
 func (uc *AuthUseCase) RefreshTokens(ctx context.Context, claims *models.Claims) (string, error) {
 	userID := claims.UserID
 	sessionID := claims.SessionID
-	userObjectID, _ := primitive.ObjectIDFromHex(userID)
-	sessionObjectID, _ := primitive.ObjectIDFromHex(sessionID)
 
-	// validate sessionID
-	err := uc.userRepo.FindLoginEventByID(ctx, userObjectID, sessionObjectID)
+	// Convert string IDs to integers
+	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
 		return "", err
 	}
 
-	accessToken, err := auth.GenerateAccessToken(userID)
+	sessionIDInt, err := strconv.Atoi(sessionID)
+	if err != nil {
+		return "", err
+	}
+
+	// Validate sessionID
+	_, err = uc.loginEventRepo.GetLoginEventByID(ctx, userIDInt, sessionIDInt)
+	if err != nil {
+		return "", err
+	}
+
+	accessToken, err := utils.GenerateAccessToken(userID)
 	if err != nil {
 		return "", err
 	}
@@ -102,10 +115,20 @@ func (uc *AuthUseCase) RefreshTokens(ctx context.Context, claims *models.Claims)
 
 func (uc *AuthUseCase) Logout(ctx context.Context, claims *models.Claims) error {
 	userID := claims.UserID
-	userObjectID, _ := primitive.ObjectIDFromHex(userID)
+	sessionID := claims.SessionID
 
-	sessionObjectID, _ := primitive.ObjectIDFromHex(claims.SessionID)
-	err := uc.userRepo.RemoveLoginEvent(ctx, userObjectID, sessionObjectID)
+	// Convert string IDs to integers
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil {
+		return err
+	}
+
+	sessionIDInt, err := strconv.Atoi(sessionID)
+	if err != nil {
+		return err
+	}
+
+	err = uc.loginEventRepo.RemoveLoginEvent(ctx, userIDInt, sessionIDInt)
 	if err != nil {
 		return err
 	}
@@ -114,11 +137,16 @@ func (uc *AuthUseCase) Logout(ctx context.Context, claims *models.Claims) error 
 }
 
 func (uc *AuthUseCase) GetLoginHistory(ctx context.Context, userID string) ([]models.LoginEvent, error) {
-	userObjectID, _ := primitive.ObjectIDFromHex(userID)
-	user, err := uc.userRepo.FindByID(ctx, userObjectID)
+	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return user.LoginHistory, nil
+	// Fetch login events from the dedicated repository
+	loginEvents, err := uc.loginEventRepo.ListLoginEvents(ctx, userIDInt, 100) // Limiting to last 100 login events
+	if err != nil {
+		return nil, err
+	}
+
+	return loginEvents, nil
 }
