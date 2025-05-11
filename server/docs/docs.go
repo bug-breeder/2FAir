@@ -24,7 +24,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/auth/google": {
+        "/api/v1/auth/google": {
             "get": {
                 "description": "Authenticate a user using Google OAuth",
                 "consumes": [
@@ -65,7 +65,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/google/callback": {
+        "/api/v1/auth/google/callback": {
             "get": {
                 "description": "Handle the callback from Google OAuth",
                 "consumes": [
@@ -109,7 +109,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/logout": {
+        "/api/v1/auth/logout": {
             "post": {
                 "security": [
                     {
@@ -158,7 +158,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/me": {
+        "/api/v1/auth/me": {
             "get": {
                 "security": [
                     {
@@ -204,7 +204,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/refresh": {
+        "/api/v1/auth/refresh": {
             "post": {
                 "description": "Refresh the access token using the refresh token cookie",
                 "consumes": [
@@ -239,7 +239,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/login-history": {
+        "/api/v1/login-history": {
             "get": {
                 "description": "Get the login history for the authenticated user",
                 "consumes": [
@@ -277,7 +277,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/otp": {
+        "/api/v1/otp": {
             "get": {
                 "security": [
                     {
@@ -393,7 +393,56 @@ const docTemplate = `{
                 }
             }
         },
-        "/otp/{id}": {
+        "/api/v1/otp/codes": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generate current and next OTP codes for the user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "otp"
+                ],
+                "summary": "Generate OTP codes",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.GenerateOTPCodesResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/otp/{id}": {
             "put": {
                 "security": [
                     {
@@ -469,7 +518,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/otp/{id}/inactivate": {
+        "/api/v1/otp/{id}/inactivate": {
             "post": {
                 "security": [
                     {
@@ -531,50 +580,6 @@ const docTemplate = `{
                             "additionalProperties": {
                                 "type": "string"
                             }
-                        }
-                    }
-                }
-            }
-        },
-        "/otps/codes": {
-            "get": {
-                "description": "Generate current and next OTP codes for the user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "otps"
-                ],
-                "summary": "Generate OTP codes",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/dto.GenerateOTPCodesResponse"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ErrorResponse"
                         }
                     }
                 }

@@ -92,7 +92,7 @@ info:
   title: 2FAir API
   version: "1.0"
 paths:
-  /auth/google:
+  /api/v1/auth/google:
     get:
       consumes:
       - application/json
@@ -119,7 +119,7 @@ paths:
       summary: Login with Google
       tags:
       - auth
-  /auth/google/callback:
+  /api/v1/auth/google/callback:
     get:
       consumes:
       - application/json
@@ -148,7 +148,7 @@ paths:
       summary: Google OAuth callback
       tags:
       - auth
-  /auth/logout:
+  /api/v1/auth/logout:
     post:
       consumes:
       - application/json
@@ -179,7 +179,7 @@ paths:
       summary: Logout
       tags:
       - auth
-  /auth/me:
+  /api/v1/auth/me:
     get:
       consumes:
       - application/json
@@ -208,7 +208,7 @@ paths:
       summary: Get current user
       tags:
       - auth
-  /auth/refresh:
+  /api/v1/auth/refresh:
     post:
       consumes:
       - application/json
@@ -231,7 +231,7 @@ paths:
       summary: Refresh access token
       tags:
       - auth
-  /login-history:
+  /api/v1/login-history:
     get:
       consumes:
       - application/json
@@ -256,7 +256,7 @@ paths:
       summary: Get login history
       tags:
       - auth
-  /otp:
+  /api/v1/otp:
     get:
       consumes:
       - application/json
@@ -330,7 +330,7 @@ paths:
       summary: Add OTP
       tags:
       - otp
-  /otp/{id}:
+  /api/v1/otp/{id}:
     put:
       consumes:
       - application/json
@@ -379,7 +379,7 @@ paths:
       summary: Edit OTP
       tags:
       - otp
-  /otp/{id}/inactivate:
+  /api/v1/otp/{id}/inactivate:
     post:
       consumes:
       - application/json
@@ -422,7 +422,7 @@ paths:
       summary: Inactivate OTP
       tags:
       - otp
-  /otps/codes:
+  /api/v1/otp/codes:
     get:
       consumes:
       - application/json
@@ -448,7 +448,9 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Generate OTP codes
       tags:
-      - otps
+      - otp
 swagger: "2.0"

@@ -31,7 +31,7 @@ func NewOTPController(otpUseCase *usecase.OTPUseCase) *OTPController {
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /otp [post]
+// @Router /api/v1/otp [post]
 func (ctrl *OTPController) AddOTP(c *gin.Context) {
 	userID := c.MustGet("userID").(string)
 	var otp models.OTP
@@ -58,7 +58,7 @@ func (ctrl *OTPController) AddOTP(c *gin.Context) {
 // @Success 200 {array} models.OTP
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /otp [get]
+// @Router /api/v1/otp [get]
 func (ctrl *OTPController) ListOTPs(c *gin.Context) {
 	userID := c.MustGet("userID").(string)
 
@@ -101,7 +101,7 @@ func (ctrl *OTPController) ListOTPs(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /otp/{id} [put]
+// @Router /api/v1/otp/{id} [put]
 func (ctrl *OTPController) EditOTP(c *gin.Context) {
 	userID := c.MustGet("userID").(string)
 	otpID := c.Param("otpID")
@@ -131,7 +131,7 @@ func (ctrl *OTPController) EditOTP(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /otp/{id}/inactivate [post]
+// @Router /api/v1/otp/{id}/inactivate [post]
 func (ctrl *OTPController) InactivateOTP(c *gin.Context) {
 	userID := c.MustGet("userID").(string)
 	otpID := c.Param("otpID")
@@ -145,17 +145,17 @@ func (ctrl *OTPController) InactivateOTP(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.MessageResponse{Message: "OTP inactivated"})
 }
 
-// GenerateOTPCodes godoc
 // @Summary Generate OTP codes
 // @Description Generate current and next OTP codes for the user
-// @Tags otps
+// @Tags otp
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Success 200 {array} dto.GenerateOTPCodesResponse
 // @Failure 401 {object} dto.ErrorResponse
 // @Failure 404 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /otps/codes [get]
+// @Router /api/v1/otp/codes [get]
 func (ctrl *OTPController) GenerateOTPCodes(c *gin.Context) {
 	userID := c.MustGet("userID").(string)
 

@@ -26,22 +26,33 @@ func SetupRoutes(router *gin.Engine, authController *controller.AuthController, 
 	redirectURI := os.Getenv("REDIRECT_URI")
 
 	goth.UseProviders(
-		google.New(configs.GetEnv("GOOGLE_CLIENT_ID"), configs.GetEnv("GOOGLE_CLIENT_SECRET"), redirectURI+"/auth/google/callback"),
-		microsoftonline.New(configs.GetEnv("MICROSOFT_CLIENT_ID"), configs.GetEnv("MICROSOFT_CLIENT_SECRET"), redirectURI+"/auth/microsoft/callback"),
-		// apple.New(configs.GetEnv("APPLE_CLIENT_ID"), configs.GetEnv("APPLE_CLIENT_SECRET"), "http://localhost:8080/auth/apple/callback"),
+		google.New(configs.GetEnv("GOOGLE_CLIENT_ID"), configs.GetEnv("GOOGLE_CLIENT_SECRET"), redirectURI+"/api/v1/auth/google/callback"),
+		microsoftonline.New(configs.GetEnv("MICROSOFT_CLIENT_ID"), configs.GetEnv("MICROSOFT_CLIENT_SECRET"), redirectURI+"/api/v1/auth/microsoft/callback"),
+		// apple.New(configs.GetEnv("APPLE_CLIENT_ID"), configs.GetEnv("APPLE_CLIENT_SECRET"), "http://localhost:8080/api/v1/auth/apple/callback"),
 	)
 
-	router.GET("/auth/:provider", authController.GoogleLogin)
-	router.GET("/auth/:provider/callback", authController.GoogleCallback)
-	router.POST("/auth/refresh", authController.RefreshToken)
-	router.DELETE("/auth/refresh", authController.Logout)
+	// API v1 routes
+	v1 := router.Group("/api/v1")
+	{
+		// Auth routes
+		v1.GET("/auth/:provider", authController.GoogleLogin)
+		v1.GET("/auth/:provider/callback", authController.GoogleCallback)
+		v1.POST("/auth/refresh", authController.RefreshToken)
+		v1.DELETE("/auth/refresh", authController.Logout)
 
-	protected := router.Group("/")
-	protected.Use(middleware.Authenticate())
-	protected.POST("/otp", otpController.AddOTP)
-	protected.PUT("/otp/:id/inactivate", otpController.InactivateOTP)
-	protected.PUT("/otp/:id", otpController.EditOTP)
-	protected.GET("/otp", otpController.ListOTPs)
-	protected.GET("/otp/codes", otpController.GenerateOTPCodes)
-	protected.GET("/login-history", authController.GetLoginHistory)
+		// Protected routes
+		protected := v1.Group("/")
+		protected.Use(middleware.Authenticate())
+		{
+			// OTP routes
+			protected.POST("/otp", otpController.AddOTP)
+			protected.PUT("/otp/:id/inactivate", otpController.InactivateOTP)
+			protected.PUT("/otp/:id", otpController.EditOTP)
+			protected.GET("/otp", otpController.ListOTPs)
+			protected.GET("/otp/codes", otpController.GenerateOTPCodes)
+
+			// User routes
+			protected.GET("/login-history", authController.GetLoginHistory)
+		}
+	}
 }

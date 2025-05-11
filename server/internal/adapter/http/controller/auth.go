@@ -32,7 +32,7 @@ func NewAuthController(authUseCase *usecase.AuthUseCase) *AuthController {
 // @Success 200 {object} models.User
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /auth/google [get]
+// @Router /api/v1/auth/google [get]
 func (ctrl *AuthController) GoogleLogin(ctx *gin.Context) {
 	provider := ctx.Param("provider")
 	if provider == "" {
@@ -52,7 +52,7 @@ func (ctrl *AuthController) GoogleLogin(ctx *gin.Context) {
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /auth/google/callback [get]
+// @Router /api/v1/auth/google/callback [get]
 func (ctrl *AuthController) GoogleCallback(ctx *gin.Context) {
 	user, err := gothic.CompleteUserAuth(ctx.Writer, ctx.Request)
 	if err != nil {
@@ -104,7 +104,7 @@ func (ctrl *AuthController) GoogleCallback(ctx *gin.Context) {
 // @Success 200 {object} models.User
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /auth/me [get]
+// @Router /api/v1/auth/me [get]
 func (ctrl *AuthController) GetCurrentUser(ctx *gin.Context) {
 	// ... existing code ...
 }
@@ -118,7 +118,7 @@ func (ctrl *AuthController) GetCurrentUser(ctx *gin.Context) {
 // @Success 200 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /auth/logout [post]
+// @Router /api/v1/auth/logout [post]
 func (ctrl *AuthController) Logout(ctx *gin.Context) {
 	// ... existing code ...
 }
@@ -131,7 +131,7 @@ func (ctrl *AuthController) Logout(ctx *gin.Context) {
 // @Success 200 {object} dto.MessageResponse
 // @Failure 401 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /auth/refresh [post]
+// @Router /api/v1/auth/refresh [post]
 func (ctrl *AuthController) RefreshToken(c *gin.Context) {
 	refreshTokenCookie, err := c.Request.Cookie("refresh_token")
 	if err != nil {
@@ -171,7 +171,7 @@ func (ctrl *AuthController) RefreshToken(c *gin.Context) {
 // @Success 200 {array} models.LoginEvent
 // @Failure 401 {object} dto.ErrorResponse
 // @Failure 500 {object} dto.ErrorResponse
-// @Router /login-history [get]
+// @Router /api/v1/login-history [get]
 func (ctrl *AuthController) GetLoginHistory(c *gin.Context) {
 	userID := c.MustGet("userID").(string)
 	loginHistory, err := ctrl.authUseCase.GetLoginHistory(c, userID)
