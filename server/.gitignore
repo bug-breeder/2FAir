@@ -28,4 +28,4 @@ build/
 fly.toml
 
 # Cursor rules
-.cursor/
+../.cursor/
