@@ -26,6 +26,3 @@ build/
 
 # Fly deployment file
 fly.toml
-
-# Cursor rules
-../.cursor/
