@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bug-breeder/2fair/server/internal/adapter/repository"
@@ -26,8 +27,13 @@ func NewAuthUseCase(userRepo repository.UserRepository, loginEventRepo repositor
 func (uc *AuthUseCase) CompleteUserAuth(ctx context.Context, user *models.User, ipAddress, userAgent string) (string, string, error) {
 	existingUser, err := uc.userRepo.FindByEmail(ctx, user.Email)
 	if err != nil {
-		log.Printf("Failed to check existing user: %v", err)
-		return "", "", err
+		// Check if it's a "not found" error, which is expected for new users
+		if !strings.Contains(err.Error(), "user not found") {
+			log.Printf("Failed to check existing user: %v", err)
+			return "", "", err
+		}
+		// User not found is expected for new users, set existingUser to nil
+		existingUser = nil
 	}
 
 	var (
@@ -78,6 +84,20 @@ func (uc *AuthUseCase) CompleteUserAuth(ctx context.Context, user *models.User, 
 	}
 
 	return accessToken, refreshToken, nil
+}
+
+func (uc *AuthUseCase) GetCurrentUser(ctx context.Context, userID string) (*models.User, error) {
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := uc.userRepo.FindByID(ctx, userIDInt)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (uc *AuthUseCase) ValidateToken(token string) (*models.Claims, error) {

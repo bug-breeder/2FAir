@@ -1,73 +1,123 @@
-# 2FAir Client Application
+# 2FAir - React Frontend
 
-The 2FAir client application provides a secure and user-friendly interface for managing two-factor authentication (2FA) codes. This web application allows users to add, manage, and use OTP (One-Time Password) codes for various online services.
+A secure and modern 2FA token management application built with React, Vite, HeroUI, and TanStack Query.
 
 ## Features
 
-- **Secure Authentication**: Login securely to access your OTP codes
-- **OTP Management**: Add, edit, and remove OTP configurations
-- **QR Code Support**: Scan or upload QR codes to easily add new services
-- **Automatic Time Synchronization**: Ensures accurate OTP generation
-- **Responsive Design**: Works on desktop and mobile devices
+- 🔐 Secure 2FA token management
+- 🎨 Modern UI with HeroUI components
+- 🌙 Dark/Light theme support
+- 📱 Responsive design
+- ⚡ Fast development with Vite
+- 🔄 Efficient data fetching with TanStack Query
+- 🛡️ OAuth authentication (Google, Microsoft)
 
-## Technologies Used
+## Tech Stack
 
-- [Next.js 14](https://nextjs.org/docs/getting-started) - React framework for building the UI
-- [HeroUI](https://heroui.org/) - Modern UI component library
-- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
-- [TypeScript](https://www.typescriptlang.org/) - Type-safe JavaScript
-- [Framer Motion](https://www.framer.com/motion/) - Animation library
+- **React 18** - UI library
+- **Vite** - Build tool and dev server
+- **TypeScript** - Type safety
+- **HeroUI** - UI component library
+- **TanStack Query** - Server state management
+- **React Router** - Client-side routing
+- **Tailwind CSS** - Styling
+- **Axios** - HTTP client
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v18 or newer)
+- Node.js 18+ 
 - Yarn package manager
 
 ### Installation
 
 1. Clone the repository
-2. Navigate to the client directory
-3. Install dependencies:
+2. Install dependencies:
+   ```bash
+   yarn install
+   ```
 
-```bash
-yarn install
-```
+3. Create environment file:
+   ```bash
+   cp .env.example .env.local
+   ```
+
+4. Update environment variables in `.env.local`:
+   ```
+   VITE_SERVER_URL=http://localhost:8080
+   ```
 
 ### Development
 
-Run the development server:
+Start the development server:
 
 ```bash
 yarn dev
 ```
 
-The application will be available at [http://localhost:3000](http://localhost:3000)
+The application will be available at `http://localhost:5173`
 
-### Build for Production
+### Building
+
+Build for production:
 
 ```bash
 yarn build
 ```
 
-### Run Production Build
+### Linting
+
+Run ESLint:
 
 ```bash
-yarn start
+yarn lint
 ```
 
 ## Project Structure
 
-- `app/` - Next.js application routes
-- `components/` - Reusable UI components
-- `config/` - Configuration files
-- `hooks/` - Custom React hooks
-- `libs/` - Utility functions and API clients
-- `public/` - Static assets and images
-- `styles/` - Global CSS styles
-- `types/` - TypeScript type definitions
+```
+src/
+├── components/          # Reusable UI components
+├── hooks/              # Custom React hooks
+├── lib/                # Utility libraries
+│   └── api/           # API client and functions
+├── pages/              # Page components
+├── providers/          # Context providers
+├── styles/             # Global styles
+├── types/              # TypeScript type definitions
+├── App.tsx             # Main app component
+├── main.tsx            # Application entry point
+└── provider.tsx        # Root providers setup
+```
+
+## Environment Variables
+
+- `VITE_SERVER_URL` - Backend API URL
+
+## Authentication
+
+The application supports OAuth authentication with:
+- Google
+- Microsoft
+
+Users are redirected to the OAuth provider and then back to the application upon successful authentication.
+
+## API Integration
+
+The application communicates with a Go backend API for:
+- User authentication
+- OTP token management
+- Code generation
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests and linting
+5. Submit a pull request
 
 ## License
 
-Licensed under the [MIT license](LICENSE).
+This project is licensed under the MIT License.

@@ -66,22 +66,32 @@ func (r *OTPRepository) InactivateOTP(ctx context.Context, userID, otpID int) er
 
 // EditOTP updates an existing OTP
 func (r *OTPRepository) EditOTP(ctx context.Context, userID, otpID int, otp *models.OTP) error {
+	fmt.Printf("Repository EditOTP called - userID: %d, otpID: %d, issuer: %s, label: %s\n",
+		userID, otpID, otp.Issuer, otp.Label)
+
 	params := sqlc.EditOTPParams{
 		ID:        int32(otpID),
 		UserID:    int32(userID),
+		Issuer:    otp.Issuer,
 		Label:     otp.Label,
+		Secret:    otp.Secret,
 		Algorithm: otp.Algorithm,
 		Digits:    int32(otp.Digits),
-		Method:    otp.Method,
 		Period:    int32(otp.Period),
 		Counter:   int32(otp.Counter),
+		Method:    otp.Method,
 	}
 
-	_, err := r.queries.EditOTP(ctx, params)
+	fmt.Printf("Repository EditOTP params - ID: %d, UserID: %d, Issuer: %s, Label: %s, Secret: %s, Algorithm: %s, Digits: %d, Period: %d, Counter: %d, Method: %s\n",
+		params.ID, params.UserID, params.Issuer, params.Label, params.Secret, params.Algorithm, params.Digits, params.Period, params.Counter, params.Method)
+
+	result, err := r.queries.EditOTP(ctx, params)
 	if err != nil {
+		fmt.Printf("Repository EditOTP SQL error: %v\n", err)
 		return fmt.Errorf("error updating OTP: %w", err)
 	}
 
+	fmt.Printf("Repository EditOTP success - updated OTP ID: %d, new issuer: %s\n", result.ID, result.Issuer)
 	return nil
 }
 

@@ -46,12 +46,13 @@ func SetupRoutes(router *gin.Engine, authController *controller.AuthController, 
 		{
 			// OTP routes
 			protected.POST("/otp", otpController.AddOTP)
-			protected.PUT("/otp/:id/inactivate", otpController.InactivateOTP)
+			protected.POST("/otp/:id/inactivate", otpController.InactivateOTP)
 			protected.PUT("/otp/:id", otpController.EditOTP)
 			protected.GET("/otp", otpController.ListOTPs)
 			protected.GET("/otp/codes", otpController.GenerateOTPCodes)
 
 			// User routes
+			protected.GET("/auth/me", authController.GetCurrentUser)
 			protected.GET("/login-history", authController.GetLoginHistory)
 		}
 	}

@@ -26,13 +26,14 @@ RETURNING *;
 -- name: EditOTP :one
 UPDATE otps
 SET 
-  label = $3,
-  secret = $4,
-  algorithm = $5,
-  digits = $6,
-  period = $7,
-  counter = $8,
-  method = $9
+  issuer = $3,
+  label = $4,
+  secret = $5,
+  algorithm = $6,
+  digits = $7,
+  period = $8,
+  counter = $9,
+  method = $10
 WHERE id = $1 AND user_id = $2
 RETURNING *;
 

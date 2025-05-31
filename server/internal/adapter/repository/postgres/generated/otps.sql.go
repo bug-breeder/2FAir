@@ -73,13 +73,14 @@ func (q *Queries) AddOTP(ctx context.Context, arg AddOTPParams) (Otp, error) {
 const editOTP = `-- name: EditOTP :one
 UPDATE otps
 SET 
-  label = $3,
-  secret = $4,
-  algorithm = $5,
-  digits = $6,
-  period = $7,
-  counter = $8,
-  method = $9
+  issuer = $3,
+  label = $4,
+  secret = $5,
+  algorithm = $6,
+  digits = $7,
+  period = $8,
+  counter = $9,
+  method = $10
 WHERE id = $1 AND user_id = $2
 RETURNING id, user_id, issuer, label, secret, algorithm, digits, period, counter, method, active, created_at
 `
@@ -87,6 +88,7 @@ RETURNING id, user_id, issuer, label, secret, algorithm, digits, period, counter
 type EditOTPParams struct {
 	ID        int32  `json:"id"`
 	UserID    int32  `json:"user_id"`
+	Issuer    string `json:"issuer"`
 	Label     string `json:"label"`
 	Secret    string `json:"secret"`
 	Algorithm string `json:"algorithm"`
@@ -100,6 +102,7 @@ func (q *Queries) EditOTP(ctx context.Context, arg EditOTPParams) (Otp, error) {
 	row := q.db.QueryRow(ctx, editOTP,
 		arg.ID,
 		arg.UserID,
+		arg.Issuer,
 		arg.Label,
 		arg.Secret,
 		arg.Algorithm,

@@ -77,11 +77,33 @@ docs: ## Generate API documentation
 sqlc:
 	sqlc generate
 
-migrate-up:
-	migrate -path db/migrations -database "${DB_URL}" -verbose up
+migrate-up: ## Run database migrations up
+	@echo "Running database migrations up..."
+	@if [ -f .env ]; then \
+		export $$(cat .env | grep -v '^#' | xargs) && \
+		migrate -path internal/adapter/repository/postgres/migrations \
+		-database "postgres://$${DB_USER}:$${DB_PASSWORD}@$${DB_HOST}:$${DB_PORT}/$${DB_NAME}?sslmode=$${DB_SSL_MODE}" \
+		-verbose up; \
+	else \
+		echo "Error: .env file not found"; \
+		exit 1; \
+	fi
 
-migrate-down:
-	migrate -path db/migrations -database "${DB_URL}" -verbose down
+migrate-down: ## Run database migrations down
+	@echo "Running database migrations down..."
+	@if [ -f .env ]; then \
+		export $$(cat .env | grep -v '^#' | xargs) && \
+		migrate -path internal/adapter/repository/postgres/migrations \
+		-database "postgres://$${DB_USER}:$${DB_PASSWORD}@$${DB_HOST}:$${DB_PORT}/$${DB_NAME}?sslmode=$${DB_SSL_MODE}" \
+		-verbose down; \
+	else \
+		echo "Error: .env file not found"; \
+		exit 1; \
+	fi
 
-migrate-create:
-	migrate create -ext sql -dir db/migrations -seq $(name)
+migrate-create: ## Create a new migration file
+	@if [ -z "$(name)" ]; then \
+		echo "Error: Please provide a migration name using 'make migrate-create name=your_migration_name'"; \
+		exit 1; \
+	fi
+	migrate create -ext sql -dir internal/adapter/repository/postgres/migrations -seq $(name)

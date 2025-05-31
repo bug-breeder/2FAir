@@ -61,9 +61,10 @@ func (ctrl *AuthController) GoogleCallback(ctx *gin.Context) {
 	}
 
 	newUser := &models.User{
-		Name:     user.Name,
-		Email:    user.Email,
-		Provider: user.Provider,
+		Name:       user.Name,
+		Email:      user.Email,
+		Provider:   user.Provider,
+		ProviderID: user.UserID,
 	}
 
 	accessToken, refreshToken, err := ctrl.authUseCase.CompleteUserAuth(ctx, newUser, ctx.ClientIP(), ctx.Request.UserAgent())
@@ -106,7 +107,25 @@ func (ctrl *AuthController) GoogleCallback(ctx *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /api/v1/auth/me [get]
 func (ctrl *AuthController) GetCurrentUser(ctx *gin.Context) {
-	// ... existing code ...
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+		return
+	}
+
+	userIDStr, ok := userID.(string)
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID format"})
+		return
+	}
+
+	user, err := ctrl.authUseCase.GetCurrentUser(ctx, userIDStr)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user information"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, user)
 }
 
 // @Summary Logout

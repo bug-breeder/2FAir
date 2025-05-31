@@ -18,7 +18,7 @@ func runServer() {
 	router := gin.Default()
 	// CORS configuration
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://2fair.vip", "http://localhost:3000", "https://app.2fair.vip"},
+		AllowOrigins:     []string{"https://2fair.vip", "http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "https://app.2fair.vip"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Authorization", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
