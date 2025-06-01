@@ -121,7 +121,6 @@ export const Navbar = () => {
             <FAir size={32} />
             <div className="flex flex-col">
               <p className="font-bold text-inherit">2FAir</p>
-              <p className="text-xs text-default-500">Secure 2FA</p>
             </div>
           </Link>
         </NavbarBrand>
