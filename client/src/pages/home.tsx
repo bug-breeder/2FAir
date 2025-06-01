@@ -5,6 +5,7 @@ import { useListOtps, useGenerateOtpCodes } from "../hooks/otp";
 import { OTP, OTPSecret } from "../types/otp";
 import SmartOTPCard from "../components/smart-otp-card";
 import FAB from "../components/fab";
+import { Navbar } from "../components/navbar";
 
 function HomePage() {
   const {
@@ -23,6 +24,15 @@ function HomePage() {
     x: number;
     y: number;
   } | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setActiveMenu(null);
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (otps && otpCodes && Array.isArray(otps) && Array.isArray(otpCodes)) {
@@ -56,18 +66,24 @@ function HomePage() {
 
   if (isLoadingOtps || isLoadingOtpCodes) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner size="lg" />
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
+          <Spinner size="lg" />
+        </div>
       </div>
     );
   }
 
   if (isErrorOtps || isErrorOtpCodes) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Error loading OTPs</h2>
-          <p className="text-default-500">Please try refreshing the page</p>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Error loading OTPs</h2>
+            <p className="text-default-500">Please try refreshing the page</p>
+          </div>
         </div>
       </div>
     );
@@ -75,12 +91,13 @@ function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">2FAir</h1>
           <p className="text-default-500">Manage your 2FA tokens securely</p>
         </div>
-
+        
         <section className="flex flex-col items-center justify-center">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-2 sm:gap-5 w-full">
             {combinedData.map((item, index) => (

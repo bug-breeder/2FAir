@@ -1130,7 +1130,7 @@
     "@heroui/system" "2.4.15"
     "@heroui/system-rsc" "2.3.13"
 
-"@heroui/switch@2.2.17":
+"@heroui/switch@2.2.17", "@heroui/switch@^2.2.17":
   version "2.2.17"
   resolved "https://registry.yarnpkg.com/@heroui/switch/-/switch-2.2.17.tgz#557271a6c17513f636f40c0f3bafe66cbf7d85cd"
   integrity sha512-32JfQpT39WDkcWDAHvxhrQ0hXSjLEBEZSWvbRZKrdmB9SPGq6F8fs+wAA5OINoa+MJEBZVHjLcNoRFl5uXQtog==
@@ -2082,13 +2082,6 @@
     "@react-aria/utils" "^3.29.0"
     "@react-types/button" "^3.12.1"
     "@react-types/shared" "^3.29.1"
-    "@swc/helpers" "^0.5.0"
-
-"@react-aria/ssr@3.9.4":
-  version "3.9.4"
-  resolved "https://registry.yarnpkg.com/@react-aria/ssr/-/ssr-3.9.4.tgz#9da8b10342c156e816dbfa4c9e713b21f274d7ab"
-  integrity sha512-4jmAigVq409qcJvQyuorsmBR4+9r3+JEC60wC+Y0MZV0HCtTmm8D9guYXlJMdx0SSkgj0hHAyFm/HvPNFofCoQ==
-  dependencies:
     "@swc/helpers" "^0.5.0"
 
 "@react-aria/ssr@3.9.8", "@react-aria/ssr@^3.9.8":
@@ -3703,15 +3696,15 @@ chokidar@^3.6.0:
   optionalDependencies:
     fsevents "~2.3.2"
 
-clsx@2.1.1, clsx@^2.0.0, clsx@^2.1.0:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/clsx/-/clsx-2.1.1.tgz#eed397c9fd8bd882bfb18deab7102049a2f32999"
-  integrity sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==
-
 clsx@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/clsx/-/clsx-1.2.1.tgz#0ddc4a20a549b59c93a4116bb26f5294ca17dc12"
   integrity sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==
+
+clsx@^2.0.0, clsx@^2.1.0, clsx@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/clsx/-/clsx-2.1.1.tgz#eed397c9fd8bd882bfb18deab7102049a2f32999"
+  integrity sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==
 
 color-convert@^2.0.1:
   version "2.0.1"

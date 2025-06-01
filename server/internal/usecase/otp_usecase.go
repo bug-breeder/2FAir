@@ -133,11 +133,11 @@ func (uc *OTPUseCase) EditOTP(ctx context.Context, userID, otpID string, otp *mo
 		return err
 	}
 
-	// Set defaults before validation
-	otp.SetDefaults()
+	// Set defaults for edit (only for empty/zero fields)
+	otp.SetDefaultsForEdit()
 
-	// Validate and normalize OTP parameters
-	if err := otp.ValidateAndNormalize(); err != nil {
+	// Validate only the fields being updated
+	if err := otp.ValidateForEdit(); err != nil {
 		uc.logger.Warn("OTP validation failed during edit",
 			"userID", userIDInt,
 			"otpID", otpIDInt,
@@ -151,7 +151,7 @@ func (uc *OTPUseCase) EditOTP(ctx context.Context, userID, otpID string, otp *mo
 		"otpIDInt", otpIDInt,
 		"otp.Issuer", otp.Issuer,
 		"otp.Label", otp.Label,
-		"normalizedSecret", otp.Secret[:8]+"...")
+		"secretProvided", otp.Secret != "")
 
 	err = uc.otpRepo.EditOTP(ctx, userIDInt, otpIDInt, otp)
 	if err != nil {

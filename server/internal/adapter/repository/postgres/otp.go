@@ -69,21 +69,59 @@ func (r *OTPRepository) EditOTP(ctx context.Context, userID, otpID int, otp *mod
 	fmt.Printf("Repository EditOTP called - userID: %d, otpID: %d, issuer: %s, label: %s\n",
 		userID, otpID, otp.Issuer, otp.Label)
 
+	// First, get the existing OTP to merge changes
+	existingOTP, err := r.queries.GetOTP(ctx, sqlc.GetOTPParams{
+		ID:     int32(otpID),
+		UserID: int32(userID),
+	})
+	if err != nil {
+		fmt.Printf("Repository EditOTP - failed to get existing OTP: %v\n", err)
+		return fmt.Errorf("error getting existing OTP: %w", err)
+	}
+
+	// Merge changes - only update fields that are provided (non-empty/non-zero)
+	updatedOTP := existingOTP
+
+	if otp.Issuer != "" {
+		updatedOTP.Issuer = otp.Issuer
+	}
+	if otp.Label != "" {
+		updatedOTP.Label = otp.Label
+	}
+	if otp.Secret != "" {
+		updatedOTP.Secret = otp.Secret
+	}
+	if otp.Algorithm != "" {
+		updatedOTP.Algorithm = otp.Algorithm
+	}
+	if otp.Digits != 0 {
+		updatedOTP.Digits = int32(otp.Digits)
+	}
+	if otp.Period != 0 {
+		updatedOTP.Period = int32(otp.Period)
+	}
+	if otp.Counter != 0 {
+		updatedOTP.Counter = int32(otp.Counter)
+	}
+	if otp.Method != "" {
+		updatedOTP.Method = otp.Method
+	}
+
 	params := sqlc.EditOTPParams{
 		ID:        int32(otpID),
 		UserID:    int32(userID),
-		Issuer:    otp.Issuer,
-		Label:     otp.Label,
-		Secret:    otp.Secret,
-		Algorithm: otp.Algorithm,
-		Digits:    int32(otp.Digits),
-		Period:    int32(otp.Period),
-		Counter:   int32(otp.Counter),
-		Method:    otp.Method,
+		Issuer:    updatedOTP.Issuer,
+		Label:     updatedOTP.Label,
+		Secret:    updatedOTP.Secret,
+		Algorithm: updatedOTP.Algorithm,
+		Digits:    updatedOTP.Digits,
+		Period:    updatedOTP.Period,
+		Counter:   updatedOTP.Counter,
+		Method:    updatedOTP.Method,
 	}
 
-	fmt.Printf("Repository EditOTP params - ID: %d, UserID: %d, Issuer: %s, Label: %s, Secret: %s, Algorithm: %s, Digits: %d, Period: %d, Counter: %d, Method: %s\n",
-		params.ID, params.UserID, params.Issuer, params.Label, params.Secret, params.Algorithm, params.Digits, params.Period, params.Counter, params.Method)
+	fmt.Printf("Repository EditOTP merged params - ID: %d, UserID: %d, Issuer: %s, Label: %s, Algorithm: %s, Digits: %d, Period: %d, Method: %s\n",
+		params.ID, params.UserID, params.Issuer, params.Label, params.Algorithm, params.Digits, params.Period, params.Method)
 
 	result, err := r.queries.EditOTP(ctx, params)
 	if err != nil {

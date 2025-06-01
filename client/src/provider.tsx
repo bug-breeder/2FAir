@@ -32,7 +32,7 @@ export function Provider({ children }: ProviderProps) {
           </AuthProvider>
         </QueryClientProvider>
       </NextThemesProvider>
-      <ToastProvider placement="top-right" />
+      <ToastProvider/>
     </HeroUIProvider>
   );
 }

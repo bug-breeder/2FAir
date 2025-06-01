@@ -63,6 +63,61 @@ func (o *OTP) ValidateAndNormalize() error {
 	return nil
 }
 
+// ValidateForEdit validates OTP parameters for edit operations
+// Only validates non-empty fields, allowing partial updates
+func (o *OTP) ValidateForEdit() error {
+	// Only validate secret if it's being updated (not empty)
+	if o.Secret != "" {
+		if err := o.validateAndNormalizeSecret(); err != nil {
+			return fmt.Errorf("invalid secret: %w", err)
+		}
+	}
+
+	// Only validate issuer if it's being updated (not empty)
+	if o.Issuer != "" {
+		if err := o.validateIssuer(); err != nil {
+			return fmt.Errorf("invalid issuer: %w", err)
+		}
+	}
+
+	// Only validate label if it's being updated (not empty)
+	if o.Label != "" {
+		if err := o.validateLabel(); err != nil {
+			return fmt.Errorf("invalid label: %w", err)
+		}
+	}
+
+	// Only validate algorithm if it's being updated (not empty)
+	if o.Algorithm != "" {
+		if err := o.validateAlgorithm(); err != nil {
+			return fmt.Errorf("invalid algorithm: %w", err)
+		}
+	}
+
+	// Only validate digits if it's being updated (not zero)
+	if o.Digits != 0 {
+		if err := o.validateDigits(); err != nil {
+			return fmt.Errorf("invalid digits: %w", err)
+		}
+	}
+
+	// Only validate period if it's being updated (not zero)
+	if o.Period != 0 {
+		if err := o.validatePeriod(); err != nil {
+			return fmt.Errorf("invalid period: %w", err)
+		}
+	}
+
+	// Only validate method if it's being updated (not empty)
+	if o.Method != "" {
+		if err := o.validateMethod(); err != nil {
+			return fmt.Errorf("invalid method: %w", err)
+		}
+	}
+
+	return nil
+}
+
 // validateAndNormalizeSecret validates and normalizes the TOTP secret
 func (o *OTP) validateAndNormalizeSecret() error {
 	if o.Secret == "" {
@@ -215,5 +270,23 @@ func (o *OTP) SetDefaults() {
 	}
 	if o.Counter == 0 && o.Method == "HOTP" {
 		o.Counter = 0
+	}
+}
+
+// SetDefaultsForEdit sets default values for optional fields during edit
+// Only sets defaults for fields that are zero/empty
+func (o *OTP) SetDefaultsForEdit() {
+	// Don't override existing values, only set if empty/zero
+	if o.Algorithm == "" {
+		o.Algorithm = "SHA1"
+	}
+	if o.Digits == 0 {
+		o.Digits = 6
+	}
+	if o.Period == 0 && (o.Method == "TOTP" || o.Method == "") {
+		o.Period = 30
+	}
+	if o.Method == "" {
+		o.Method = "TOTP"
 	}
 }

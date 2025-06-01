@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	"github.com/bug-breeder/2fair/server/internal/domain/dto"
@@ -15,12 +16,14 @@ import (
 // AuthController handles authentication-related HTTP requests
 type AuthController struct {
 	authUseCase *usecase.AuthUseCase
+	logger      *slog.Logger
 }
 
 // NewAuthController creates a new auth controller instance
 func NewAuthController(authUseCase *usecase.AuthUseCase) *AuthController {
 	return &AuthController{
 		authUseCase: authUseCase,
+		logger:      slog.Default().With("component", "AuthController"),
 	}
 }
 
@@ -128,18 +131,40 @@ func (ctrl *AuthController) GetCurrentUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
-// @Summary Logout
-// @Description Log out the current user
+// @Summary Logout user
+// @Description Logout user by clearing refresh token cookie
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Security BearerAuth
-// @Success 200 {object} map[string]string
-// @Failure 401 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} dto.MessageResponse
 // @Router /api/v1/auth/logout [post]
-func (ctrl *AuthController) Logout(ctx *gin.Context) {
-	// ... existing code ...
+func (ctrl *AuthController) Logout(c *gin.Context) {
+	ctrl.logger.Info("User logout request")
+
+	// Clear the refresh token cookie
+	c.SetCookie(
+		"refresh_token",
+		"",
+		-1, // Expire immediately
+		"/",
+		"",
+		false,
+		true, // HttpOnly
+	)
+
+	// Clear the access token cookie if it exists
+	c.SetCookie(
+		"access_token",
+		"",
+		-1, // Expire immediately
+		"/",
+		"",
+		false,
+		true, // HttpOnly
+	)
+
+	ctrl.logger.Info("User logged out successfully")
+	c.JSON(http.StatusOK, dto.MessageResponse{Message: "Logged out successfully"})
 }
 
 // @Summary Refresh access token

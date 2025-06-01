@@ -22,7 +22,6 @@ const EditOtpModal: React.FC<EditOtpModalProps> = ({ isOpen, onClose, otp }) => 
   const [editedOtp, setEditedOtp] = useState({
     issuer: "",
     label: "",
-    secret: "",
     period: 30,
     algorithm: "SHA1",
     digits: 6,
@@ -37,7 +36,6 @@ const EditOtpModal: React.FC<EditOtpModalProps> = ({ isOpen, onClose, otp }) => 
       setEditedOtp({
         issuer: otp.Issuer,
         label: otp.Label,
-        secret: otp.Secret,
         period: otp.Period,
         algorithm: "SHA1", // Default since not in OTP type
         digits: 6, // Default since not in OTP type
@@ -47,22 +45,37 @@ const EditOtpModal: React.FC<EditOtpModalProps> = ({ isOpen, onClose, otp }) => 
   }, [isOpen, otp]);
 
   const handleEditOtp = () => {
-    const otpData = {
-      active: true,
-      algorithm: editedOtp.algorithm,
-      counter: 0,
-      createdAt: new Date().toISOString(),
-      digits: editedOtp.digits,
-      label: editedOtp.label,
-      issuer: editedOtp.issuer,
-      method: editedOtp.method,
-      period: editedOtp.period,
-      secret: editedOtp.secret,
-    };
+    // Only include fields that have actually changed
+    const otpData: any = {};
+    
+    // Always include these for the API structure
+    otpData.active = true;
+    otpData.counter = 0;
+    otpData.createdAt = new Date().toISOString();
+    
+    // Only include changed fields
+    if (editedOtp.issuer !== otp.Issuer) {
+      otpData.issuer = editedOtp.issuer;
+    }
+    if (editedOtp.label !== otp.Label) {
+      otpData.label = editedOtp.label;
+    }
+    if (editedOtp.algorithm !== "SHA1") { // Only if not default
+      otpData.algorithm = editedOtp.algorithm;
+    }
+    if (editedOtp.digits !== 6) { // Only if not default
+      otpData.digits = editedOtp.digits;
+    }
+    if (editedOtp.period !== otp.Period) {
+      otpData.period = editedOtp.period;
+    }
+    if (editedOtp.method !== "TOTP") { // Only if not default
+      otpData.method = editedOtp.method;
+    }
 
     console.log("Edit OTP - Original OTP:", otp);
     console.log("Edit OTP - Edited data:", editedOtp);
-    console.log("Edit OTP - Sending to API:", otpData);
+    console.log("Edit OTP - Sending to API (only changed fields):", otpData);
     console.log("Edit OTP - OTP ID:", otp.Id);
 
     editOtpMutation.mutate(
@@ -88,7 +101,6 @@ const EditOtpModal: React.FC<EditOtpModalProps> = ({ isOpen, onClose, otp }) => 
     setEditedOtp({
       issuer: "",
       label: "",
-      secret: "",
       period: 30,
       algorithm: "SHA1",
       digits: 6,
@@ -100,7 +112,12 @@ const EditOtpModal: React.FC<EditOtpModalProps> = ({ isOpen, onClose, otp }) => 
     <Modal isOpen={isOpen} placement="center" onOpenChange={handleClose}>
       <ModalContent>
         <>
-          <ModalHeader className="flex flex-col gap-1">Edit OTP</ModalHeader>
+          <ModalHeader className="flex flex-col gap-1">
+            <span>Edit OTP</span>
+            <p className="text-sm text-default-500 font-normal">
+              Note: The secret key cannot be changed for security reasons. To use a different secret, please delete this OTP and add a new one.
+            </p>
+          </ModalHeader>
           <ModalBody>
             <Input
               label="Issuer"
@@ -116,14 +133,6 @@ const EditOtpModal: React.FC<EditOtpModalProps> = ({ isOpen, onClose, otp }) => 
               value={editedOtp.label}
               onChange={(e) =>
                 setEditedOtp({ ...editedOtp, label: e.target.value })
-              }
-            />
-            <Input
-              label="Secret"
-              placeholder="The secret key, e.g. NB2W45DFOIZA"
-              value={editedOtp.secret}
-              onChange={(e) =>
-                setEditedOtp({ ...editedOtp, secret: e.target.value })
               }
             />
             <Input

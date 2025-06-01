@@ -1,7 +1,4 @@
-import { Button } from "@heroui/button";
-import { Kbd } from "@heroui/kbd";
-import { Link } from "@heroui/link";
-import { Input } from "@heroui/input";
+import React, { useRef, useEffect, useState } from "react";
 import {
   Navbar as HeroUINavbar,
   NavbarBrand,
@@ -11,24 +8,58 @@ import {
   NavbarMenu,
   NavbarMenuItem,
 } from "@heroui/navbar";
-import { link as linkStyles } from "@heroui/theme";
-import clsx from "clsx";
-
-import { siteConfig } from "@/config/site";
-import { ThemeSwitch } from "@/components/theme-switch";
+import { Button } from "@heroui/button";
+import { Kbd } from "@heroui/kbd";
+import { Link } from "@heroui/link";
+import { Input } from "@heroui/input";
 import {
-  TwitterIcon,
-  GithubIcon,
-  DiscordIcon,
-  HeartFilledIcon,
-  SearchIcon,
-} from "@/components/icons";
-import { Logo } from "@/components/icons";
+  Avatar,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Badge,
+  Chip,
+} from "@heroui/react";
+import { useNavigate } from "react-router-dom";
+import { RiVipCrown2Fill } from "react-icons/ri";
+import { MdSecurity, MdSettings, MdLogout, MdHelp } from "react-icons/md";
+
+import { siteConfig } from "../config/site";
+import { ThemeSwitch } from "./theme-switch";
+import { FAir, HeartFilledIcon, SearchIcon } from "./icons";
+import { useAuth } from "../providers/auth-provider";
+import { useListOtps } from "../hooks/otp";
+import { toast } from "../lib/toast";
 
 export const Navbar = () => {
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout, isAuthenticated } = useAuth();
+  const { data: otps = [] } = useListOtps();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logged out successfully");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error("Logout failed");
+    }
+  };
+
+  const handleSearch = (searchTerm: string) => {
+    if (searchTerm.trim()) {
+      // TODO: Implement search functionality
+      console.log("Searching for:", searchTerm);
+      toast.info(`Searching for: ${searchTerm}`);
+    }
+  };
+
   const searchInput = (
     <Input
-      aria-label="Search"
+      aria-label="Search OTPs"
       classNames={{
         inputWrapper: "bg-default-100",
         input: "text-sm",
@@ -39,43 +70,75 @@ export const Navbar = () => {
         </Kbd>
       }
       labelPlacement="outside"
-      placeholder="Search..."
+      placeholder="Search your OTPs..."
       startContent={
         <SearchIcon className="text-base text-default-400 pointer-events-none flex-shrink-0" />
       }
       type="search"
+      ref={searchRef}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          handleSearch(e.currentTarget.value);
+        }
+      }}
     />
   );
 
+  // Keyboard shortcut for search
+  useEffect(() => {
+    const handleKeydown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "k") {
+        event.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeydown);
+    return () => window.removeEventListener("keydown", handleKeydown);
+  }, []);
+
+  // Don't show navbar on login page
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
-    <HeroUINavbar maxWidth="xl" position="sticky">
+    <HeroUINavbar 
+      maxWidth="xl" 
+      position="sticky"
+      isMenuOpen={isMenuOpen}
+      onMenuOpenChange={setIsMenuOpen}
+      className="border-b border-divider"
+    >
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand className="gap-3 max-w-fit">
           <Link
-            className="flex justify-start items-center gap-1"
+            className="flex justify-start items-center gap-2"
             color="foreground"
             href="/"
+            onClick={() => navigate("/")}
           >
-            <Logo />
-            <p className="font-bold text-inherit">ACME</p>
+            <FAir size={32} />
+            <div className="flex flex-col">
+              <p className="font-bold text-inherit">2FAir</p>
+              <p className="text-xs text-default-500">Secure 2FA</p>
+            </div>
           </Link>
         </NavbarBrand>
-        <div className="hidden lg:flex gap-4 justify-start ml-2">
-          {siteConfig.navItems.map((item) => (
-            <NavbarItem key={item.href}>
-              <Link
-                className={clsx(
-                  linkStyles({ color: "foreground" }),
-                  "data-[active=true]:text-primary data-[active=true]:font-medium",
-                )}
-                color="foreground"
-                href={item.href}
-              >
-                {item.label}
-              </Link>
-            </NavbarItem>
-          ))}
-        </div>
+
+        {/* OTP Count Badge */}
+        {Array.isArray(otps) && otps.length > 0 && (
+          <NavbarItem className="hidden sm:flex">
+            <Chip
+              size="sm"
+              variant="flat"
+              color="primary"
+              startContent={<MdSecurity className="text-sm" />}
+            >
+              {otps.length} OTP{otps.length !== 1 ? 's' : ''}
+            </Chip>
+          </NavbarItem>
+        )}
       </NavbarContent>
 
       <NavbarContent
@@ -83,60 +146,140 @@ export const Navbar = () => {
         justify="end"
       >
         <NavbarItem className="hidden sm:flex gap-2">
-          <Link isExternal href={siteConfig.links.twitter} title="Twitter">
-            <TwitterIcon className="text-default-500" />
-          </Link>
-          <Link isExternal href={siteConfig.links.discord} title="Discord">
-            <DiscordIcon className="text-default-500" />
-          </Link>
-          <Link isExternal href={siteConfig.links.github} title="GitHub">
-            <GithubIcon className="text-default-500" />
-          </Link>
           <ThemeSwitch />
         </NavbarItem>
+
         <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
+
         <NavbarItem className="hidden md:flex">
           <Button
             isExternal
             as={Link}
             className="text-sm font-normal text-default-600 bg-default-100"
             href={siteConfig.links.sponsor}
-            startContent={<HeartFilledIcon className="text-danger" />}
+            startContent={<RiVipCrown2Fill className="text-warning" />}
             variant="flat"
+            size="sm"
           >
-            Sponsor
+            Support
           </Button>
+        </NavbarItem>
+
+        {/* User Avatar Dropdown */}
+        <NavbarItem>
+          <Dropdown placement="bottom-end">
+            <DropdownTrigger>
+              <Avatar
+                as="button"
+                className="transition-transform hover:scale-105"
+                color="primary"
+                name={user?.name || user?.email || "User"}
+                size="sm"
+                src={user?.picture}
+                showFallback
+              />
+            </DropdownTrigger>
+            <DropdownMenu aria-label="User menu" variant="flat">
+              <DropdownItem key="profile" className="h-14 gap-2">
+                <p className="font-semibold">Signed in as</p>
+                <p className="font-semibold text-primary">{user?.email}</p>
+              </DropdownItem>
+              <DropdownItem
+                key="settings"
+                startContent={<MdSettings className="text-lg" />}
+                onPress={() => navigate("/settings")}
+              >
+                Settings
+              </DropdownItem>
+              <DropdownItem
+                key="security"
+                startContent={<MdSecurity className="text-lg" />}
+                onPress={() => navigate("/security")}
+              >
+                Security
+              </DropdownItem>
+              <DropdownItem
+                key="help"
+                startContent={<MdHelp className="text-lg" />}
+                onPress={() => window.open(siteConfig.links.docs, "_blank")}
+              >
+                Help & Support
+              </DropdownItem>
+              <DropdownItem
+                key="logout"
+                className="text-danger"
+                color="danger"
+                startContent={<MdLogout className="text-lg" />}
+                onPress={handleLogout}
+              >
+                Log Out
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
         </NavbarItem>
       </NavbarContent>
 
+      {/* Mobile Menu */}
       <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
-        <Link isExternal href={siteConfig.links.github}>
-          <GithubIcon className="text-default-500" />
-        </Link>
         <ThemeSwitch />
         <NavbarMenuToggle />
       </NavbarContent>
 
       <NavbarMenu>
-        {searchInput}
-        <div className="mx-4 mt-2 flex flex-col gap-2">
+        <div className="mx-4 mt-2 mb-4">{searchInput}</div>
+        
+        {/* User Info in Mobile Menu */}
+        <div className="mx-4 mb-4 p-3 bg-default-100 rounded-lg">
+          <div className="flex items-center gap-3">
+            <Avatar
+              name={user?.name || user?.email || "User"}
+              size="sm"
+              src={user?.picture}
+              showFallback
+            />
+            <div>
+              <p className="font-semibold text-sm">{user?.name || "User"}</p>
+              <p className="text-xs text-default-500">{user?.email}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-4 flex flex-col gap-2">
           {siteConfig.navMenuItems.map((item, index) => (
-            <NavbarMenuItem key={`${item}-${index}`}>
+            <NavbarMenuItem key={`${item.label}-${index}`}>
               <Link
-                color={
-                  index === 2
-                    ? "primary"
-                    : index === siteConfig.navMenuItems.length - 1
-                      ? "danger"
-                      : "foreground"
-                }
-                href="#"
+                className="w-full"
+                color={index === siteConfig.navMenuItems.length - 1 ? "danger" : "foreground"}
+                href={item.href}
                 size="lg"
+                onPress={() => {
+                  if (item.href === "/logout") {
+                    handleLogout();
+                  } else {
+                    navigate(item.href);
+                  }
+                  setIsMenuOpen(false);
+                }}
               >
                 {item.label}
               </Link>
             </NavbarMenuItem>
           ))}
+          
+          {/* Logout in mobile menu */}
+          <NavbarMenuItem>
+            <Link
+              className="w-full"
+              color="danger"
+              size="lg"
+              onPress={() => {
+                handleLogout();
+                setIsMenuOpen(false);
+              }}
+            >
+              Log Out
+            </Link>
+          </NavbarMenuItem>
         </div>
       </NavbarMenu>
     </HeroUINavbar>

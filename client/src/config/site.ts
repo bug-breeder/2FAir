@@ -1,69 +1,42 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "Vite + HeroUI",
-  description: "Make beautiful websites regardless of your design experience.",
+  name: "2FAir",
+  description: "Lock down your logins with ease! Secure 2FA management made simple.",
   navItems: [
-    {
-      label: "Home",
-      href: "/",
-    },
-    {
-      label: "Docs",
-      href: "/docs",
-    },
-    {
-      label: "Pricing",
-      href: "/pricing",
-    },
-    {
-      label: "Blog",
-      href: "/blog",
-    },
-    {
-      label: "About",
-      href: "/about",
-    },
+    // Main navigation items - keeping minimal for 2FA app
   ],
   navMenuItems: [
     {
-      label: "Profile",
-      href: "/profile",
-    },
-    {
       label: "Dashboard",
-      href: "/dashboard",
-    },
-    {
-      label: "Projects",
-      href: "/projects",
-    },
-    {
-      label: "Team",
-      href: "/team",
-    },
-    {
-      label: "Calendar",
-      href: "/calendar",
+      href: "/",
     },
     {
       label: "Settings",
       href: "/settings",
     },
     {
-      label: "Help & Feedback",
-      href: "/help-feedback",
+      label: "Security",
+      href: "/security",
     },
     {
-      label: "Logout",
-      href: "/logout",
+      label: "Export Data",
+      href: "/export",
+    },
+    {
+      label: "Help & Support",
+      href: "/help",
+    },
+    {
+      label: "About",
+      href: "/about",
     },
   ],
   links: {
-    github: "https://github.com/frontio-ai/heroui",
-    twitter: "https://twitter.com/hero_ui",
-    docs: "https://heroui.com",
-    discord: "https://discord.gg/9b6yyZKmH4",
-    sponsor: "https://patreon.com/jrgarciadev",
+    github: "https://github.com/anh-ngn/2FAir",
+    email: "mailto:anhngzv@gmail.com",
+    sponsor: "https://www.buymeacoffee.com/battle_beast",
+    docs: "https://github.com/anh-ngn/2FAir/wiki",
+    discord: "https://discord.gg/2fair",
   },
 };

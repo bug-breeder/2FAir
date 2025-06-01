@@ -40,18 +40,21 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       (error: AxiosError<ApiErrorResponse>) => {
-        const message = this.getErrorMessage(error);
+        // Don't show toast for 401 errors - let the protected route handle redirect
+        if (error.response?.status !== 401) {
+          const message = this.getErrorMessage(error);
 
-        // Only show error toast if it's not a duplicate within the last 2 seconds
-        const errorKey = `${error.response?.status}-${message}`;
-        if (!this.recentErrors.has(errorKey)) {
-          this.recentErrors.add(errorKey);
-          toast.error(message);
-          
-          // Remove from recent errors after 2 seconds
-          setTimeout(() => {
-            this.recentErrors.delete(errorKey);
-          }, 2000);
+          // Only show error toast if it's not a duplicate within the last 2 seconds
+          const errorKey = `${error.response?.status}-${message}`;
+          if (!this.recentErrors.has(errorKey)) {
+            this.recentErrors.add(errorKey);
+            toast.error(message);
+            
+            // Remove from recent errors after 2 seconds
+            setTimeout(() => {
+              this.recentErrors.delete(errorKey);
+            }, 2000);
+          }
         }
 
         return Promise.reject(error);
