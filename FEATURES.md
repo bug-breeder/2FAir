@@ -409,19 +409,47 @@ otpauth://totp/{issuer}:{label}?secret={secret}&issuer={issuer}&algorithm={algor
 
 ### 19. Search Functionality
 
-**Description**: Search through OTP entries with keyboard shortcuts.
+**Description**: Real-time search through OTP entries with advanced filtering and keyboard shortcuts.
 
 **Technical Implementation**:
-- **Component**: Search input in `Navbar`
-- **Features**: Keyboard shortcuts, real-time filtering
-- **Patterns**: Debounced search, fuzzy matching
+- **Provider**: `SearchProvider` in `client/src/providers/search-provider.tsx`
+- **Component**: Search input in `client/src/components/navbar.tsx`
+- **Utilities**: Search functions in `client/src/lib/search.ts`
+- **State Management**: React Context API for global search state
+- **Filtering**: Real-time filtering in `client/src/pages/home.tsx`
 
 **Search Features**:
-- Search by issuer name
-- Search by label/account
-- Keyboard shortcut (`Cmd/Ctrl + K`)
-- Search history
-- Real-time filtering
+- **Multi-term Search**: Supports multiple search terms (space-separated)
+- **Fuzzy Matching**: Searches across issuer and label fields
+- **Real-time Filtering**: Instant results as you type
+- **Keyboard Shortcuts**: 
+  - `Cmd/Ctrl + K`: Focus search input
+  - `Enter`: Apply search
+  - `Escape`: Clear search
+- **Clear Button**: Visual clear button when search is active
+- **Search Statistics**: Shows filtered vs total results
+- **Empty States**: Different messages for no tokens vs no results
+
+**Search Logic**:
+- Case-insensitive matching
+- Searches in both issuer and label fields
+- Supports partial word matching
+- Multiple search terms (AND logic - all terms must match)
+
+**User Experience**:
+- Search results header showing query and count
+- Visual feedback with toast notifications
+- Responsive design for mobile and desktop
+- Accessible with proper ARIA labels
+- Smooth transitions and loading states
+
+**State Management**:
+- Global search context shared between components
+- Search query persistence during navigation
+- Automatic state cleanup
+- Optimized re-renders with useMemo
+
+**API**: No backend API required - client-side filtering only
 
 ---
 
@@ -584,10 +612,48 @@ GET    /swagger/*any         # API documentation
 
 ### Integration Points
 
-- Authentication: All new features must respect authentication state
-- API: Follow existing API patterns and error handling
-- UI: Use HeroUI components for consistency
-- State: Integrate with existing state management patterns
-- Routing: Follow protected route patterns
+- **Authentication**: All new features must respect authentication state
+- **API**: Follow existing API patterns and error handling
+- **UI**: Use HeroUI components for consistency
+- **State**: Integrate with existing state management patterns
+- **Routing**: Follow protected route patterns
+- **Search**: Use the search context for any searchable content
+
+### Working with Search Feature
+
+When adding new searchable content or modifying existing search:
+
+1. **Search Context**: Use `useSearch()` hook to access search state
+2. **Search Utilities**: Use functions from `lib/search.ts` for consistent search behavior
+3. **Searchable Fields**: Update search logic in `searchOTPs()` when adding new OTP fields
+4. **Search Statistics**: Use `getSearchStats()` for consistent result counting
+5. **Empty States**: Handle both "no data" and "no search results" scenarios
+6. **Keyboard Shortcuts**: Maintain existing shortcuts (`Cmd/Ctrl+K`, `Escape`)
+
+### Search Implementation Example
+
+```typescript
+// In a component that needs search functionality
+import { useSearch } from "../providers/search-provider";
+import { searchOTPs } from "../lib/search";
+
+function MyComponent() {
+  const { searchQuery, isSearchActive } = useSearch();
+  const [data, setData] = useState([]);
+  
+  const filteredData = useMemo(() => {
+    return searchOTPs(data, searchQuery);
+  }, [data, searchQuery]);
+  
+  return (
+    <div>
+      {isSearchActive && (
+        <p>Showing {filteredData.length} of {data.length} results</p>
+      )}
+      {/* Render filtered data */}
+    </div>
+  );
+}
+```
 
 This documentation provides a comprehensive overview of all features in the 2FAir application. Use it as a reference when developing new features, debugging issues, or understanding the application architecture. 
