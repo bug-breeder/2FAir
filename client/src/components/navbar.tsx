@@ -56,13 +56,6 @@ export const Navbar = () => {
     setSearchQuery(trimmedTerm);
   };
 
-  const handleSearchClear = () => {
-    clearSearch();
-    if (searchRef.current) {
-      searchRef.current.value = "";
-    }
-  };
-
   const searchInput = (
     <Input
       ref={searchRef}
@@ -72,21 +65,9 @@ export const Navbar = () => {
         input: "text-sm",
       }}
       endContent={
-        <div className="flex items-center gap-2">
-          {isSearchActive && (
-            <Button
-              isIconOnly
-              size="sm"
-              variant="light"
-              onPress={handleSearchClear}
-            >
-              ✕
-            </Button>
-          )}
-          <Kbd className="hidden lg:inline-block" keys={["command"]}>
-            K
-          </Kbd>
-        </div>
+        <Kbd className="hidden lg:inline-block" keys={["command"]}>
+          K
+        </Kbd>
       }
       labelPlacement="outside"
       placeholder="Search your OTPs..."
@@ -101,7 +82,10 @@ export const Navbar = () => {
           handleSearch(e.currentTarget.value);
         }
         if (e.key === "Escape") {
-          handleSearchClear();
+          clearSearch();
+          if (searchRef.current) {
+            searchRef.current.value = "";
+          }
         }
       }}
     />
