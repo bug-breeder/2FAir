@@ -25,14 +25,12 @@ export function Provider({ children }: ProviderProps) {
 
   return (
     <HeroUIProvider navigate={navigate}>
-      <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
+      <NextThemesProvider enableSystem attribute="class" defaultTheme="system">
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <AuthProvider>{children}</AuthProvider>
         </QueryClientProvider>
       </NextThemesProvider>
-      <ToastProvider/>
+      <ToastProvider />
     </HeroUIProvider>
   );
 }

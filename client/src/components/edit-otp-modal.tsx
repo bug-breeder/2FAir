@@ -8,6 +8,7 @@ import {
   Input,
   Button,
 } from "@heroui/react";
+
 import { useEditOtp } from "../hooks/otp";
 import { OTP } from "../types/otp";
 import { toast } from "../lib/toast";
@@ -18,7 +19,11 @@ interface EditOtpModalProps {
   otp: OTP;
 }
 
-const EditOtpModal: React.FC<EditOtpModalProps> = ({ isOpen, onClose, otp }) => {
+const EditOtpModal: React.FC<EditOtpModalProps> = ({
+  isOpen,
+  onClose,
+  otp,
+}) => {
   const [editedOtp, setEditedOtp] = useState({
     issuer: "",
     label: "",
@@ -47,12 +52,12 @@ const EditOtpModal: React.FC<EditOtpModalProps> = ({ isOpen, onClose, otp }) => 
   const handleEditOtp = () => {
     // Only include fields that have actually changed
     const otpData: any = {};
-    
+
     // Always include these for the API structure
     otpData.active = true;
     otpData.counter = 0;
     otpData.createdAt = new Date().toISOString();
-    
+
     // Only include changed fields
     if (editedOtp.issuer !== otp.Issuer) {
       otpData.issuer = editedOtp.issuer;
@@ -60,16 +65,19 @@ const EditOtpModal: React.FC<EditOtpModalProps> = ({ isOpen, onClose, otp }) => 
     if (editedOtp.label !== otp.Label) {
       otpData.label = editedOtp.label;
     }
-    if (editedOtp.algorithm !== "SHA1") { // Only if not default
+    if (editedOtp.algorithm !== "SHA1") {
+      // Only if not default
       otpData.algorithm = editedOtp.algorithm;
     }
-    if (editedOtp.digits !== 6) { // Only if not default
+    if (editedOtp.digits !== 6) {
+      // Only if not default
       otpData.digits = editedOtp.digits;
     }
     if (editedOtp.period !== otp.Period) {
       otpData.period = editedOtp.period;
     }
-    if (editedOtp.method !== "TOTP") { // Only if not default
+    if (editedOtp.method !== "TOTP") {
+      // Only if not default
       otpData.method = editedOtp.method;
     }
 
@@ -91,7 +99,7 @@ const EditOtpModal: React.FC<EditOtpModalProps> = ({ isOpen, onClose, otp }) => 
           console.error("Edit OTP - Error details:", error.response?.data);
           toast.error("Failed to update OTP");
         },
-      }
+      },
     );
   };
 
@@ -115,7 +123,8 @@ const EditOtpModal: React.FC<EditOtpModalProps> = ({ isOpen, onClose, otp }) => 
           <ModalHeader className="flex flex-col gap-1">
             <span>Edit OTP</span>
             <p className="text-sm text-default-500 font-normal">
-              Note: The secret key cannot be changed for security reasons. To use a different secret, please delete this OTP and add a new one.
+              Note: The secret key cannot be changed for security reasons. To
+              use a different secret, please delete this OTP and add a new one.
             </p>
           </ModalHeader>
           <ModalBody>
@@ -137,11 +146,14 @@ const EditOtpModal: React.FC<EditOtpModalProps> = ({ isOpen, onClose, otp }) => 
             />
             <Input
               label="Period"
-              type="number"
               placeholder="30"
+              type="number"
               value={editedOtp.period.toString()}
               onChange={(e) =>
-                setEditedOtp({ ...editedOtp, period: parseInt(e.target.value) || 30 })
+                setEditedOtp({
+                  ...editedOtp,
+                  period: parseInt(e.target.value) || 30,
+                })
               }
             />
           </ModalBody>
@@ -163,4 +175,4 @@ const EditOtpModal: React.FC<EditOtpModalProps> = ({ isOpen, onClose, otp }) => 
   );
 };
 
-export default EditOtpModal; 
+export default EditOtpModal;

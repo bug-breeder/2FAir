@@ -9,6 +9,7 @@ import {
 } from "@heroui/react";
 import QrScanner from "qr-scanner";
 import { MdCameraswitch, MdOutlineFlashOn } from "react-icons/md";
+
 import { useAddOtp } from "../hooks/otp";
 
 interface QrScannerModalProps {
@@ -40,7 +41,7 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
         {
           highlightScanRegion: true,
           highlightCodeOutline: true,
-        }
+        },
       );
 
       qrScannerRef.current.start().then(() => {
@@ -69,6 +70,7 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
   const switchCamera = () => {
     const newFacingMode =
       currentFacingMode === "environment" ? "user" : "environment";
+
     qrScannerRef.current?.setCamera(newFacingMode).then(() => {
       setCurrentFacingMode(newFacingMode);
       qrScannerRef.current?.hasFlash().then(setHasFlash);
@@ -122,7 +124,7 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
           <ModalHeader className="flex flex-col gap-1">QR Scanner</ModalHeader>
           <ModalBody>
             <div id="video-container" style={{ position: "relative" }}>
-              <video id="qr-video" ref={videoRef} style={{ width: "100%" }}>
+              <video ref={videoRef} id="qr-video" style={{ width: "100%" }}>
                 <track kind="captions" />
               </video>
               <div
@@ -135,9 +137,9 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
                 {hasFlash && (
                   <Button
                     isIconOnly
+                    aria-label="Toggle Flash"
                     color="warning"
                     onPress={toggleFlash}
-                    aria-label="Toggle Flash"
                   >
                     <MdOutlineFlashOn />
                   </Button>
@@ -152,9 +154,9 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
               >
                 <Button
                   isIconOnly
+                  aria-label="Switch Camera"
                   color="primary"
                   onPress={switchCamera}
-                  aria-label="Switch Camera"
                 >
                   <MdCameraswitch />
                 </Button>
@@ -179,4 +181,4 @@ const QrScannerModal: React.FC<QrScannerModalProps> = ({ isOpen, onClose }) => {
   );
 };
 
-export default QrScannerModal; 
+export default QrScannerModal;

@@ -10,10 +10,12 @@ import {
 } from "react-icons/pi";
 import { RxDividerVertical } from "react-icons/rx";
 import { CgArrowRight } from "react-icons/cg";
+
+import { OTP, OTPSecret } from "../types/otp";
+
 import ContextMenu from "./context-menu";
 import QRModal from "./qr-modal";
 import EditOtpModal from "./edit-otp-modal";
-import { OTP, OTPSecret } from "../types/otp";
 
 interface SmartOTPCardProps {
   otp: OTP;
@@ -110,11 +112,11 @@ const SmartOTPCard: React.FC<SmartOTPCardProps> = ({
           <CardBody className="flex flex-row gap-5 justify-between items-center pt-3 pl-3 pr-3 pb-1">
             <div className="flex gap-3 items-center flex-grow overflow-hidden">
               <Avatar
+                alt={otp.Issuer}
                 className="flex-shrink-0"
                 radius="full"
                 size="md"
                 src={`/providers/SVG/${otp.Issuer}.svg`}
-                alt={otp.Issuer}
               />
               <div className="flex flex-col gap-1 items-start justify-center flex-grow overflow-hidden">
                 <h4 className="text-md leading-none">{otp.Issuer}</h4>
@@ -169,8 +171,8 @@ const SmartOTPCard: React.FC<SmartOTPCardProps> = ({
           activeMenu={activeMenu}
           closeMenu={closeMenu}
           otpID={otp.Id}
-          setShowQR={setShowQR}
           setShowEdit={setShowEdit}
+          setShowQR={setShowQR}
         />
       )}
       {showQR && (
@@ -179,12 +181,12 @@ const SmartOTPCard: React.FC<SmartOTPCardProps> = ({
       {showEdit && (
         <EditOtpModal
           isOpen={showEdit}
-          onClose={() => setShowEdit(false)}
           otp={otp}
+          onClose={() => setShowEdit(false)}
         />
       )}
     </div>
   );
 };
 
-export default SmartOTPCard; 
+export default SmartOTPCard;

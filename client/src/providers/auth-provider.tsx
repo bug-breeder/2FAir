@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Try to get current user info
       const user = await apiClient.get<User>("/api/v1/auth/me");
+
       setUser(user);
     } catch (error) {
       // If that fails, try to refresh token
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await apiClient.post("/api/v1/auth/refresh");
         // If refresh succeeds, try to get user info again
         const user = await apiClient.get<User>("/api/v1/auth/me");
+
         setUser(user);
       } catch (refreshError) {
         setUser(null);

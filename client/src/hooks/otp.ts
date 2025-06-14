@@ -37,7 +37,8 @@ export const useEditOtp = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ otpID, otp }: { otpID: string; otp: any }) => editOtp(otpID, otp),
+    mutationFn: ({ otpID, otp }: { otpID: string; otp: any }) =>
+      editOtp(otpID, otp),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["otps"] });
       queryClient.invalidateQueries({ queryKey: ["otpCodes"] });

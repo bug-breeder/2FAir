@@ -3,6 +3,7 @@ import { Button, Chip } from "@heroui/react";
 import { FaPlus, FaEdit } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { LuFileImage, LuCamera } from "react-icons/lu";
+
 import AddOtpModal from "./add-otp-modal";
 import QrScannerModal from "./qr-scanner";
 import QRImageUploaderModal from "./qr-uploader";
@@ -21,10 +22,10 @@ const FAB = () => {
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            initial={{ opacity: 0 }}
             animate={{ opacity: 0.5 }}
-            exit={{ opacity: 0 }}
             className="fixed inset-0 z-10"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
             onClick={closeExpand}
           />
         )}
@@ -33,23 +34,23 @@ const FAB = () => {
         <AnimatePresence>
           {isExpanded && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
               className="flex items-center space-x-2"
+              exit={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 20 }}
             >
               <Chip
                 className="text-sm text-default-500"
-                variant="solid"
                 radius="sm"
+                variant="solid"
               >
                 Scan QR Code
               </Chip>
               <Button
                 isIconOnly
+                className="rounded-full w-14 h-14"
                 size="lg"
                 variant="shadow"
-                className="rounded-full w-14 h-14"
                 onPress={() => {
                   setShowQRScanner(true);
                   closeExpand();
@@ -61,23 +62,23 @@ const FAB = () => {
           )}
           {isExpanded && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
               className="flex items-center space-x-2"
+              exit={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 20 }}
             >
               <Chip
                 className="text-sm text-default-500"
-                variant="solid"
                 radius="sm"
+                variant="solid"
               >
                 Read QR Image
               </Chip>
               <Button
                 isIconOnly
+                className="rounded-full w-14 h-14"
                 size="lg"
                 variant="shadow"
-                className="rounded-full w-14 h-14"
                 onPress={() => {
                   setShowQRUploader(true);
                   closeExpand();
@@ -89,22 +90,22 @@ const FAB = () => {
           )}
           {isExpanded && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
               className="flex items-center space-x-2"
+              exit={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 20 }}
             >
               <Chip
                 className="text-sm text-default-500"
-                variant="solid"
                 radius="sm"
+                variant="solid"
               >
                 Add Manually
               </Chip>
               <Button
                 isIconOnly
-                size="lg"
                 className="rounded-full w-14 h-14"
+                size="lg"
                 variant="shadow"
                 onPress={() => {
                   setShowModal(true);
@@ -118,10 +119,10 @@ const FAB = () => {
         </AnimatePresence>
         <Button
           isIconOnly
-          size="lg"
           className="rounded-full w-14 h-14"
-          variant="shadow"
           color="success"
+          size="lg"
+          variant="shadow"
           onPress={toggleExpand}
         >
           <FaPlus className={isExpanded ? "rotate-45" : ""} />
@@ -141,4 +142,4 @@ const FAB = () => {
   );
 };
 
-export default FAB; 
+export default FAB;

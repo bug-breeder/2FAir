@@ -1,9 +1,8 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Button, Divider, Link } from "@heroui/react";
 import { Icon } from "@iconify/react";
-import { toast } from "../lib/toast";
-import { FaGoogle, FaMicrosoft } from "react-icons/fa";
 
+import { toast } from "../lib/toast";
 import { useAuth } from "../providers/auth-provider";
 import { FAir } from "../components/icons";
 
@@ -22,7 +21,7 @@ function LoginPage() {
     <div className="flex min-h-screen w-full flex-col items-center justify-center px-6 sm:px-0">
       <div className="mt-2 flex w-full max-w-sm flex-col gap-4 rounded-large bg-content1 px-4 sm:px-8 py-6 shadow-small">
         <div className="flex flex-col items-center pb-1">
-          <FAir size={60} className="text-foreground" />
+          <FAir className="text-foreground" size={60} />
           <h1 className="text-xl font-medium mt-4">Welcome Back</h1>
           <p className="text-small text-default-500">
             Log in to your account to continue

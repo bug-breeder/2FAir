@@ -187,10 +187,10 @@ export const SearchIcon = (props: IconSvgProps) => (
 
 export const FAir: React.FC<IconSvgProps> = ({ size = 32, ...props }) => (
   <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={size}
     height={size}
     viewBox="0 0 2048 2048"
+    width={size}
+    xmlns="http://www.w3.org/2000/svg"
     {...props}
   >
     <path

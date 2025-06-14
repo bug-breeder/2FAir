@@ -2,7 +2,8 @@ export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
   name: "2FAir",
-  description: "Lock down your logins with ease! Secure 2FA management made simple.",
+  description:
+    "Lock down your logins with ease! Secure 2FA management made simple.",
   navItems: [
     // Main navigation items - keeping minimal for 2FA app
   ],

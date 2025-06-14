@@ -74,14 +74,14 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 
   if (isMobile) {
     return (
-      <Modal isOpen={true} onClose={closeMenu} placement="bottom-center">
+      <Modal isOpen={true} placement="bottom-center" onClose={closeMenu}>
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">Actions</ModalHeader>
           <ModalBody className="gap-4 mb-6">
             <Button
-              onPress={handleShowQR}
-              variant="flat"
               startContent={<MdQrCode className="text-2xl" />}
+              variant="flat"
+              onPress={handleShowQR}
             >
               Show QR code
             </Button>
@@ -130,18 +130,14 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
         >
           <span className="text-lg lg:text-sm">Show QR code</span>
         </DropdownItem>
-        <DropdownItem
-          key="edit"
-          className="text-xl"
-          startContent={<FaEdit />}
-        >
+        <DropdownItem key="edit" className="text-xl" startContent={<FaEdit />}>
           <span className="text-lg lg:text-sm">Edit</span>
         </DropdownItem>
         <DropdownItem
           key="delete"
           className="text-danger"
-          startContent={<MdDeleteSweep className="text-2xl text-danger" />}
           isDisabled={inactivateOtpMutation.isPending}
+          startContent={<MdDeleteSweep className="text-2xl text-danger" />}
         >
           <span className="text-lg lg:text-sm text-danger">
             {inactivateOtpMutation.isPending ? "Deleting..." : "Delete"}
@@ -152,4 +148,4 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
   );
 };
 
-export default ContextMenu; 
+export default ContextMenu;

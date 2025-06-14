@@ -18,7 +18,6 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-  Badge,
   Chip,
 } from "@heroui/react";
 import { useNavigate } from "react-router-dom";
@@ -26,11 +25,12 @@ import { RiVipCrown2Fill } from "react-icons/ri";
 import { MdSecurity, MdSettings, MdLogout, MdHelp } from "react-icons/md";
 
 import { siteConfig } from "../config/site";
-import { ThemeSwitch } from "./theme-switch";
-import { FAir, HeartFilledIcon, SearchIcon } from "./icons";
 import { useAuth } from "../providers/auth-provider";
 import { useListOtps } from "../hooks/otp";
 import { toast } from "../lib/toast";
+
+import { FAir, SearchIcon } from "./icons";
+import { ThemeSwitch } from "./theme-switch";
 
 export const Navbar = () => {
   const searchRef = useRef<HTMLInputElement>(null);
@@ -59,6 +59,7 @@ export const Navbar = () => {
 
   const searchInput = (
     <Input
+      ref={searchRef}
       aria-label="Search OTPs"
       classNames={{
         inputWrapper: "bg-default-100",
@@ -75,7 +76,6 @@ export const Navbar = () => {
         <SearchIcon className="text-base text-default-400 pointer-events-none flex-shrink-0" />
       }
       type="search"
-      ref={searchRef}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
           handleSearch(e.currentTarget.value);
@@ -94,6 +94,7 @@ export const Navbar = () => {
     };
 
     window.addEventListener("keydown", handleKeydown);
+
     return () => window.removeEventListener("keydown", handleKeydown);
   }, []);
 
@@ -103,12 +104,12 @@ export const Navbar = () => {
   }
 
   return (
-    <HeroUINavbar 
-      maxWidth="xl" 
-      position="sticky"
-      isMenuOpen={isMenuOpen}
-      onMenuOpenChange={setIsMenuOpen}
+    <HeroUINavbar
       className="border-b border-divider"
+      isMenuOpen={isMenuOpen}
+      maxWidth="xl"
+      position="sticky"
+      onMenuOpenChange={setIsMenuOpen}
     >
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand className="gap-3 max-w-fit">
@@ -129,12 +130,12 @@ export const Navbar = () => {
         {Array.isArray(otps) && otps.length > 0 && (
           <NavbarItem className="hidden sm:flex">
             <Chip
-              size="sm"
-              variant="flat"
               color="primary"
+              size="sm"
               startContent={<MdSecurity className="text-sm" />}
+              variant="flat"
             >
-              {otps.length} OTP{otps.length !== 1 ? 's' : ''}
+              {otps.length} OTP{otps.length !== 1 ? "s" : ""}
             </Chip>
           </NavbarItem>
         )}
@@ -156,9 +157,9 @@ export const Navbar = () => {
             as={Link}
             className="text-sm font-normal text-default-600 bg-default-100"
             href={siteConfig.links.sponsor}
+            size="sm"
             startContent={<RiVipCrown2Fill className="text-warning" />}
             variant="flat"
-            size="sm"
           >
             Support
           </Button>
@@ -169,13 +170,13 @@ export const Navbar = () => {
           <Dropdown placement="bottom-end">
             <DropdownTrigger>
               <Avatar
+                showFallback
                 as="button"
                 className="transition-transform hover:scale-105"
                 color="primary"
                 name={user?.name || user?.email || "User"}
                 size="sm"
                 src={user?.picture}
-                showFallback
               />
             </DropdownTrigger>
             <DropdownMenu aria-label="User menu" variant="flat">
@@ -226,15 +227,15 @@ export const Navbar = () => {
 
       <NavbarMenu>
         <div className="mx-4 mt-2 mb-4">{searchInput}</div>
-        
+
         {/* User Info in Mobile Menu */}
         <div className="mx-4 mb-4 p-3 bg-default-100 rounded-lg">
           <div className="flex items-center gap-3">
             <Avatar
+              showFallback
               name={user?.name || user?.email || "User"}
               size="sm"
               src={user?.picture}
-              showFallback
             />
             <div>
               <p className="font-semibold text-sm">{user?.name || "User"}</p>
@@ -248,7 +249,11 @@ export const Navbar = () => {
             <NavbarMenuItem key={`${item.label}-${index}`}>
               <Link
                 className="w-full"
-                color={index === siteConfig.navMenuItems.length - 1 ? "danger" : "foreground"}
+                color={
+                  index === siteConfig.navMenuItems.length - 1
+                    ? "danger"
+                    : "foreground"
+                }
                 href={item.href}
                 size="lg"
                 onPress={() => {
@@ -264,7 +269,7 @@ export const Navbar = () => {
               </Link>
             </NavbarMenuItem>
           ))}
-          
+
           {/* Logout in mobile menu */}
           <NavbarMenuItem>
             <Link

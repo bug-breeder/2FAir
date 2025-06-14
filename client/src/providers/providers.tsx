@@ -31,4 +31,4 @@ export function Providers({ children }: ProvidersProps) {
       </QueryClientProvider>
     </BrowserRouter>
   );
-} 
+}

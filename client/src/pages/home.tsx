@@ -18,7 +18,9 @@ function HomePage() {
     isLoading: isLoadingOtpCodes,
     isError: isErrorOtpCodes,
   } = useGenerateOtpCodes();
-  const [combinedData, setCombinedData] = useState<Array<{ otp: OTP; secret: OTPSecret }>>([]);
+  const [combinedData, setCombinedData] = useState<
+    Array<{ otp: OTP; secret: OTPSecret }>
+  >([]);
   const [activeMenu, setActiveMenu] = useState<{
     idx: number;
     x: number;
@@ -31,25 +33,30 @@ function HomePage() {
     };
 
     document.addEventListener("click", handleClickOutside);
+
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
   useEffect(() => {
     if (otps && otpCodes && Array.isArray(otps) && Array.isArray(otpCodes)) {
-      const combined = otps.map((otp: OTP) => {
-        const codeData = otpCodes.find((code: OTPSecret) => code.Id === otp.Id);
-        
-        return {
-          otp,
-          secret: codeData || {
-            Id: otp.Id,
-            CurrentCode: "------",
-            CurrentExpireAt: new Date().toISOString(),
-            NextCode: "------",
-            NextExpireAt: new Date().toISOString(),
-          },
-        };
-      }).filter(item => item.secret.CurrentCode !== "------"); // Only show items with valid codes
+      const combined = otps
+        .map((otp: OTP) => {
+          const codeData = otpCodes.find(
+            (code: OTPSecret) => code.Id === otp.Id,
+          );
+
+          return {
+            otp,
+            secret: codeData || {
+              Id: otp.Id,
+              CurrentCode: "------",
+              CurrentExpireAt: new Date().toISOString(),
+              NextCode: "------",
+              NextExpireAt: new Date().toISOString(),
+            },
+          };
+        })
+        .filter((item) => item.secret.CurrentCode !== "------"); // Only show items with valid codes
 
       setCombinedData(combined);
       console.log("Combined OTP data:", combined);
@@ -98,11 +105,11 @@ function HomePage() {
             {combinedData.map((item, index) => (
               <SmartOTPCard
                 key={item.otp.Id}
-                otp={item.otp}
-                otpSecret={item.secret}
                 activeMenu={activeMenu}
                 closeMenu={handleCloseMenu}
                 isActive={activeMenu?.idx === index}
+                otp={item.otp}
+                otpSecret={item.secret}
                 setActiveMenu={(x, y) => handleOpenMenu(index, x, y)}
               />
             ))}

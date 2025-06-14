@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
+
 import { toast } from "../toast";
 
 const API_URL = import.meta.env.VITE_SERVER_URL;
@@ -46,10 +47,11 @@ class ApiClient {
 
           // Only show error toast if it's not a duplicate within the last 2 seconds
           const errorKey = `${error.response?.status}-${message}`;
+
           if (!this.recentErrors.has(errorKey)) {
             this.recentErrors.add(errorKey);
             toast.error(message);
-            
+
             // Remove from recent errors after 2 seconds
             setTimeout(() => {
               this.recentErrors.delete(errorKey);

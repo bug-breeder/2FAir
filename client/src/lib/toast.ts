@@ -8,7 +8,7 @@ export const toast = {
       timeout: 4000,
     });
   },
-  
+
   error: (message: string) => {
     addToast({
       title: message,
@@ -16,7 +16,7 @@ export const toast = {
       timeout: 4000,
     });
   },
-  
+
   info: (message: string) => {
     addToast({
       title: message,
@@ -24,7 +24,7 @@ export const toast = {
       timeout: 4000,
     });
   },
-  
+
   warning: (message: string) => {
     addToast({
       title: message,
@@ -32,4 +32,4 @@ export const toast = {
       timeout: 4000,
     });
   },
-}; 
+};

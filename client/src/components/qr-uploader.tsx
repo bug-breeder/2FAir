@@ -8,6 +8,7 @@ import {
   Button,
 } from "@heroui/react";
 import QrScanner from "qr-scanner";
+
 import { useAddOtp } from "../hooks/otp";
 
 interface QRImageUploaderModalProps {
@@ -64,6 +65,7 @@ const QRImageUploaderModal: React.FC<QRImageUploaderModalProps> = ({
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+
     if (file) {
       QrScanner.scanImage(file)
         .then((result) => {
@@ -81,6 +83,7 @@ const QRImageUploaderModal: React.FC<QRImageUploaderModalProps> = ({
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const file = event.dataTransfer.files?.[0];
+
     if (file) {
       QrScanner.scanImage(file)
         .then((result) => {
@@ -104,8 +107,6 @@ const QRImageUploaderModal: React.FC<QRImageUploaderModalProps> = ({
           </ModalHeader>
           <ModalBody>
             <div
-              onDrop={handleDrop}
-              onDragOver={(e) => e.preventDefault()}
               style={{
                 width: "100%",
                 height: "300px",
@@ -116,11 +117,11 @@ const QRImageUploaderModal: React.FC<QRImageUploaderModalProps> = ({
                 position: "relative",
                 borderRadius: "8px",
               }}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDrop}
             >
               <input
-                type="file"
                 accept="image/*"
-                onChange={handleFileChange}
                 style={{
                   position: "absolute",
                   width: "100%",
@@ -128,6 +129,8 @@ const QRImageUploaderModal: React.FC<QRImageUploaderModalProps> = ({
                   opacity: 0,
                   cursor: "pointer",
                 }}
+                type="file"
+                onChange={handleFileChange}
               />
               <p className="text-center text-default-500">
                 Drag & drop an image here, or click to select a file
@@ -152,4 +155,4 @@ const QRImageUploaderModal: React.FC<QRImageUploaderModalProps> = ({
   );
 };
 
-export default QRImageUploaderModal; 
+export default QRImageUploaderModal;
