@@ -26,6 +26,7 @@ import { MdSecurity, MdSettings, MdLogout, MdHelp } from "react-icons/md";
 
 import { siteConfig } from "../config/site";
 import { useAuth } from "../providers/auth-provider";
+import { useSearch } from "../providers/search-provider";
 import { useListOtps } from "../hooks/otp";
 import { toast } from "../lib/toast";
 
@@ -36,6 +37,7 @@ export const Navbar = () => {
   const searchRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
+  const { searchQuery, setSearchQuery, clearSearch, isSearchActive } = useSearch();
   const { data: otps = [] } = useListOtps();
   const navigate = useNavigate();
 
@@ -50,10 +52,14 @@ export const Navbar = () => {
   };
 
   const handleSearch = (searchTerm: string) => {
-    if (searchTerm.trim()) {
-      // TODO: Implement search functionality
-      console.log("Searching for:", searchTerm);
-      toast.info(`Searching for: ${searchTerm}`);
+    const trimmedTerm = searchTerm.trim();
+    setSearchQuery(trimmedTerm);
+  };
+
+  const handleSearchClear = () => {
+    clearSearch();
+    if (searchRef.current) {
+      searchRef.current.value = "";
     }
   };
 
@@ -66,9 +72,21 @@ export const Navbar = () => {
         input: "text-sm",
       }}
       endContent={
-        <Kbd className="hidden lg:inline-block" keys={["command"]}>
-          K
-        </Kbd>
+        <div className="flex items-center gap-2">
+          {isSearchActive && (
+            <Button
+              isIconOnly
+              size="sm"
+              variant="light"
+              onPress={handleSearchClear}
+            >
+              ✕
+            </Button>
+          )}
+          <Kbd className="hidden lg:inline-block" keys={["command"]}>
+            K
+          </Kbd>
+        </div>
       }
       labelPlacement="outside"
       placeholder="Search your OTPs..."
@@ -76,9 +94,14 @@ export const Navbar = () => {
         <SearchIcon className="text-base text-default-400 pointer-events-none flex-shrink-0" />
       }
       type="search"
+      value={searchQuery}
+      onChange={(e) => handleSearch(e.target.value)}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
           handleSearch(e.currentTarget.value);
+        }
+        if (e.key === "Escape") {
+          handleSearchClear();
         }
       }}
     />
