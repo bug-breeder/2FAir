@@ -21,6 +21,7 @@ React and General Best Practices
 * Extract logic into reusable custom hooks prefixed with 'use'.
 * Avoid inline functions within JSX; use useCallback and useMemo strategically.
 * Ensure components are small, modular, and highly reusable.
+* Use `yarn` as the package manager.
 
 State Management
 
