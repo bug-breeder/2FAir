@@ -1,6 +1,28 @@
-# 2FAir - Cloud Based Two-Factor Authentication Manager
+# 2FAir - E2E Encrypted TOTP Vault
 
-2FAir is a modern, secure, and user-friendly two-factor authentication (2FA) manager that helps you organize and manage your OTP (One-Time Password) codes across multiple devices. Built with a React frontend and Go backend, 2FAir provides a seamless experience for managing your 2FA tokens with cloud synchronization.
+2FAir is a modern, secure, end-to-end encrypted TOTP (Time-based One-Time Password) vault that helps you organize and manage your 2FA codes across multiple devices. Built with a React frontend and Go backend, 2FAir provides a zero-knowledge architecture for managing your 2FA tokens with strong cryptographic security.
+
+## 🚧 **Current Development Status: Phase 2 Complete**
+
+**✅ Phase 1: Backend Foundation** - Complete
+- Clean architecture with Go/Gin
+- PostgreSQL with E2E encryption schema
+- SQLC for type-safe database operations
+- Domain-driven design with repositories
+
+**✅ Phase 2: Hybrid Authentication System** - Complete
+- OAuth authentication (Google, GitHub)
+- JWT token management
+- Authentication middleware
+- User management with secure sessions
+- WebAuthn service layer & HTTP handlers implemented
+- PRF extension support for vault key derivation
+
+**🔄 Phase 3: E2E Vault Encryption** - In Progress
+- WebAuthn repository integration (database layer)
+- AES-256-GCM encryption implementation
+- Multi-device key synchronization
+- Encrypted TOTP seed storage
 
 ## ✨ Features
 
@@ -54,100 +76,124 @@
 - **Swagger** - API documentation
 - **Docker** - Containerization support
 
-## 🚀 Getting Started
+## 🚀 Getting Started (Phase 2: OAuth Authentication)
 
 ### Prerequisites
 
-- **Node.js 18+** with Yarn package manager
-- **Go 1.22+** 
-- **Docker** (optional, for containerized deployment)
-- **MongoDB Atlas** account (for production) or **PostgreSQL** (for development)
-- **OAuth Credentials** from Google Cloud Console and/or Microsoft Azure
+- **Go 1.23+** - [Install Go](https://golang.org/doc/install)
+- **PostgreSQL 15+** - [Install PostgreSQL](https://www.postgresql.org/download/)
+- **Docker & Docker Compose** - [Install Docker](https://docs.docker.com/get-docker/)
+- **Make** - Usually pre-installed on Unix systems
+- **OAuth Provider Credentials** - Google/GitHub OAuth applications (optional for testing)
 
 ### 📦 Installation
 
 1. **Clone the repository**
    ```bash
    git clone https://github.com/bug-breeder/2fair.git
-   cd 2FAir
+   cd 2FAir/server
    ```
 
-2. **Setup Frontend**
+2. **Setup Backend Dependencies**
    ```bash
-   cd client
-   yarn install
-   ```
-
-3. **Setup Backend**
-   ```bash
-   cd ../server
    go mod tidy
+   ```
+
+3. **Start Development Database**
+   ```bash
+   make docker-up
+   ```
+
+4. **Run Database Migrations**
+   ```bash
+   make migrate-up
+   ```
+
+5. **Build the Application**
+   ```bash
+   make build
    ```
 
 ### ⚙️ Configuration
 
-#### Frontend Environment
+Create a `.env` file in the `server/` directory:
 
-Create `client/.env.local`:
 ```env
-VITE_SERVER_URL=http://localhost:8080
-```
+# Required Configuration
+JWT_SIGNING_KEY=your_super_secure_jwt_signing_key_change_in_production
+OAUTH_SESSION_SECRET=your_oauth_session_secret_change_in_production
 
-#### Backend Environment
+# Database Configuration (using Docker Compose)
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=2fair
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_SSL_MODE=disable
 
-Create `server/.env` based on `server/.env.example`:
-```env
 # Server Configuration
-PORT=8080
+SERVER_HOST=localhost
+SERVER_PORT=8080
 ENVIRONMENT=development
 
-# Database Configuration
-DATABASE_URL=mongodb://localhost:27017/2fair
-# OR for PostgreSQL development
-# DB_HOST=localhost
-# DB_PORT=5432
-# DB_USER=your_user
-# DB_PASSWORD=your_password
-# DB_NAME=2fair
-# DB_SSL_MODE=disable
+# OAuth Configuration (Optional - for full OAuth testing)
+OAUTH_GOOGLE_ENABLED=false
+OAUTH_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+OAUTH_GOOGLE_CLIENT_SECRET=your_google_client_secret
 
-# OAuth Configuration
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-MICROSOFT_CLIENT_ID=your_microsoft_client_id
-MICROSOFT_CLIENT_SECRET=your_microsoft_client_secret
+OAUTH_GITHUB_ENABLED=false
+OAUTH_GITHUB_CLIENT_ID=your_github_client_id
+OAUTH_GITHUB_CLIENT_SECRET=your_github_client_secret
 
-# JWT Configuration
-JWT_SECRET=your_jwt_secret_key
-JWT_EXPIRE_DURATION=24h
-REFRESH_TOKEN_EXPIRE_DURATION=7d
-
-# CORS Configuration
-FRONTEND_URL=http://localhost:5173
+# WebAuthn Configuration (for Phase 3)
+WEBAUTHN_RP_DISPLAY_NAME=2FAir
+WEBAUTHN_RP_ID=localhost
+WEBAUTHN_RP_ORIGINS=http://localhost:3000,http://localhost:8080
 ```
+
+> **Note**: The application will run without OAuth credentials for testing the API endpoints. OAuth providers can be enabled by setting the `OAUTH_*_ENABLED=true` and providing valid credentials.
 
 ### 🏃‍♂️ Running the Application
 
 #### Development Mode
 
-1. **Start the Backend**
+1. **Start the Development Database**
    ```bash
-   cd server
+   make docker-up
+   ```
+
+2. **Run Database Migrations**
+   ```bash
+   make migrate-up
+   ```
+
+3. **Start the Backend Server**
+   ```bash
    make run
-   # or
-   go run cmd/server/*.go
+   # or with custom environment
+   JWT_SIGNING_KEY=test_key OAUTH_SESSION_SECRET=test_secret DB_PASSWORD=postgres make run
    ```
 
-2. **Start the Frontend** (in a new terminal)
+4. **Test the API**
    ```bash
-   cd client
-   yarn dev
+   # Health check
+   curl http://localhost:8080/health
+   
+   # Public status
+   curl http://localhost:8080/v1/public/status
+   
+   # OAuth providers
+   curl http://localhost:8080/v1/auth/providers
+   
+   # Protected endpoint (should require auth)
+   curl http://localhost:8080/v1/api/vault/status
    ```
 
-3. **Access the Application**
-   - Frontend: http://localhost:5173
+5. **Access the Application**
    - Backend API: http://localhost:8080
-   - API Documentation: http://localhost:8080/swagger/index.html
+   - Health Check: http://localhost:8080/health
+   - Public Status: http://localhost:8080/v1/public/status
+   - OAuth Providers: http://localhost:8080/v1/auth/providers
 
 #### Production Deployment
 
@@ -179,28 +225,62 @@ FRONTEND_URL=http://localhost:5173
    yarn build
    ```
 
-## 📚 API Documentation
+## 📚 API Documentation (Phase 2: OAuth Authentication)
 
-The backend provides a comprehensive REST API with the following endpoints:
+The backend provides a hybrid OAuth + WebAuthn authentication system with the following endpoints:
 
-### Authentication
-- `GET /auth/google` - Google OAuth login
-- `GET /auth/microsoftonline` - Microsoft OAuth login
-- `POST /auth/logout` - User logout
-- `POST /auth/refresh` - Refresh JWT token
+### Health & Status
+- `GET /health` - Application health check
+- `GET /v1/public/status` - Public API status and features
 
-### OTP Management
-- `GET /api/v1/otp` - List all user OTPs
-- `POST /api/v1/otp` - Add new OTP
-- `PUT /api/v1/otp/{id}` - Update existing OTP
-- `POST /api/v1/otp/{id}/inactivate` - Deactivate OTP
-- `GET /api/v1/otp/codes` - Generate current OTP codes
+### Authentication (OAuth)
+- `GET /v1/auth/providers` - List available OAuth providers
+- `GET /v1/auth/google` - Google OAuth login initiation
+- `GET /v1/auth/github` - GitHub OAuth login initiation
+- `GET /v1/auth/google/callback` - Google OAuth callback
+- `GET /v1/auth/github/callback` - GitHub OAuth callback
+- `POST /v1/auth/logout` - User logout
+- `POST /v1/auth/refresh` - Refresh JWT token
+- `GET /v1/auth/profile` - Get current user profile (requires auth)
 
-### User Management
-- `GET /api/v1/user/profile` - Get user profile
-- `PUT /api/v1/user/profile` - Update user profile
+### Protected API (Requires Authentication)
+- `GET /v1/api/vault/status` - Vault status (placeholder for Phase 3)
 
-Visit `http://localhost:8080/swagger/index.html` when running the server for interactive API documentation.
+### Response Examples
+
+**Public Status:**
+```json
+{
+  "message": "2FAir API",
+  "version": "1.0.0",
+  "phase": "Phase 2 Complete - Hybrid Authentication System",
+  "features": {
+    "oauth": "enabled",
+    "webauthn": "planned", 
+    "vault": "planned"
+  }
+}
+```
+
+**OAuth Providers:**
+```json
+{
+  "providers": [
+    {
+      "name": "Google",
+      "provider": "google",
+      "login_url": "localhost:8080/auth/google",
+      "description": "Sign in with Google"
+    },
+    {
+      "name": "GitHub", 
+      "provider": "github",
+      "login_url": "localhost:8080/auth/github",
+      "description": "Sign in with GitHub"
+    }
+  ]
+}
+```
 
 ## 📋 Feature Documentation
 
@@ -218,50 +298,70 @@ The features documentation includes:
 - Development patterns and best practices
 - Integration guidelines for new features
 
-## 🛠️ Development
+## 🛠️ Development (Phase 2)
 
-### Frontend Development
+### Project Structure
+```
+server/
+├── cmd/server/          # Application entrypoint
+├── internal/
+│   ├── adapter/
+│   │   ├── api/         # HTTP handlers and middleware  
+│   │   └── database/    # Database repositories
+│   ├── domain/
+│   │   ├── entities/    # Domain models
+│   │   ├── repositories/# Repository interfaces
+│   │   └── services/    # Service interfaces
+│   └── infrastructure/
+│       ├── config/      # Configuration management
+│       ├── database/    # Database connection & migrations
+│       └── services/    # Service implementations
+├── migrations/          # Database migration files
+├── docker-compose.yml   # Development database
+└── Makefile            # Development commands
+```
+
+### Available Make Commands
 
 ```bash
-# Install dependencies
-yarn install
+# Development
+make run                 # Start the server
+make build              # Build the application
+make test               # Run tests
+make generate           # Generate SQLC code
 
-# Start development server
-yarn dev
+# Database
+make docker-up          # Start PostgreSQL with Docker
+make docker-down        # Stop Docker containers
+make migrate-up         # Run database migrations
+make migrate-down       # Rollback migrations
+make migrate-create name=<name>  # Create new migration
 
-# Build for production
-yarn build
+# Code Quality
+make lint               # Run linter
+make format             # Format code
+make deps               # Download dependencies
+make clean              # Clean build artifacts
 
-# Run tests
-yarn test
-
-# Lint and format code
-yarn lint
+# Documentation
+make docs               # Generate API documentation
 ```
 
 ### Backend Development
 
 ```bash
-# Install dependencies
-go mod tidy
+# Development workflow
+make docker-up          # Start database
+make migrate-up         # Apply migrations  
+make generate           # Generate SQLC
+make run               # Start server
 
-# Run server locally
-make run
+# Testing
+make test              # Run all tests
+go test ./internal/... # Run specific package tests
 
-# Build for production
-make build
-
-# Generate API documentation
-make docs
-
-# Run database migrations
-make migrate-up
-
-# Create new migration
-make migrate-create name=migration_name
-
-# Run tests
-go test ./...
+# Building
+make build             # Production build
 ```
 
 ### Database Management
