@@ -13,6 +13,9 @@ import {
 
 import { useAddOtp, useListOtps } from "../hooks/otp";
 import { toast } from "../lib/toast";
+import { validateTOTPSecret, normalizeTOTPSecret } from "../lib/totp";
+import { encryptData } from "../lib/crypto";
+import { authenticateWebAuthn, isWebAuthnSupported } from "../lib/webauthn";
 
 interface AddOtpModalProps {
   isOpen: boolean;
@@ -23,20 +26,8 @@ interface AddOtpModalProps {
 const validateSecret = (secret: string): string | null => {
   if (!secret) return "Secret is required";
 
-  // Remove spaces and common separators
-  const normalized = secret.toUpperCase().replace(/[\s\-_]/g, "");
-
-  // Check base32 format (A-Z, 2-7)
-  if (!/^[A-Z2-7]+$/.test(normalized)) {
-    return "Secret must contain only letters A-Z and digits 2-7";
-  }
-
-  if (normalized.length < 16) {
-    return "Secret too short (minimum 16 characters for security)";
-  }
-
-  if (normalized.length > 128) {
-    return "Secret too long (maximum 128 characters)";
+  if (!validateTOTPSecret(secret)) {
+    return "Secret must be Base32 format (A-Z, 2-7) and 16-128 characters";
   }
 
   return null;
@@ -72,6 +63,7 @@ const AddOtpModal: React.FC<AddOtpModalProps> = ({ isOpen, onClose }) => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isEncrypting, setIsEncrypting] = useState(false);
   const addOtpMutation = useAddOtp();
   const { refetch } = useListOtps(); // Hook to refetch the OTP list
 
@@ -79,77 +71,96 @@ const AddOtpModal: React.FC<AddOtpModalProps> = ({ isOpen, onClose }) => {
     const newErrors: Record<string, string> = {};
 
     const secretError = validateSecret(formData.secret);
-
     if (secretError) newErrors.secret = secretError;
 
     const issuerError = validateIssuer(formData.issuer);
-
     if (issuerError) newErrors.issuer = issuerError;
 
     const labelError = validateLabel(formData.label);
-
     if (labelError) newErrors.label = labelError;
 
     const period = parseInt(formData.period);
-
     if (period < 15 || period > 300) {
       newErrors.period = "Period must be between 15 and 300 seconds";
     }
 
     const digits = parseInt(formData.digits);
-
     if (digits < 6 || digits > 8) {
       newErrors.digits = "Digits must be between 6 and 8";
     }
 
     setErrors(newErrors);
-
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleAddOtp = () => {
+  const handleAddOtp = async () => {
     if (!validateForm()) {
       toast.error("Please fix the validation errors");
-
       return;
     }
 
-    const otpData = {
-      active: true,
-      algorithm: formData.algorithm,
-      counter: 0,
-      createdAt: new Date().toISOString(),
-      digits: parseInt(formData.digits),
-      issuer: formData.issuer.trim(),
-      label: formData.label.trim(),
-      method: formData.method,
-      period: parseInt(formData.period),
-      secret: formData.secret.toUpperCase().replace(/[\s\-_]/g, ""), // Normalize secret
-    };
+    // Check WebAuthn support
+    if (!isWebAuthnSupported()) {
+      toast.error("WebAuthn is not supported by this browser. Please use a modern browser with security key support.");
+      return;
+    }
 
-    addOtpMutation.mutate(otpData, {
-      onSuccess: () => {
-        refetch(); // Refetch the OTP list
-        onClose();
-        setFormData({
-          issuer: "",
-          label: "",
-          secret: "",
-          algorithm: "SHA1",
-          digits: "6",
-          period: "30",
-          method: "TOTP",
-        });
-        setErrors({});
-        toast.success("OTP added successfully");
-      },
-      onError: (error: any) => {
-        console.error("Error adding OTP:", error);
-        const errorMessage = error.response?.data?.error || "Failed to add OTP";
+    setIsEncrypting(true);
 
-        toast.error(errorMessage);
-      },
-    });
+    try {
+      // Authenticate with WebAuthn to get encryption key
+      console.log('Authenticating with WebAuthn for encryption...');
+      const encryptionKey = await authenticateWebAuthn();
+
+      // Normalize and encrypt the TOTP secret
+      const normalizedSecret = normalizeTOTPSecret(formData.secret);
+      const encryptedSecret = await encryptData(normalizedSecret, encryptionKey);
+      
+      // Format encrypted secret as ciphertext.iv.authTag for backend storage
+      const secretForBackend = `${encryptedSecret.ciphertext}.${encryptedSecret.iv}.${encryptedSecret.authTag}`;
+
+      const otpData = {
+        active: true,
+        algorithm: formData.algorithm,
+        counter: 0,
+        createdAt: new Date().toISOString(),
+        digits: parseInt(formData.digits),
+        issuer: formData.issuer.trim(),
+        label: formData.label.trim(),
+        method: formData.method,
+        period: parseInt(formData.period),
+        secret: secretForBackend, // Encrypted TOTP secret
+      };
+
+      console.log('Adding OTP with encrypted secret...');
+      addOtpMutation.mutate(otpData, {
+        onSuccess: () => {
+          refetch(); // Refetch the OTP list
+          onClose();
+          setFormData({
+            issuer: "",
+            label: "",
+            secret: "",
+            algorithm: "SHA1",
+            digits: "6",
+            period: "30",
+            method: "TOTP",
+          });
+          setErrors({});
+          toast.success("OTP added successfully with end-to-end encryption");
+        },
+        onError: (error: any) => {
+          console.error("Error adding OTP:", error);
+          const errorMessage = error.response?.data?.error || "Failed to add OTP";
+          toast.error(errorMessage);
+        },
+      });
+    } catch (error) {
+      console.error('Encryption or authentication failed:', error);
+      toast.error(`Failed to encrypt OTP secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsEncrypting(false);
+    }
   };
 
   const handleClose = () => {
@@ -179,7 +190,12 @@ const AddOtpModal: React.FC<AddOtpModalProps> = ({ isOpen, onClose }) => {
     <Modal isOpen={isOpen} placement="center" onOpenChange={handleClose}>
       <ModalContent>
         <>
-          <ModalHeader className="flex flex-col gap-1">Add New OTP</ModalHeader>
+          <ModalHeader className="flex flex-col gap-1">
+            <span>Add New OTP</span>
+            <p className="text-sm text-default-500 font-normal">
+              🔒 Your TOTP secret will be encrypted client-side before storage
+            </p>
+          </ModalHeader>
           <ModalBody>
             <Input
               description="The service provider name"
@@ -200,11 +216,12 @@ const AddOtpModal: React.FC<AddOtpModalProps> = ({ isOpen, onClose }) => {
               onChange={(e) => handleInputChange("label", e.target.value)}
             />
             <Input
-              description="Base32 encoded secret key (A-Z, 2-7)"
+              description="Base32 encoded secret key (A-Z, 2-7) - will be encrypted"
               errorMessage={errors.secret}
               isInvalid={!!errors.secret}
               label="Secret"
               placeholder="e.g., JBSWY3DPEHPK3PXP"
+              type="password"
               value={formData.secret}
               onChange={(e) => handleInputChange("secret", e.target.value)}
             />
@@ -214,7 +231,6 @@ const AddOtpModal: React.FC<AddOtpModalProps> = ({ isOpen, onClose }) => {
                 selectedKeys={[formData.algorithm]}
                 onSelectionChange={(keys) => {
                   const value = Array.from(keys)[0] as string;
-
                   handleInputChange("algorithm", value);
                 }}
               >
@@ -253,10 +269,10 @@ const AddOtpModal: React.FC<AddOtpModalProps> = ({ isOpen, onClose }) => {
             </Button>
             <Button
               color="success"
-              isDisabled={addOtpMutation.isPending}
+              isDisabled={addOtpMutation.isPending || isEncrypting}
               onPress={handleAddOtp}
             >
-              {addOtpMutation.isPending ? "Adding..." : "Add OTP"}
+              {isEncrypting ? "🔐 Encrypting..." : addOtpMutation.isPending ? "Adding..." : "🔒 Add OTP (Encrypted)"}
             </Button>
           </ModalFooter>
         </>

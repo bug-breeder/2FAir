@@ -18,6 +18,7 @@ type Config struct {
 	WebAuthn WebAuthnConfig
 	OAuth    OAuthConfig
 	Security SecurityConfig
+	Frontend FrontendConfig
 }
 
 // ServerConfig holds server-related configuration
@@ -88,6 +89,11 @@ type SecurityConfig struct {
 	CSPPolicy      string
 }
 
+// FrontendConfig holds frontend-related configuration
+type FrontendConfig struct {
+	URL string
+}
+
 // Load loads configuration from environment variables
 func Load() (*Config, error) {
 	// Load .env file if it exists (for development)
@@ -124,7 +130,7 @@ func Load() (*Config, error) {
 		},
 		WebAuthn: WebAuthnConfig{
 			RPDisplayName: getEnv("WEBAUTHN_RP_DISPLAY_NAME", "2FAir"),
-			RPID:          getEnv("WEBAUTHN_RP_ID", ""),
+			RPID:          getEnv("WEBAUTHN_RP_ID", "localhost"),
 			RPOrigins:     getEnvAsSlice("WEBAUTHN_RP_ORIGINS", []string{"http://localhost:3000", "http://localhost:8080"}),
 			Timeout:       getEnvAsDuration("WEBAUTHN_TIMEOUT", 60*time.Second),
 		},
@@ -132,14 +138,14 @@ func Load() (*Config, error) {
 			Google: OAuthProviderConfig{
 				ClientID:     getEnv("OAUTH_GOOGLE_CLIENT_ID", ""),
 				ClientSecret: getEnv("OAUTH_GOOGLE_CLIENT_SECRET", ""),
-				CallbackURL:  getEnv("OAUTH_GOOGLE_CALLBACK_URL", "http://localhost:8080/auth/oauth/callback/google"),
+				CallbackURL:  getEnv("OAUTH_GOOGLE_CALLBACK_URL", ""),
 				Scopes:       getEnvAsSlice("OAUTH_GOOGLE_SCOPES", []string{"email", "profile"}),
 				Enabled:      getEnvAsBool("OAUTH_GOOGLE_ENABLED", false),
 			},
 			GitHub: OAuthProviderConfig{
 				ClientID:     getEnv("OAUTH_GITHUB_CLIENT_ID", ""),
 				ClientSecret: getEnv("OAUTH_GITHUB_CLIENT_SECRET", ""),
-				CallbackURL:  getEnv("OAUTH_GITHUB_CALLBACK_URL", "http://localhost:8080/auth/oauth/callback/github"),
+				CallbackURL:  getEnv("OAUTH_GITHUB_CALLBACK_URL", ""),
 				Scopes:       getEnvAsSlice("OAUTH_GITHUB_SCOPES", []string{"user:email"}),
 				Enabled:      getEnvAsBool("OAUTH_GITHUB_ENABLED", false),
 			},
@@ -150,14 +156,17 @@ func Load() (*Config, error) {
 				Scopes:       getEnvAsSlice("OAUTH_MICROSOFT_SCOPES", []string{"https://graph.microsoft.com/User.Read"}),
 				Enabled:      getEnvAsBool("OAUTH_MICROSOFT_ENABLED", false),
 			},
-			SessionSecret: getEnv("OAUTH_SESSION_SECRET", ""),
+			SessionSecret: getEnv("OAUTH_SESSION_SECRET", "dev-session-secret-change-in-production"),
 			SessionMaxAge: getEnvAsInt("OAUTH_SESSION_MAX_AGE", 86400), // 24 hours
 		},
 		Security: SecurityConfig{
 			RateLimitRPS:   getEnvAsInt("RATE_LIMIT_RPS", 100),
 			RateLimitBurst: getEnvAsInt("RATE_LIMIT_BURST", 200),
-			CORSOrigins:    getEnvAsSlice("CORS_ORIGINS", []string{"http://localhost:3000"}),
+			CORSOrigins:    getEnvAsSlice("CORS_ORIGINS", []string{"http://localhost:5173"}),
 			CSPPolicy:      getEnv("CSP_POLICY", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"),
+		},
+		Frontend: FrontendConfig{
+			URL: getEnv("FRONTEND_URL", "http://localhost:5173"),
 		},
 	}
 

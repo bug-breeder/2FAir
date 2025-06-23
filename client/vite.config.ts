@@ -8,6 +8,22 @@ import tsconfigPaths from "vite-tsconfig-paths";
 export default mergeConfig(
   defineConfig({
     plugins: [react(), tsconfigPaths()],
+    server: {
+      proxy: {
+        // Proxy API requests to backend server
+        '/api': {
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+          secure: false,
+        },
+        // Also proxy OAuth callback routes
+        '/v1': {
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+          secure: false,
+        }
+      }
+    }
   }),
   defineTestConfig({
     test: {

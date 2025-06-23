@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
 
 import { toast } from "../toast";
 
-const API_URL = import.meta.env.VITE_SERVER_URL;
+const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8080';
 
 interface ApiErrorResponse {
   message: string;
@@ -19,17 +19,21 @@ class ApiClient {
       headers: {
         "Content-Type": "application/json",
       },
-      withCredentials: true, // Important for cookies/auth
+      // Remove withCredentials since we're using JWT tokens
     });
 
     this.setupInterceptors();
   }
 
   private setupInterceptors() {
-    // Request interceptor
+    // Request interceptor - add JWT token to requests
     this.client.interceptors.request.use(
       (config) => {
-        // You can add auth token here if needed
+        // Get token from localStorage and add to Authorization header
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
         return config;
       },
       (error) => {
@@ -41,8 +45,15 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       (error: AxiosError<ApiErrorResponse>) => {
-        // Don't show toast for 401 errors - let the protected route handle redirect
-        if (error.response?.status !== 401) {
+        // Handle 401 errors by clearing token
+        if (error.response?.status === 401) {
+          localStorage.removeItem('authToken');
+          // Redirect to login if not already there
+          if (!window.location.pathname.includes('/login')) {
+            window.location.href = '/login';
+          }
+        } else {
+          // Show error toast for other errors
           const message = this.getErrorMessage(error);
 
           // Only show error toast if it's not a duplicate within the last 2 seconds

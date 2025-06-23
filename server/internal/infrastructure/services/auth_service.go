@@ -38,12 +38,12 @@ func NewAuthService(
 		google.New(
 			googleClientID,
 			googleClientSecret,
-			fmt.Sprintf("%s/auth/google/callback", serverURL),
+			fmt.Sprintf("%s/api/v1/auth/google/callback", serverURL),
 		),
 		github.New(
 			githubClientID,
 			githubClientSecret,
-			fmt.Sprintf("%s/auth/github/callback", serverURL),
+			fmt.Sprintf("%s/api/v1/auth/github/callback", serverURL),
 		),
 	)
 

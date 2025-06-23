@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bug-breeder/2fair/server/internal/domain/services"
+	"github.com/bug-breeder/2fair/server/internal/infrastructure/config"
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth/gothic"
 )
@@ -13,12 +14,14 @@ import (
 // AuthHandler handles authentication endpoints
 type AuthHandler struct {
 	authService services.AuthService
+	config      *config.Config
 }
 
 // NewAuthHandler creates a new auth handler
-func NewAuthHandler(authService services.AuthService) *AuthHandler {
+func NewAuthHandler(authService services.AuthService, cfg *config.Config) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
+		config:      cfg,
 	}
 }
 
@@ -70,33 +73,74 @@ func (h *AuthHandler) OAuthCallback(c *gin.Context) {
 	// Complete OAuth flow
 	gothUser, err := gothic.CompleteUserAuth(c.Writer, c.Request)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "OAuth authentication failed"})
+		// Log the actual error for debugging
+		fmt.Printf("OAuth CompleteUserAuth error: %v\n", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "OAuth authentication failed", "details": err.Error()})
 		return
 	}
 
+	// Log successful OAuth data
+	fmt.Printf("OAuth success - User: %+v\n", gothUser)
+
 	// Convert to our OAuth provider format
+	username := gothUser.NickName
+	if username == "" {
+		// Generate username from email if NickName is empty (common with Google OAuth)
+		atIndex := 0
+		for i, c := range gothUser.Email {
+			if c == '@' {
+				atIndex = i
+				break
+			}
+		}
+		if atIndex > 0 {
+			username = gothUser.Email[:atIndex]
+		} else {
+			// Fallback username
+			username = fmt.Sprintf("user_%d", time.Now().Unix())
+		}
+	}
+
+	fmt.Printf("Generated username: %s for email: %s\n", username, gothUser.Email)
+
+	// Generate display name with fallback
+	displayName := gothUser.Name
+	if displayName == "" {
+		// Fallback to username if no display name provided
+		displayName = username
+	}
+
 	oauthData := &services.OAuthProvider{
 		Provider:    provider,
 		UserID:      gothUser.UserID,
 		Email:       gothUser.Email,
-		Username:    gothUser.NickName,
-		DisplayName: gothUser.Name,
+		Username:    username,
+		DisplayName: displayName,
 		AvatarURL:   gothUser.AvatarURL,
 	}
 
 	// Register or login user
+	fmt.Printf("Attempting to register/login user with data: %+v\n", oauthData)
 	user, err := h.authService.RegisterOrLoginUser(c.Request.Context(), oauthData)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to register/login user"})
+		// Log the actual registration error
+		fmt.Printf("RegisterOrLoginUser error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to register/login user", "details": err.Error()})
 		return
 	}
+
+	fmt.Printf("User registered/logged in successfully: %+v\n", user)
 
 	// Generate JWT token
 	token, err := h.authService.GenerateJWT(user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
+		// Log JWT generation error
+		fmt.Printf("GenerateJWT error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token", "details": err.Error()})
 		return
 	}
+
+	fmt.Printf("JWT token generated successfully\n")
 
 	// Set token in cookie
 	c.SetCookie(
@@ -109,17 +153,10 @@ func (h *AuthHandler) OAuthCallback(c *gin.Context) {
 		true,  // HTTP-only
 	)
 
-	// Return success response
-	c.JSON(http.StatusOK, gin.H{
-		"message": "authentication successful",
-		"user": gin.H{
-			"id":          user.ID,
-			"username":    user.Username,
-			"email":       user.Email,
-			"displayName": user.DisplayName,
-		},
-		"token": token,
-	})
+	// Redirect back to frontend with token
+	redirectURL := fmt.Sprintf("%s/?token=%s", h.config.Frontend.URL, token)
+
+	c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 }
 
 // Logout handles user logout
@@ -237,13 +274,13 @@ func (h *AuthHandler) GetProviders(c *gin.Context) {
 		{
 			"name":        "Google",
 			"provider":    "google",
-			"login_url":   fmt.Sprintf("%s/auth/google", c.Request.Host),
+			"login_url":   fmt.Sprintf("http://%s/api/v1/auth/google", c.Request.Host),
 			"description": "Sign in with Google",
 		},
 		{
 			"name":        "GitHub",
 			"provider":    "github",
-			"login_url":   fmt.Sprintf("%s/auth/github", c.Request.Host),
+			"login_url":   fmt.Sprintf("http://%s/api/v1/auth/github", c.Request.Host),
 			"description": "Sign in with GitHub",
 		},
 	}
