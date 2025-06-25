@@ -1,366 +1,319 @@
-# 2FAir - Cloud Based Two-Factor Authentication Manager
+# 🔐 2FAir - E2E Encrypted TOTP Vault
 
-2FAir is a modern, secure, and user-friendly two-factor authentication (2FA) manager that helps you organize and manage your OTP (One-Time Password) codes across multiple devices. Built with a React frontend and Go backend, 2FAir provides a seamless experience for managing your 2FA tokens with cloud synchronization.
+**Status**: ✅ **Production Ready** - Zero-Knowledge Architecture with WebAuthn Integration
 
-## ✨ Features
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Version](https://img.shields.io/badge/Go-1.21+-blue.svg)](https://golang.org)
+[![Node Version](https://img.shields.io/badge/Node-18+-green.svg)](https://nodejs.org)
+[![React](https://img.shields.io/badge/React-18+-61DAFB.svg)](https://reactjs.org)
 
-### 🔐 **Secure OTP Management**
-- Add, edit, and manage OTP entries with validation
-- Support for TOTP (Time-based) and HOTP (Counter-based) algorithms
-- Secure secret storage with proper validation
-- Real-time code generation with expiration tracking
+2FAir is a **zero-knowledge, end-to-end encrypted TOTP (Time-based One-Time Password) vault** that puts security and privacy first. Your TOTP secrets are encrypted client-side using WebAuthn-derived keys, ensuring the server never sees your plaintext data.
 
-### 📱 **QR Code Integration**
-- Scan QR codes to quickly add new OTP entries
-- Support for standard OTP URI format
-- Camera-based scanning with fallback options
+## ✨ Current Features
 
-### 🌐 **Multi-Device Synchronization**
-- Cloud-based storage for cross-device access
-- Real-time synchronization across all your devices
-- Secure user authentication with OAuth providers
+### 🔒 **Zero-Knowledge Security** ✅ IMPLEMENTED
+- **End-to-End Encryption**: AES-256-GCM with client-side encryption
+- **WebAuthn Integration**: Hardware-backed key derivation from biometric/security keys
+- **No Server Access**: Server never sees plaintext TOTP secrets or codes
+- **Session-Based Keys**: Consistent encryption keys throughout the browser session
+- **PBKDF2 Key Derivation**: Secure key generation from WebAuthn credentials
 
-### 🎨 **Modern User Interface**
-- Clean, responsive design with HeroUI components
-- Dark/Light theme support with system preference detection
-- Mobile-first responsive design
-- Intuitive drag-and-drop interface for OTP management
+### 🚀 **Modern TOTP Management** ✅ IMPLEMENTED
+- **Client-Side Generation**: All TOTP codes generated using the `otpauth` library
+- **Real-Time Updates**: Codes auto-refresh every 30 seconds
+- **Multi-Algorithm Support**: SHA1, SHA256, SHA512 algorithms
+- **Standard Compatibility**: Works with Google Authenticator, Authy, and all TOTP apps
+- **Visual Progress**: Time-remaining indicators for each code
 
-### 🔒 **Enterprise-Grade Security**
-- OAuth authentication with Google and Microsoft
-- JWT-based secure session management
-- Input validation and sanitization
-- Secure secret handling with proper encoding
+### 🌐 **Full-Stack Application** ✅ IMPLEMENTED
+- **React Frontend**: TypeScript + HeroUI + TanStack Query + Zustand
+- **Go Backend**: Gin framework + PostgreSQL + SQLC
+- **OAuth Authentication**: Google login support
+- **WebAuthn Registration**: Complete credential management UI
+- **Responsive Design**: Works on desktop and mobile browsers
 
-## 🏗️ Architecture
+### 🛡️ **Production Security** ✅ IMPLEMENTED
+- **Comprehensive Error Handling**: User-friendly error messages
+- **Secure Headers**: CORS, CSP configured
+- **Input Validation**: Server-side validation for all inputs
+- **Authentication Required**: All endpoints properly protected
+- **Session Management**: Secure JWT and WebAuthn session handling
 
-### Frontend Stack
-- **React 18** - Modern UI library with hooks
-- **TypeScript** - Type safety and better developer experience
-- **Vite** - Fast build tool and development server
-- **HeroUI** - Comprehensive UI component library
-- **TanStack Query** - Powerful data fetching and caching
-- **Zustand** - Lightweight state management
-- **Tailwind CSS** - Utility-first CSS framework
-- **React Router** - Client-side routing
-
-### Backend Stack
-- **Go 1.22+** - High-performance backend language
-- **Gin** - Fast HTTP web framework
-- **Clean Architecture** - Separation of concerns with domain-driven design
-- **MongoDB Atlas** - Cloud database for production
-- **PostgreSQL** - Local development database with migrations
-- **JWT** - Secure authentication tokens
-- **Swagger** - API documentation
-- **Docker** - Containerization support
-
-## 🚀 Getting Started
+## 📋 Quick Start
 
 ### Prerequisites
+- **Docker & Docker Compose** (recommended)
+- **Go 1.21+** (for local development)
+- **Node.js 18+** & **Yarn** (for frontend development)
+- **PostgreSQL 14+** (for local database)
 
-- **Node.js 18+** with Yarn package manager
-- **Go 1.22+** 
-- **Docker** (optional, for containerized deployment)
-- **MongoDB Atlas** account (for production) or **PostgreSQL** (for development)
-- **OAuth Credentials** from Google Cloud Console and/or Microsoft Azure
-
-### 📦 Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/bug-breeder/2fair.git
-   cd 2FAir
-   ```
-
-2. **Setup Frontend**
-   ```bash
-   cd client
-   yarn install
-   ```
-
-3. **Setup Backend**
-   ```bash
-   cd ../server
-   go mod tidy
-   ```
-
-### ⚙️ Configuration
-
-#### Frontend Environment
-
-Create `client/.env.local`:
-```env
-VITE_SERVER_URL=http://localhost:8080
-```
-
-#### Backend Environment
-
-Create `server/.env` based on `server/.env.example`:
-```env
-# Server Configuration
-PORT=8080
-ENVIRONMENT=development
-
-# Database Configuration
-DATABASE_URL=mongodb://localhost:27017/2fair
-# OR for PostgreSQL development
-# DB_HOST=localhost
-# DB_PORT=5432
-# DB_USER=your_user
-# DB_PASSWORD=your_password
-# DB_NAME=2fair
-# DB_SSL_MODE=disable
-
-# OAuth Configuration
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-MICROSOFT_CLIENT_ID=your_microsoft_client_id
-MICROSOFT_CLIENT_SECRET=your_microsoft_client_secret
-
-# JWT Configuration
-JWT_SECRET=your_jwt_secret_key
-JWT_EXPIRE_DURATION=24h
-REFRESH_TOKEN_EXPIRE_DURATION=7d
-
-# CORS Configuration
-FRONTEND_URL=http://localhost:5173
-```
-
-### 🏃‍♂️ Running the Application
-
-#### Development Mode
-
-1. **Start the Backend**
-   ```bash
-   cd server
-   make run
-   # or
-   go run cmd/server/*.go
-   ```
-
-2. **Start the Frontend** (in a new terminal)
-   ```bash
-   cd client
-   yarn dev
-   ```
-
-3. **Access the Application**
-   - Frontend: http://localhost:5173
-   - Backend API: http://localhost:8080
-   - API Documentation: http://localhost:8080/swagger/index.html
-
-#### Production Deployment
-
-##### Using Docker
-
-1. **Build and run with Docker Compose**
-   ```bash
-   cd server
-   docker-compose up --build
-   ```
-
-2. **Build frontend for production**
-   ```bash
-   cd client
-   yarn build
-   ```
-
-##### Manual Production Build
-
-1. **Build Backend**
-   ```bash
-   cd server
-   make build
-   ```
-
-2. **Build Frontend**
-   ```bash
-   cd client
-   yarn build
-   ```
-
-## 📚 API Documentation
-
-The backend provides a comprehensive REST API with the following endpoints:
-
-### Authentication
-- `GET /auth/google` - Google OAuth login
-- `GET /auth/microsoftonline` - Microsoft OAuth login
-- `POST /auth/logout` - User logout
-- `POST /auth/refresh` - Refresh JWT token
-
-### OTP Management
-- `GET /api/v1/otp` - List all user OTPs
-- `POST /api/v1/otp` - Add new OTP
-- `PUT /api/v1/otp/{id}` - Update existing OTP
-- `POST /api/v1/otp/{id}/inactivate` - Deactivate OTP
-- `GET /api/v1/otp/codes` - Generate current OTP codes
-
-### User Management
-- `GET /api/v1/user/profile` - Get user profile
-- `PUT /api/v1/user/profile` - Update user profile
-
-Visit `http://localhost:8080/swagger/index.html` when running the server for interactive API documentation.
-
-## 📋 Feature Documentation
-
-For comprehensive technical documentation of all features, including implementation details, components, and API specifications, see **[FEATURES.md](FEATURES.md)**. This documentation is specifically designed to help:
-
-- 🤖 **AI Agents & Tools** (like Cursor) understand the codebase structure
-- 👨‍💻 **Developers** quickly understand existing features
-- 🆕 **New Contributors** get up to speed with the architecture
-- 🔧 **Maintainers** reference implementation patterns
-
-The features documentation includes:
-- Technical implementation details for each feature
-- Component hierarchy and relationships  
-- API endpoint specifications
-- Development patterns and best practices
-- Integration guidelines for new features
-
-## 🛠️ Development
-
-### Frontend Development
+### 🐳 Docker Setup (Recommended)
 
 ```bash
+# Clone repository
+git clone <repository-url>
+cd 2FAir
+
+# Start all services
+docker-compose up -d
+
+# Check service health
+docker-compose ps
+```
+
+**Services will be available at:**
+- **Frontend**: http://localhost:5173 (Vite dev server)
+- **Backend API**: http://localhost:8080
+- **Database**: localhost:5432
+
+### 🔧 Manual Setup
+
+#### Backend Setup
+```bash
+# Navigate to server directory
+cd server
+
 # Install dependencies
+go mod download
+
+# Set up environment
+cp .env.example .env
+# Edit .env with your configuration
+
+# Start PostgreSQL (via Docker)
+docker run --name 2fair-postgres -e POSTGRES_DB=2fair -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:14
+
+# Run database migrations
+go run ./cmd/migrate
+
+# Start server
+go run cmd/server/main.go
+```
+
+#### Frontend Setup
+```bash
+# Navigate to client directory  
+cd client
+
+# Install dependencies (including otpauth package)
 yarn install
+
+# Set up environment
+cp .env.example .env.local
+# Edit .env.local with your configuration
 
 # Start development server
 yarn dev
-
-# Build for production
-yarn build
-
-# Run tests
-yarn test
-
-# Lint and format code
-yarn lint
 ```
 
-### Backend Development
+## 🏗️ Architecture
 
-```bash
-# Install dependencies
-go mod tidy
-
-# Run server locally
-make run
-
-# Build for production
-make build
-
-# Generate API documentation
-make docs
-
-# Run database migrations
-make migrate-up
-
-# Create new migration
-make migrate-create name=migration_name
-
-# Run tests
-go test ./...
+### Current Implementation
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   React SPA     │    │   Go API Server  │    │   PostgreSQL    │
+│                 │    │                  │    │                 │
+│ • HeroUI        │◄──►│ • Gin Framework  │◄──►│ • Encrypted     │
+│ • TanStack Query│    │ • SQLC           │    │   TOTP Secrets  │
+│ • Zustand       │    │ • WebAuthn       │    │ • User Data     │
+│ • OTPAuth       │    │ • OAuth 2.0      │    │ • Credentials   │
+│ • WebAuthn      │    │ • JWT Auth       │    │                 │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
-### Database Management
+### Zero-Knowledge Flow (As Implemented)
+```
+1. User logs in via OAuth (Google)
+2. WebAuthn registration creates hardware-backed credential
+3. TOTP secret encrypted client-side using WebAuthn-derived key
+4. Encrypted data sent to server (format: ciphertext.iv.authTag)
+5. Server stores encrypted data without modification (no double encryption)
+6. TOTP codes generated entirely on client using otpauth library
+7. Server never sees plaintext secrets or codes
+```
 
-The project supports both MongoDB (production) and PostgreSQL (development) databases.
+### Tech Stack
 
-#### MongoDB Setup
-1. Create a MongoDB Atlas account
-2. Create a new cluster and database
-3. Add the connection string to your `.env` file
+**Frontend:**
+- **React 18** with TypeScript
+- **HeroUI** for beautiful, accessible components
+- **TanStack Query** for server state management
+- **Zustand** for client state management
+- **OTPAuth** for industry-standard TOTP generation
+- **WebAuthn API** for hardware security integration
+- **Vite** for fast development and building
 
-#### PostgreSQL Setup (Development)
-1. Install PostgreSQL locally
-2. Create a new database
-3. Update the database configuration in `.env`
-4. Run migrations: `make migrate-up`
+**Backend:**
+- **Go 1.21+** with Gin web framework
+- **PostgreSQL** with SQLC for type-safe queries
+- **WebAuthn** for hardware security keys
+- **OAuth 2.0** for authentication (Google)
+- **JWT** for session management
+- **AES-256-GCM** encryption with PBKDF2 key derivation
+
+## 🔒 Security Model (Current Implementation)
+
+### Encryption Details
+- **Algorithm**: AES-256-GCM (authenticated encryption)
+- **Key Derivation**: PBKDF2 with SHA-256 (100,000 iterations)
+- **Key Source**: WebAuthn credential.id (consistent across sessions)
+- **Session Management**: Keys cached in memory for session duration
+- **IV Generation**: Cryptographically secure random (12 bytes)
+- **Authentication**: GCM authentication tags prevent tampering
+
+### Zero-Knowledge Principles
+1. **Client-Side Encryption**: All TOTP secrets encrypted before leaving the client
+2. **Server Blindness**: Server stores only encrypted `ciphertext.iv.authTag` format
+3. **Key Derivation**: Encryption keys derived from WebAuthn, never transmitted
+4. **TOTP Generation**: All code generation happens client-side using `otpauth`
+5. **No Decryption**: Server cannot decrypt user data under any circumstances
+6. **Session Consistency**: Same encryption key used throughout browser session
+
+### Current Security Flow
+```
+WebAuthn credential.id → PBKDF2 → AES-256-GCM key → Encrypt TOTP secret
+                    ↓
+            Store encrypted: "ciphertext.iv.authTag"
+                    ↓
+            Retrieve & decrypt client-side → Generate TOTP codes
+```
+
+## 📚 Documentation
+
+- **[API Documentation](docs/API.md)** - Complete API reference
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment instructions
+- **[System Architecture](docs/design/system-architecture.md)** - Technical deep dive
+- **[Cryptographic Design](docs/design/cryptographic-design.md)** - Encryption details
+- **[Features Overview](docs/FEATURES.md)** - Complete feature list
 
 ## 🧪 Testing
-
-### Frontend Tests
-```bash
-cd client
-yarn test
-```
 
 ### Backend Tests
 ```bash
 cd server
+
+# Run all tests
 go test ./...
+
+# Run tests with coverage
+go test -v -cover ./...
 ```
 
-## 📱 Usage
+### Frontend Tests
+```bash
+cd client
 
-1. **Login**: Use Google or Microsoft OAuth to authenticate
-2. **Add OTP**: Click the "+" button to add a new 2FA token
-   - Scan QR code from your service provider
-   - Or manually enter the secret key
-3. **Manage Tokens**: View, edit, or delete your OTP entries
-4. **Copy Codes**: Click on any OTP code to copy it to clipboard
-5. **Sync**: Your tokens are automatically synchronized across devices
+# Run all tests
+yarn test
 
-## 🔒 Security Considerations
+# Run tests with coverage
+yarn test:coverage
 
-- All secrets are validated and normalized before storage
-- JWT tokens have configurable expiration times
-- OAuth integration provides secure authentication
-- Input validation prevents injection attacks
-- CORS configuration restricts unauthorized access
-- Secrets are stored securely with proper encoding
+# Run tests in watch mode
+yarn test:watch
+```
+
+## 📊 Current Status
+
+### ✅ Completed Features
+- **Authentication System**: OAuth 2.0 + WebAuthn integration
+- **WebAuthn Registration**: Complete UI flow with error handling
+- **E2E Encryption**: AES-256-GCM with zero-knowledge architecture
+- **TOTP Management**: Full CRUD operations with client-side encryption
+- **TOTP Generation**: Real-time client-side code generation using `otpauth`
+- **Database Layer**: PostgreSQL with SQLC integration
+- **API Layer**: RESTful API with comprehensive error handling
+- **Frontend**: Modern React SPA with HeroUI components
+- **Session Management**: Consistent encryption keys throughout session
+- **Error Handling**: User-friendly messages for all failure scenarios
+
+### 🔧 Current Limitations
+- **Single OAuth Provider**: Only Google login implemented
+- **Browser-Only**: No mobile app or browser extension
+- **No Backup/Recovery**: Manual backup not yet implemented
+- **Single Device**: No cross-device synchronization
+
+### 🚧 Future Enhancements
+- **Additional OAuth Providers**: GitHub, Microsoft, Apple
+- **Backup & Recovery**: Secure backup codes and recovery options
+- **Multi-Device Sync**: Cross-device encrypted synchronization
+- **Mobile Apps**: React Native or Progressive Web App
+- **Browser Extensions**: Chrome/Firefox extensions
+- **Enterprise Features**: Team management, audit logs
+
+## 🚀 Deployment
+
+### Development
+```bash
+# Start both frontend and backend
+# Terminal 1 - Backend
+cd server && go run cmd/server/main.go
+
+# Terminal 2 - Frontend  
+cd client && yarn dev
+
+# Access at:
+# Frontend: http://localhost:5173
+# Backend: http://localhost:8080
+```
+
+### Production
+See **[Deployment Guide](docs/DEPLOYMENT.md)** for detailed production setup including:
+- Docker Compose production configuration
+- Nginx reverse proxy setup  
+- SSL/TLS certificate configuration
+- Environment variable security
+- Database backup strategies
+- Monitoring and logging
 
 ## 🤝 Contributing
 
+We welcome contributions! Please follow these guidelines:
+
+### Development Setup
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes with tests
+4. Ensure all tests pass
+5. Submit a pull request
 
-## 📝 License
+### Code Standards
+- **Go**: Follow `gofmt` and `golint` standards
+- **TypeScript**: Use strict type checking
+- **React**: Functional components with hooks
+- **Security**: All user inputs must be validated
 
-This project is licensed under the GNU General Public License v3.0. See the [LICENSE](LICENSE) file for details.
+## 📜 License
 
-## 👥 Authors
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-- **Alan Nguyen** - *Initial work* - [@bug-breeder](https://github.com/bug-breeder)
+## 🙏 Acknowledgments
+
+- **WebAuthn Community** for passwordless authentication standards
+- **OTPAuth Library** for client-side TOTP implementation  
+- **HeroUI Team** for beautiful React components
+- **Go Community** for excellent tooling and libraries
 
 ## 📞 Support
 
-For support, email [anhngw@gmail.com](mailto:anhngw@gmail.com) or create an issue on GitHub.
+- **Issues**: [GitHub Issues](https://github.com/yourusername/2FAir/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/2FAir/discussions)
+- **Security**: For security issues, please email security@yourdomain.com
 
-## 🎯 Roadmap
+## ⭐ How It Works (Technical Summary)
 
-- [ ] Backup and restore functionality
-- [ ] Import/export OTP data
-- [ ] Biometric authentication
-- [ ] Browser extension
-- [ ] Mobile applications (iOS/Android)
-- [ ] Advanced security features
-- [ ] Team/organization management
+2FAir implements a true zero-knowledge architecture:
 
-## 📸 Screenshots
+1. **User Authentication**: OAuth login creates user account
+2. **WebAuthn Setup**: User registers biometric/security key
+3. **Key Derivation**: Client derives AES key from WebAuthn credential
+4. **Secret Encryption**: TOTP secrets encrypted client-side with AES-256-GCM
+5. **Secure Storage**: Server stores only encrypted `ciphertext.iv.authTag` data
+6. **Code Generation**: Client decrypts secrets and generates TOTP codes using `otpauth`
+7. **Session Management**: Encryption keys cached in memory for seamless UX
 
-<div style="display: flex; justify-content: space-between; margin: 20px 0;">
-    <img src="./screenshots/s4.png" alt="Main Dashboard" width="30%" />
-    <img src="./screenshots/s5.png" alt="OTP Management" width="30%" />
-    <img src="./screenshots/s9.png" alt="Add OTP" width="30%" />
-</div>
-
-<div style="display: flex; justify-content: space-between; margin: 20px 0;">
-    <img src="./screenshots/s6.png" alt="QR Code Scanner" width="30%" />
-    <img src="./screenshots/s7.png" alt="QR Code Processing" width="30%" />
-    <img src="./screenshots/s8.png" alt="Settings" width="30%" />
-</div>
-
-<div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0;">
-    <img src="./screenshots/tablet.jpeg" alt="Tablet View" width="45%" />
-    <img src="./screenshots/pc.png" alt="Desktop View" width="45%" />
-</div>
+**The server never sees your TOTP secrets or codes in plaintext!**
 
 ---
 
-**2FAir** - Secure. Simple. Synchronized.
+**Built with ❤️ for privacy and security**

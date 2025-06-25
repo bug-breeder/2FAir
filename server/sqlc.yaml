@@ -1,16 +1,16 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "internal/adapter/repository/postgres/queries"
-    schema: "internal/adapter/repository/postgres/migrations"
+    queries: "internal/adapter/database/queries/"
+    schema: "internal/adapter/database/migrations/"
     gen:
       go:
-        package: "generated"
-        out: "internal/adapter/repository/postgres/generated"
+        package: "db"
+        out: "internal/adapter/database/sqlc/"
         sql_package: "pgx/v5"
         emit_interface: true
         emit_json_tags: true
-        emit_prepared_queries: true
+        emit_prepared_queries: false
         emit_exact_table_names: false
         emit_empty_slices: true
         overrides:
