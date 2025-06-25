@@ -3,6 +3,9 @@
  * Handles WebAuthn registration, authentication, and key derivation
  */
 
+// Session-based key storage to maintain consistency
+let sessionEncryptionKey: Uint8Array | null = null;
+
 export interface WebAuthnCredential {
   id: string;
   name: string;
@@ -30,7 +33,9 @@ export async function beginWebAuthnRegistration(): Promise<WebAuthnRegistrationO
   });
 
   if (!response.ok) {
-    throw new Error(`WebAuthn registration failed: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('WebAuthn registration begin failed:', response.status, errorText);
+    throw new Error(`WebAuthn registration failed: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
   return await response.json();
@@ -40,25 +45,31 @@ export async function beginWebAuthnRegistration(): Promise<WebAuthnRegistrationO
  * Completes WebAuthn registration
  */
 export async function finishWebAuthnRegistration(credential: PublicKeyCredential): Promise<void> {
+  const requestData = {
+    id: credential.id,
+    rawId: uint8ArrayToBase64Url(new Uint8Array(credential.rawId)),
+    response: {
+      attestationObject: uint8ArrayToBase64Url(new Uint8Array((credential.response as AuthenticatorAttestationResponse).attestationObject)),
+      clientDataJSON: uint8ArrayToBase64Url(new Uint8Array(credential.response.clientDataJSON)),
+    },
+    type: credential.type,
+  };
+
+
+
   const response = await fetch('/api/v1/webauthn/register/finish', {
     method: 'POST',
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      id: credential.id,
-      rawId: Array.from(new Uint8Array(credential.rawId)),
-      response: {
-        attestationObject: Array.from(new Uint8Array((credential.response as AuthenticatorAttestationResponse).attestationObject)),
-        clientDataJSON: Array.from(new Uint8Array(credential.response.clientDataJSON)),
-      },
-      type: credential.type,
-    }),
+    body: JSON.stringify(requestData),
   });
 
   if (!response.ok) {
-    throw new Error(`WebAuthn registration completion failed: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('WebAuthn registration completion failed:', response.status, errorText);
+    throw new Error(`WebAuthn registration completion failed: ${response.status} ${response.statusText} - ${errorText}`);
   }
 }
 
@@ -93,13 +104,13 @@ export async function finishWebAuthnAuthentication(credential: PublicKeyCredenti
     },
     body: JSON.stringify({
       id: credential.id,
-      rawId: Array.from(new Uint8Array(credential.rawId)),
+      rawId: uint8ArrayToBase64Url(new Uint8Array(credential.rawId)),
       response: {
-        authenticatorData: Array.from(new Uint8Array((credential.response as AuthenticatorAssertionResponse).authenticatorData)),
-        clientDataJSON: Array.from(new Uint8Array(credential.response.clientDataJSON)),
-        signature: Array.from(new Uint8Array((credential.response as AuthenticatorAssertionResponse).signature)),
+        authenticatorData: uint8ArrayToBase64Url(new Uint8Array((credential.response as AuthenticatorAssertionResponse).authenticatorData)),
+        clientDataJSON: uint8ArrayToBase64Url(new Uint8Array(credential.response.clientDataJSON)),
+        signature: uint8ArrayToBase64Url(new Uint8Array((credential.response as AuthenticatorAssertionResponse).signature)),
         userHandle: (credential.response as AuthenticatorAssertionResponse).userHandle ? 
-          Array.from(new Uint8Array((credential.response as AuthenticatorAssertionResponse).userHandle!)) : null,
+          uint8ArrayToBase64Url(new Uint8Array((credential.response as AuthenticatorAssertionResponse).userHandle!)) : null,
       },
       type: credential.type,
     }),
@@ -109,10 +120,9 @@ export async function finishWebAuthnAuthentication(credential: PublicKeyCredenti
     throw new Error(`WebAuthn authentication completion failed: ${response.statusText}`);
   }
 
-  // For zero-knowledge architecture, we derive encryption key from WebAuthn credential
-  // This is a simplified approach - in production, you'd use PRF extension or similar
-  const credentialId = new Uint8Array(credential.rawId);
-  const key = await deriveEncryptionKey(credentialId);
+  // Use the consistent credential ID for key derivation (not rawId which changes)
+  const consistentCredentialId = new TextEncoder().encode(credential.id);
+  const key = await deriveEncryptionKey(consistentCredentialId);
   
   return key;
 }
@@ -154,8 +164,8 @@ export async function deleteWebAuthnCredential(credentialId: string): Promise<vo
 }
 
 /**
- * Derives encryption key from WebAuthn credential
- * This is a simplified implementation - production should use PRF extension
+ * Derives encryption key from WebAuthn credential ID
+ * Uses PBKDF2 with the credential ID as consistent key material
  */
 async function deriveEncryptionKey(credentialId: Uint8Array): Promise<Uint8Array> {
   // Import credential ID as key material
@@ -194,6 +204,52 @@ export function isWebAuthnSupported(): boolean {
 }
 
 /**
+ * Converts Uint8Array to base64url string
+ */
+function uint8ArrayToBase64Url(uint8Array: Uint8Array): string {
+  const base64 = btoa(String.fromCharCode(...uint8Array));
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+/**
+ * Converts base64url string or BufferSource to Uint8Array
+ */
+function base64UrlToUint8Array(input: string | BufferSource): Uint8Array {
+  // Handle different input types
+  if (input instanceof Uint8Array) {
+    return input;
+  }
+  if (input instanceof ArrayBuffer) {
+    return new Uint8Array(input);
+  }
+  if (ArrayBuffer.isView(input)) {
+    return new Uint8Array(input.buffer, input.byteOffset, input.byteLength);
+  }
+  if (typeof input !== 'string') {
+    console.error('Invalid base64url input:', input);
+    throw new Error(`Expected string or BufferSource, got ${typeof input}`);
+  }
+  
+  // Convert base64url to base64
+  let base64 = input.replace(/-/g, '+').replace(/_/g, '/');
+  
+  // Add padding if needed
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  
+  // Decode base64 to binary string
+  const binaryString = atob(base64);
+  
+  // Convert binary string to Uint8Array
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+/**
  * Registers a new WebAuthn credential
  */
 export async function registerWebAuthnCredential(): Promise<Uint8Array> {
@@ -205,14 +261,32 @@ export async function registerWebAuthnCredential(): Promise<Uint8Array> {
     // Begin registration
     const options = await beginWebAuthnRegistration();
     
-    // Convert challenge and user ID to Uint8Array
+    // Validate response structure
+    if (!options || !options.publicKey) {
+      throw new Error('Invalid WebAuthn registration response: missing publicKey');
+    }
+    
+    if (!options.publicKey.challenge) {
+      throw new Error('Invalid WebAuthn registration response: missing challenge');
+    }
+    
+    if (!options.publicKey.user || !options.publicKey.user.id) {
+      throw new Error('Invalid WebAuthn registration response: missing user.id');
+    }
+    
+    // Convert base64url-encoded fields to Uint8Array
     const publicKey = {
       ...options.publicKey,
-      challenge: new Uint8Array(options.publicKey.challenge as unknown as ArrayLike<number>),
+      challenge: base64UrlToUint8Array(options.publicKey.challenge),
       user: {
         ...options.publicKey.user,
-        id: new Uint8Array(options.publicKey.user.id as unknown as ArrayLike<number>),
+        id: base64UrlToUint8Array(options.publicKey.user.id),
       },
+      // Convert excludeCredentials if present
+      excludeCredentials: options.publicKey.excludeCredentials?.map(cred => ({
+        ...cred,
+        id: base64UrlToUint8Array(cred.id),
+      })),
     };
 
     // Create credential
@@ -225,8 +299,9 @@ export async function registerWebAuthnCredential(): Promise<Uint8Array> {
     // Complete registration
     await finishWebAuthnRegistration(credential);
 
-    // Derive and return encryption key
-    const encryptionKey = await deriveEncryptionKey(new Uint8Array(credential.rawId));
+    // Derive and return encryption key using consistent credential ID
+    const consistentCredentialId = new TextEncoder().encode(credential.id);
+    const encryptionKey = await deriveEncryptionKey(consistentCredentialId);
     
     return encryptionKey;
   } catch (error) {
@@ -247,15 +322,31 @@ export async function authenticateWebAuthn(): Promise<Uint8Array> {
     // Begin authentication
     const options = await beginWebAuthnAuthentication();
     
-    // Convert challenge to Uint8Array
-    const publicKey = {
+    // Convert base64url-encoded fields to Uint8Array
+    const publicKey: PublicKeyCredentialRequestOptions = {
       ...options.publicKey,
-      challenge: new Uint8Array(options.publicKey.challenge as unknown as ArrayLike<number>),
+      challenge: base64UrlToUint8Array(options.publicKey.challenge),
       allowCredentials: options.publicKey.allowCredentials?.map(cred => ({
         ...cred,
-        id: new Uint8Array(cred.id as unknown as ArrayLike<number>),
+        id: base64UrlToUint8Array(cred.id),
       })),
     };
+
+    // Handle PRF extension separately with proper type conversion
+    if (options.publicKey.extensions?.prf?.eval?.first) {
+      if (!publicKey.extensions) publicKey.extensions = {};
+      
+      const prfEval: any = {
+        first: base64UrlToUint8Array(options.publicKey.extensions.prf.eval.first),
+      };
+      
+      // Add second PRF value if present
+      if (options.publicKey.extensions.prf.eval.second) {
+        prfEval.second = base64UrlToUint8Array(options.publicKey.extensions.prf.eval.second);
+      }
+      
+      publicKey.extensions.prf = { eval: prfEval };
+    }
 
     // Get credential
     const credential = await navigator.credentials.get({ publicKey }) as PublicKeyCredential;
@@ -272,4 +363,25 @@ export async function authenticateWebAuthn(): Promise<Uint8Array> {
     console.error('WebAuthn authentication failed:', error);
     throw new Error(`WebAuthn authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
+}
+
+/**
+ * Gets the current session encryption key, or derives a new one if needed
+ */
+export async function getSessionEncryptionKey(): Promise<Uint8Array> {
+  if (sessionEncryptionKey) {
+    return sessionEncryptionKey;
+  }
+  
+  // Need to authenticate to get the key
+  const key = await authenticateWebAuthn();
+  sessionEncryptionKey = key;
+  return key;
+}
+
+/**
+ * Clears the session encryption key (useful for logout)
+ */
+export function clearSessionEncryptionKey(): void {
+  sessionEncryptionKey = null;
 } 

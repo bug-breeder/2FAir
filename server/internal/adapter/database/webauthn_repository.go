@@ -28,34 +28,50 @@ func NewWebAuthnCredentialRepository(database *database.DB) repositories.WebAuth
 
 // Create stores a new WebAuthn credential
 func (r *webAuthnCredentialRepository) Create(ctx context.Context, credential *entities.WebAuthnCredential) error {
-	params := db.CreateWebAuthnCredentialParams{
-		UserID:         pgtype.UUID{Bytes: credential.UserID, Valid: true},
-		CredentialID:   credential.CredentialID,
-		PublicKey:      credential.PublicKey,
-		CloneWarning:   pgtype.Bool{Bool: credential.CloneWarning, Valid: true},
-		Transport:      credential.Transport,
-		BackupEligible: pgtype.Bool{Bool: credential.BackupEligible, Valid: true},
-		BackupState:    pgtype.Bool{Bool: credential.BackupState, Valid: true},
-		SignCount:      pgtype.Int8{Int64: int64(credential.SignCount), Valid: true},
-	}
-
-	// Handle optional AAGUID
+	// Convert AAGUID from *uuid.UUID to pgtype.UUID
+	var aaguid pgtype.UUID
 	if credential.AAGUID != nil {
-		params.Aaguid = pgtype.UUID{Bytes: *credential.AAGUID, Valid: true}
+		aaguid = pgtype.UUID{Bytes: *credential.AAGUID, Valid: true}
 	}
 
-	// Handle optional attachment
+	// Convert attachment string to pgtype.Text
+	var attachment pgtype.Text
 	if credential.Attachment != "" {
-		params.Attachment = pgtype.Text{String: credential.Attachment, Valid: true}
+		attachment = pgtype.Text{String: credential.Attachment, Valid: true}
+	}
+
+	// Ensure transport is never empty to avoid database NULL constraint violation
+	transport := credential.Transport
+	if len(transport) == 0 {
+		transport = []string{"internal"}
+	}
+
+	params := db.CreateWebAuthnCredentialParams{
+		UserID:          pgtype.UUID{Bytes: credential.UserID, Valid: true},
+		CredentialID:    credential.CredentialID,
+		PublicKey:       credential.PublicKey,
+		AttestationType: "none", // Default attestation type
+		Transport:       transport,
+		Flags:           []byte{},     // Default empty flags
+		Authenticator:   []byte(`{}`), // Default empty JSON
+		DeviceName:      pgtype.Text{String: "Default Device", Valid: true},
+		Aaguid:          aaguid,
+		CloneWarning:    credential.CloneWarning,
+		SignCount:       int64(credential.SignCount),
+		Attachment:      attachment,
+		BackupEligible:  credential.BackupEligible,
+		BackupState:     credential.BackupState,
 	}
 
 	_, err := r.queries.CreateWebAuthnCredential(ctx, params)
 	return err
 }
 
-// GetByID retrieves a WebAuthn credential by ID
+// GetByID retrieves a WebAuthn credential by credential ID
 func (r *webAuthnCredentialRepository) GetByID(ctx context.Context, id uuid.UUID) (*entities.WebAuthnCredential, error) {
-	row, err := r.queries.GetWebAuthnCredentialByID(ctx, id[:])
+	// Convert UUID to bytes for the query
+	credentialID := id[:]
+	cred, err := r.queries.GetWebAuthnCredentialByID(ctx, credentialID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, entities.ErrCredentialNotFound
@@ -63,22 +79,22 @@ func (r *webAuthnCredentialRepository) GetByID(ctx context.Context, id uuid.UUID
 		return nil, fmt.Errorf("failed to get WebAuthn credential: %w", err)
 	}
 
-	return r.mapRowToEntity(row), nil
+	return r.convertToEntity(cred), nil
 }
 
 // GetByUserID retrieves all WebAuthn credentials for a user
 func (r *webAuthnCredentialRepository) GetByUserID(ctx context.Context, userID uuid.UUID) ([]*entities.WebAuthnCredential, error) {
-	rows, err := r.queries.GetWebAuthnCredentialsByUserID(ctx, pgtype.UUID{Bytes: userID, Valid: true})
+	creds, err := r.queries.GetWebAuthnCredentialsByUserID(ctx, pgtype.UUID{Bytes: userID, Valid: true})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get WebAuthn credentials for user: %w", err)
+		return nil, fmt.Errorf("failed to get WebAuthn credentials: %w", err)
 	}
 
-	credentials := make([]*entities.WebAuthnCredential, len(rows))
-	for i, row := range rows {
-		credentials[i] = r.mapRowToEntity(row)
+	entities := make([]*entities.WebAuthnCredential, len(creds))
+	for i, cred := range creds {
+		entities[i] = r.convertToEntity(cred)
 	}
 
-	return credentials, nil
+	return entities, nil
 }
 
 // GetByCredentialID retrieves a WebAuthn credential by credential ID
@@ -91,43 +107,29 @@ func (r *webAuthnCredentialRepository) GetByCredentialID(ctx context.Context, cr
 		return nil, fmt.Errorf("failed to get WebAuthn credential by credential ID: %w", err)
 	}
 
-	return r.mapRowToEntity(row), nil
+	return r.convertToEntity(row), nil
 }
 
-// Update updates an existing WebAuthn credential (not fully implemented in SQLC, using sign count update for now)
+// Update updates an existing WebAuthn credential
 func (r *webAuthnCredentialRepository) Update(ctx context.Context, credential *entities.WebAuthnCredential) error {
-	// For now, just update the sign count which is the most common update
-	return r.UpdateSignCount(ctx, credential.CredentialID, credential.SignCount)
-}
-
-// UpdateSignCount updates the sign count and last used timestamp
-func (r *webAuthnCredentialRepository) UpdateSignCount(ctx context.Context, credentialID []byte, signCount uint64) error {
-	params := db.UpdateWebAuthnCredentialSignCountParams{
-		CredentialID: credentialID,
-		SignCount:    pgtype.Int8{Int64: int64(signCount), Valid: true},
+	// Update last used timestamp
+	err := r.queries.UpdateWebAuthnCredentialLastUsed(ctx, credential.CredentialID)
+	if err != nil {
+		return fmt.Errorf("failed to update WebAuthn credential: %w", err)
 	}
-
-	return r.queries.UpdateWebAuthnCredentialSignCount(ctx, params)
+	return nil
 }
 
-// UpdateCloneWarning updates the clone warning flag
-func (r *webAuthnCredentialRepository) UpdateCloneWarning(ctx context.Context, credentialID []byte, cloneWarning bool) error {
-	params := db.UpdateWebAuthnCredentialCloneWarningParams{
-		CredentialID: credentialID,
-		CloneWarning: pgtype.Bool{Bool: cloneWarning, Valid: true},
-	}
-
-	return r.queries.UpdateWebAuthnCredentialCloneWarning(ctx, params)
-}
-
-// Delete removes a WebAuthn credential
+// Delete deletes a WebAuthn credential
 func (r *webAuthnCredentialRepository) Delete(ctx context.Context, credentialID []byte, userID uuid.UUID) error {
-	params := db.DeleteWebAuthnCredentialParams{
+	err := r.queries.DeleteWebAuthnCredential(ctx, db.DeleteWebAuthnCredentialParams{
 		CredentialID: credentialID,
 		UserID:       pgtype.UUID{Bytes: userID, Valid: true},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete WebAuthn credential: %w", err)
 	}
-
-	return r.queries.DeleteWebAuthnCredential(ctx, params)
+	return nil
 }
 
 // ExistsByCredentialID checks if a credential exists by credential ID
@@ -142,36 +144,54 @@ func (r *webAuthnCredentialRepository) ExistsByCredentialID(ctx context.Context,
 	return true, nil
 }
 
-// mapRowToEntity converts a database row to a WebAuthn credential entity
-func (r *webAuthnCredentialRepository) mapRowToEntity(row db.WebauthnCredential) *entities.WebAuthnCredential {
-	credential := &entities.WebAuthnCredential{
-		ID:             uuid.UUID(row.ID.Bytes),
-		UserID:         uuid.UUID(row.UserID.Bytes),
-		CredentialID:   row.CredentialID,
-		PublicKey:      row.PublicKey,
-		CloneWarning:   row.CloneWarning.Bool,
-		Transport:      row.Transport,
-		BackupEligible: row.BackupEligible.Bool,
-		BackupState:    row.BackupState.Bool,
-		SignCount:      uint64(row.SignCount.Int64),
-		CreatedAt:      row.CreatedAt.Time,
+// UpdateSignCount updates the sign count and last used timestamp
+func (r *webAuthnCredentialRepository) UpdateSignCount(ctx context.Context, credentialID []byte, signCount uint64) error {
+	params := db.UpdateWebAuthnCredentialSignCountParams{
+		CredentialID: credentialID,
+		SignCount:    int64(signCount),
+	}
+	return r.queries.UpdateWebAuthnCredentialSignCount(ctx, params)
+}
+
+// UpdateCloneWarning updates the clone warning flag
+func (r *webAuthnCredentialRepository) UpdateCloneWarning(ctx context.Context, credentialID []byte, cloneWarning bool) error {
+	params := db.UpdateWebAuthnCredentialCloneWarningParams{
+		CredentialID: credentialID,
+		CloneWarning: cloneWarning,
+	}
+	return r.queries.UpdateWebAuthnCredentialCloneWarning(ctx, params)
+}
+
+// convertToEntity converts a database WebAuthn credential to a domain entity
+func (r *webAuthnCredentialRepository) convertToEntity(cred db.WebauthnCredential) *entities.WebAuthnCredential {
+	entity := &entities.WebAuthnCredential{
+		ID:             uuid.UUID(cred.ID.Bytes),
+		UserID:         uuid.UUID(cred.UserID.Bytes),
+		CredentialID:   cred.CredentialID,
+		PublicKey:      cred.PublicKey,
+		Transport:      cred.Transport,
+		CreatedAt:      cred.CreatedAt.Time,
+		CloneWarning:   cred.CloneWarning,
+		SignCount:      uint64(cred.SignCount),
+		BackupEligible: cred.BackupEligible,
+		BackupState:    cred.BackupState,
 	}
 
 	// Handle optional AAGUID
-	if row.Aaguid.Valid {
-		aaguid := uuid.UUID(row.Aaguid.Bytes)
-		credential.AAGUID = &aaguid
+	if cred.Aaguid.Valid {
+		aaguid := uuid.UUID(cred.Aaguid.Bytes)
+		entity.AAGUID = &aaguid
 	}
 
 	// Handle optional attachment
-	if row.Attachment.Valid {
-		credential.Attachment = row.Attachment.String
+	if cred.Attachment.Valid {
+		entity.Attachment = cred.Attachment.String
 	}
 
 	// Handle optional last used timestamp
-	if row.LastUsedAt.Valid {
-		credential.LastUsedAt = &row.LastUsedAt.Time
+	if cred.LastUsedAt.Valid {
+		entity.LastUsedAt = &cred.LastUsedAt.Time
 	}
 
-	return credential
+	return entity
 }

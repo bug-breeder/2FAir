@@ -131,7 +131,7 @@ func Load() (*Config, error) {
 		WebAuthn: WebAuthnConfig{
 			RPDisplayName: getEnv("WEBAUTHN_RP_DISPLAY_NAME", "2FAir"),
 			RPID:          getEnv("WEBAUTHN_RP_ID", "localhost"),
-			RPOrigins:     getEnvAsSlice("WEBAUTHN_RP_ORIGINS", []string{"http://localhost:3000", "http://localhost:8080"}),
+			RPOrigins:     getEnvAsSlice("WEBAUTHN_RP_ORIGINS", []string{"http://localhost:5173", "http://localhost:3000", "http://localhost:8080"}),
 			Timeout:       getEnvAsDuration("WEBAUTHN_TIMEOUT", 60*time.Second),
 		},
 		OAuth: OAuthConfig{

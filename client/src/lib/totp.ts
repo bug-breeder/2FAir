@@ -1,4 +1,4 @@
-import { TOTP } from 'otpauth';
+import { TOTP, Secret } from 'otpauth';
 
 export interface TOTPConfig {
   secret: string;
@@ -11,15 +11,29 @@ export interface TOTPConfig {
 
 export interface TOTPCodes {
   currentCode: string;
-  currentExpireAt: Date;
   nextCode: string;
+  currentExpireAt: Date;
   nextExpireAt: Date;
-  timeRemaining: number; // seconds until current code expires
 }
 
 /**
- * Generates TOTP codes for a given secret
- * This replaces the removed server-side /api/v1/otp/codes endpoint
+ * Generates a TOTP code from the given configuration
+ */
+export function generateTOTPCode(config: TOTPConfig): string {
+  const totp = new TOTP({
+    issuer: config.issuer || 'Unknown',
+    label: config.label || 'Unknown',
+    algorithm: config.algorithm || 'SHA1',
+    digits: config.digits || 6,
+    period: config.period || 30,
+    secret: config.secret,
+  });
+
+  return totp.generate();
+}
+
+/**
+ * Generates both current and next TOTP codes with expiration times
  */
 export function generateTOTPCodes(config: TOTPConfig): TOTPCodes {
   const totp = new TOTP({
@@ -28,56 +42,78 @@ export function generateTOTPCodes(config: TOTPConfig): TOTPCodes {
     algorithm: config.algorithm || 'SHA1',
     digits: config.digits || 6,
     period: config.period || 30,
-    secret: config.secret, // Base32 encoded secret
+    secret: config.secret,
   });
 
-  const now = Date.now();
-  const period = (config.period || 30) * 1000; // Convert to milliseconds
+  const now = new Date();
+  const nowSeconds = Math.floor(now.getTime() / 1000);
+  const period = config.period || 30;
   
-  // Calculate current period start time
-  const currentPeriodStart = Math.floor(now / period) * period;
-  const nextPeriodStart = currentPeriodStart + period;
+  // Calculate current period start and end
+  const currentPeriodStart = Math.floor(nowSeconds / period) * period;
+  const currentPeriodEnd = currentPeriodStart + period;
   
-  // Generate current and next codes
-  const currentCode = totp.generate({ timestamp: currentPeriodStart });
-  const nextCode = totp.generate({ timestamp: nextPeriodStart });
+  // Calculate next period end
+  const nextPeriodEnd = currentPeriodEnd + period;
   
-  // Calculate expiration times
-  const currentExpireAt = new Date(nextPeriodStart);
-  const nextExpireAt = new Date(nextPeriodStart + period);
+  // Generate current code
+  const currentCode = totp.generate();
   
-  // Calculate time remaining for current code
-  const timeRemaining = Math.ceil((nextPeriodStart - now) / 1000);
-
+  // Generate next code by using the next period timestamp
+  const nextCode = totp.generate({ timestamp: currentPeriodEnd * 1000 });
+  
   return {
     currentCode,
-    currentExpireAt,
     nextCode,
-    nextExpireAt,
-    timeRemaining,
+    currentExpireAt: new Date(currentPeriodEnd * 1000),
+    nextExpireAt: new Date(nextPeriodEnd * 1000),
   };
 }
 
 /**
- * Validates a TOTP secret (Base32 format)
+ * Gets the remaining time until the current TOTP code expires
+ */
+export function getTOTPRemainingTime(period: number = 30): number {
+  const now = Math.floor(Date.now() / 1000);
+  const remaining = period - (now % period);
+  return remaining;
+}
+
+/**
+ * Validates a TOTP secret string
  */
 export function validateTOTPSecret(secret: string): boolean {
-  if (!secret) return false;
-  
-  // Remove spaces and common separators
-  const normalized = secret.toUpperCase().replace(/[\s\-_]/g, '');
-  
-  // Check base32 format (A-Z, 2-7)
-  if (!/^[A-Z2-7]+$/.test(normalized)) {
+  try {
+    // Try to create a TOTP instance with the secret
+    new TOTP({ secret });
+    return true;
+  } catch {
     return false;
   }
-  
-  // Check reasonable length
-  if (normalized.length < 16 || normalized.length > 128) {
-    return false;
-  }
-  
-  return true;
+}
+
+/**
+ * Generates a random TOTP secret
+ */
+export function generateTOTPSecret(): string {
+  const secret = new Secret({ size: 20 }); // 160 bits
+  return secret.base32;
+}
+
+/**
+ * Creates a QR code URI for TOTP setup
+ */
+export function createTOTPUri(config: TOTPConfig): string {
+  const totp = new TOTP({
+    issuer: config.issuer || 'Unknown',
+    label: config.label || 'Unknown',
+    algorithm: config.algorithm || 'SHA1',
+    digits: config.digits || 6,
+    period: config.period || 30,
+    secret: config.secret,
+  });
+
+  return totp.toString();
 }
 
 /**

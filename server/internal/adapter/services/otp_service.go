@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -12,14 +11,6 @@ import (
 	infraServices "github.com/bug-breeder/2fair/server/internal/infrastructure/services"
 	"github.com/google/uuid"
 )
-
-// OTPSecretData represents the encrypted portion of OTP data
-type OTPSecretData struct {
-	Secret    string `json:"secret"`
-	Period    int    `json:"period"`
-	Algorithm string `json:"algorithm"`
-	Digits    int    `json:"digits"`
-}
 
 // otpService implements the domain OTP service interface
 type otpService struct {
@@ -51,28 +42,20 @@ func (s *otpService) CreateOTP(ctx context.Context, userID uuid.UUID, issuer, la
 	}
 
 	// Create OTP entity
+	// Note: secret is already encrypted client-side in format "ciphertext.iv.authTag"
 	otp := entities.NewOTP(userID, issuer, label, secret, period)
 	otp.Algorithm = algorithm
 	otp.Digits = digits
 
-	// Validate the OTP
-	if err := otp.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid OTP data: %w", err)
+	// Skip validation of encrypted secret (it won't be valid base32)
+	// Only validate issuer and label which should not be empty
+	if otp.Issuer == "" || otp.Label == "" {
+		return nil, fmt.Errorf("issuer and label are required")
 	}
 
-	// Prepare secret data for encryption
-	secretData := &OTPSecretData{
-		Secret:    secret,
-		Period:    period,
-		Algorithm: algorithm,
-		Digits:    digits,
-	}
-
-	// Encrypt the secret data
-	encryptedData, err := s.encryptSecretData(secretData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt secret data: %w", err)
-	}
+	// Store the already-encrypted secret directly (no double encryption)
+	// The secret comes pre-encrypted from the client in format: ciphertext.iv.authTag
+	encryptedData := []byte(secret)
 
 	// Save to repository
 	if err := s.otpRepo.Create(ctx, otp, encryptedData, 1); err != nil {
@@ -128,24 +111,14 @@ func (s *otpService) UpdateOTP(ctx context.Context, otpID uuid.UUID, userID uuid
 	existingOTP.UpdateMetadata(issuer, label)
 	existingOTP.UpdateSecret(secret, period, algorithm, digits)
 
-	// Validate the updated OTP
-	if err := existingOTP.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid updated OTP data: %w", err)
+	// Only validate issuer and label which should not be empty
+	if issuer == "" || label == "" {
+		return nil, fmt.Errorf("issuer and label are required")
 	}
 
-	// Prepare secret data for encryption
-	secretData := &OTPSecretData{
-		Secret:    secret,
-		Period:    period,
-		Algorithm: algorithm,
-		Digits:    digits,
-	}
-
-	// Encrypt the secret data
-	encryptedData, err := s.encryptSecretData(secretData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt secret data: %w", err)
-	}
+	// Store the already-encrypted secret directly (no double encryption)
+	// The secret comes pre-encrypted from the client in format: ciphertext.iv.authTag
+	encryptedData := []byte(secret)
 
 	// Update in repository
 	if err := s.otpRepo.Update(ctx, existingOTP, encryptedData, 1); err != nil {
@@ -196,34 +169,4 @@ func (s *otpService) GenerateOTPCodes(ctx context.Context, userID uuid.UUID) ([]
 	}
 
 	return otpCodes, nil
-}
-
-// encryptSecretData encrypts the secret data
-func (s *otpService) encryptSecretData(secretData *OTPSecretData) ([]byte, error) {
-	// Marshal secret data to JSON
-	jsonData, err := json.Marshal(secretData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal secret data: %w", err)
-	}
-
-	// For now, we'll use a fixed key for encryption
-	// In a real implementation, this should be derived from user's master key
-	// TODO: Implement proper key derivation from user's master password/key
-	key, err := s.cryptoService.GenerateRandomKey()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate encryption key: %w", err)
-	}
-
-	// Encrypt the data
-	ciphertext, nonce, err := s.cryptoService.Encrypt(jsonData, key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt data: %w", err)
-	}
-
-	// For now, we'll just return the ciphertext
-	// In a real implementation, we need to store the key securely
-	// and include nonce in the encrypted data structure
-	_ = nonce // TODO: Handle nonce properly
-
-	return ciphertext, nil
 }

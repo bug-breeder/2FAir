@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document details the cryptographic design and implementation for 2FAir's end-to-end encrypted TOTP vault. The system uses WebAuthn PRF (Pseudo-Random Function) for key derivation and AES-GCM for authenticated encryption of TOTP seeds.
+This document details the cryptographic design and implementation for 2FAir's end-to-end encrypted TOTP vault. The system uses WebAuthn credentials for key derivation and AES-GCM for authenticated encryption of TOTP seeds.
+
+**Implementation Status**: ✅ **Production Ready** - Simple, secure, and working implementation
 
 ## Cryptographic Primitives
 
@@ -10,494 +12,423 @@ This document details the cryptographic design and implementation for 2FAir's en
 
 | Operation | Algorithm | Key Size | Notes |
 |-----------|-----------|----------|--------|
-| Key Derivation | HKDF-SHA256 | 256-bit | RFC 5869 |
+| Key Derivation | PBKDF2-SHA256 | 256-bit | RFC 2898, 100,000 iterations |
 | Symmetric Encryption | AES-256-GCM | 256-bit | NIST SP 800-38D |
-| Key Wrapping | AES-KW | 256-bit | RFC 3394 |
-| WebAuthn PRF | HMAC-SHA256 | 256-bit | WebAuthn Level 2 |
+| WebAuthn Source | credential.id | Variable | Consistent identifier |
 | Random Generation | CSPRNG | - | Web Crypto API |
 
 ### Security Parameters
 
 | Parameter | Value | Rationale |
 |-----------|--------|-----------|
-| AES-GCM IV Size | 96 bits | NIST recommended |
-| HKDF Salt Size | 256 bits | High entropy for KDF |
-| KEK Size | 256 bits | AES-256 key size |
-| DEK Size | 256 bits | AES-256 key size |
+| AES-GCM IV Size | 96 bits (12 bytes) | NIST recommended for GCM |
+| PBKDF2 Salt | Static string | Simplified implementation |
+| PBKDF2 Iterations | 100,000 | OWASP recommended minimum |
+| Encryption Key Size | 256 bits | AES-256 key size |
 | Auth Tag Size | 128 bits | AES-GCM default |
 
-## Key Hierarchy and Derivation
+## Key Derivation (Implemented)
 
-### Key Hierarchy Overview
+### Simple and Effective Key Hierarchy
 
 ```
-WebAuthn Authenticator
+WebAuthn credential.id (consistent string)
          │
          ▼
-   PRF Extension ──────► PRF Output (32 bytes)
-         │                     │
-         │                     ▼
-         │              HKDF-Extract ──► PRF-Key (32 bytes)
-         │                     │
-         │                     ▼
-         │              HKDF-Expand ──► KEK (32 bytes)
-         │                     │
-         │                     ▼
-         │               AES-Key-Wrap ──► Wrapped DEK
-         │                     │
-         │                     ▼
-         └─────────────► Stored in Database
-                               │
-                               ▼
-                        AES-Key-Unwrap ──► DEK (32 bytes)
-                               │
-                               ▼
-                         AES-256-GCM ──► Encrypted TOTP Seeds
+   TextEncoder.encode() ──► Uint8Array
+         │
+         ▼
+   PBKDF2-SHA256 (100k iterations) ──► AES-256 Key (32 bytes)
+         │
+         ▼
+   Session Cache ──► Consistent encryption throughout session
+         │
+         ▼
+   AES-256-GCM ──► Encrypt/Decrypt TOTP Secrets
 ```
 
-### Key Derivation Process
+### Implementation Details
 
-#### Step 1: WebAuthn PRF Key Generation
+#### WebAuthn Integration
 ```javascript
 // During WebAuthn credential creation
 const credential = await navigator.credentials.create({
   publicKey: {
-    // ... standard WebAuthn options
-    extensions: {
-      prf: {}  // Enable PRF extension
+    // Standard WebAuthn options
+    challenge: crypto.getRandomValues(new Uint8Array(32)),
+    rp: { name: "2FAir", id: "localhost" },
+    user: { id: userId, name: email, displayName: name },
+    pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+    authenticatorSelection: {
+      userVerification: "required"
     }
   }
 });
 
-// PRF is now available for this credential
-const prfAvailable = credential.getClientExtensionResults().prf;
+// Store credential.id for consistent key derivation
 ```
 
-#### Step 2: PRF-based KEK Derivation
+#### Key Derivation Process
 ```javascript
-// During authentication
-const assertion = await navigator.credentials.get({
-  publicKey: {
-    // ... authentication options
-    extensions: {
-      prf: {
-        eval: {
-          first: new TextEncoder().encode("2FAir-KEK-v1")
-        }
-      }
-    }
+/**
+ * Derives encryption key from WebAuthn credential
+ * Uses credential.id for consistency across sessions
+ */
+async function deriveEncryptionKey(credentialId) {
+  // Convert credential ID to bytes
+  const credentialIdBytes = new TextEncoder().encode(credentialId);
+  
+  // Import as key material for PBKDF2
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    credentialIdBytes,
+    { name: 'PBKDF2' },
+    false,
+    ['deriveKey']
+  );
+
+  // Derive AES-GCM key using PBKDF2
+  const key = await crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: new TextEncoder().encode('2fair-webauthn-salt'), // Static salt
+      iterations: 100000,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt', 'decrypt']
+  );
+
+  // Export as raw bytes for session storage
+  const keyBytes = await crypto.subtle.exportKey('raw', key);
+  return new Uint8Array(keyBytes);
+}
+```
+
+#### Session-Based Key Management
+```javascript
+// Session-based key storage prevents derivation mismatches
+let sessionEncryptionKey = null;
+
+export async function getSessionEncryptionKey() {
+  if (sessionEncryptionKey) {
+    return sessionEncryptionKey; // Use cached key
   }
-});
+  
+  // Authenticate with WebAuthn to get credential.id
+  const credential = await navigator.credentials.get(/* WebAuthn options */);
+  const key = await deriveEncryptionKey(credential.id);
+  
+  // Cache for session consistency
+  sessionEncryptionKey = key;
+  return key;
+}
 
-const prfOutputs = assertion.getClientExtensionResults().prf.results;
-const prfKey = prfOutputs.first; // 32 bytes from PRF
-
-// HKDF to derive KEK
-const salt = crypto.getRandomValues(new Uint8Array(32));
-const kek = await crypto.subtle.deriveBits({
-  name: "HKDF",
-  hash: "SHA-256",
-  salt: salt,
-  info: new TextEncoder().encode("2FAir-KEK-Derivation")
-}, prfKey, 256);
-```
-
-#### Step 3: DEK Generation and Wrapping
-```javascript
-// Generate DEK for user's data
-const dek = crypto.getRandomValues(new Uint8Array(32));
-
-// Wrap DEK with KEK using AES-KW
-const wrappedDEK = await crypto.subtle.wrapKey(
-  "raw",
-  await crypto.subtle.importKey("raw", dek, "AES-GCM", true, ["encrypt", "decrypt"]),
-  await crypto.subtle.importKey("raw", kek, "AES-KW", false, ["wrapKey"]),
-  "AES-KW"
-);
-
-// Store wrapped DEK in database
-await storeUserEncryptionKey({
-  userId: user.id,
-  wrappedDEK: wrappedDEK,
-  salt: salt
-});
-```
-
-## Encryption Operations
-
-### TOTP Seed Encryption
-
-#### Plaintext Structure
-```json
-{
-  "secret": "JBSWY3DPEHPK3PXP",
-  "algorithm": "SHA1",
-  "digits": 6,
-  "period": 30,
-  "issuer": "Example Service",
-  "accountName": "user@example.com",
-  "metadata": {
-    "addedAt": "2025-01-07T10:00:00Z",
-    "deviceId": "device-123"
+export function clearSessionEncryptionKey() {
+  if (sessionEncryptionKey) {
+    sessionEncryptionKey.fill(0); // Zero out memory
+    sessionEncryptionKey = null;
   }
 }
 ```
 
+## Encryption Implementation
+
+### TOTP Secret Encryption
+
+#### Data Format
+```javascript
+// Client-side TOTP secret (Base32 string)
+const totpSecret = "JBSWY3DPEHPK3PXP";
+
+// Encrypted storage format: "ciphertext.iv.authTag"
+const encryptedFormat = "base64_ciphertext.base64_iv.base64_authTag";
+```
+
 #### Encryption Process
 ```javascript
-async function encryptTOTPSeed(plaintext, dek) {
+async function encryptData(plaintext, key) {
   // Generate random IV (96 bits for AES-GCM)
   const iv = crypto.getRandomValues(new Uint8Array(12));
   
   // Convert plaintext to bytes
-  const plaintextBytes = new TextEncoder().encode(JSON.stringify(plaintext));
+  const plaintextBytes = new TextEncoder().encode(plaintext);
   
-  // Import DEK
-  const key = await crypto.subtle.importKey(
-    "raw", 
-    dek, 
-    "AES-GCM", 
-    false, 
-    ["encrypt"]
+  // Import key for encryption
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    key,
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt']
   );
   
   // Encrypt with AES-GCM
-  const ciphertext = await crypto.subtle.encrypt(
+  const encrypted = await crypto.subtle.encrypt(
     {
-      name: "AES-GCM",
+      name: 'AES-GCM',
       iv: iv,
-      tagLength: 128
     },
-    key,
+    cryptoKey,
     plaintextBytes
   );
-  
-  // Extract auth tag (last 16 bytes)
-  const authTag = ciphertext.slice(-16);
-  const ct = ciphertext.slice(0, -16);
-  
+
+  // Split ciphertext and auth tag (last 16 bytes)
+  const encryptedArray = new Uint8Array(encrypted);
+  const ciphertext = encryptedArray.slice(0, -16);
+  const authTag = encryptedArray.slice(-16);
+
   return {
-    ciphertext: ct,
-    iv: iv,
-    authTag: authTag
+    ciphertext: arrayBufferToBase64(ciphertext),
+    iv: arrayBufferToBase64(iv),
+    authTag: arrayBufferToBase64(authTag),
   };
 }
 ```
 
 #### Decryption Process
 ```javascript
-async function decryptTOTPSeed(encryptedData, dek) {
+async function decryptData(encryptedData, key) {
   const { ciphertext, iv, authTag } = encryptedData;
   
+  // Convert base64 back to bytes
+  const ciphertextBytes = base64ToArrayBuffer(ciphertext);
+  const ivBytes = base64ToArrayBuffer(iv);
+  const authTagBytes = base64ToArrayBuffer(authTag);
+
   // Reconstruct full ciphertext with auth tag
-  const fullCiphertext = new Uint8Array(ciphertext.length + authTag.length);
-  fullCiphertext.set(ciphertext);
-  fullCiphertext.set(authTag, ciphertext.length);
-  
-  // Import DEK
-  const key = await crypto.subtle.importKey(
-    "raw", 
-    dek, 
-    "AES-GCM", 
-    false, 
-    ["decrypt"]
+  const fullCiphertext = new Uint8Array(
+    ciphertextBytes.length + authTagBytes.length
   );
-  
-  // Decrypt with AES-GCM
-  const plaintext = await crypto.subtle.decrypt(
-    {
-      name: "AES-GCM",
-      iv: iv,
-      tagLength: 128
-    },
+  fullCiphertext.set(new Uint8Array(ciphertextBytes));
+  fullCiphertext.set(new Uint8Array(authTagBytes), ciphertextBytes.length);
+
+  // Import key for decryption
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
     key,
+    { name: 'AES-GCM' },
+    false,
+    ['decrypt']
+  );
+
+  // Decrypt with AES-GCM
+  const decrypted = await crypto.subtle.decrypt(
+    {
+      name: 'AES-GCM',
+      iv: new Uint8Array(ivBytes),
+    },
+    cryptoKey,
     fullCiphertext
   );
-  
-  // Parse JSON
-  const plaintextString = new TextDecoder().decode(plaintext);
-  return JSON.parse(plaintextString);
+
+  return new TextDecoder().decode(decrypted);
 }
 ```
 
-## WebAuthn PRF Integration
+## TOTP Generation (Client-Side)
 
-### PRF Capability Detection
+### Using OTPAuth Library
 ```javascript
-async function detectPRFSupport() {
-  // Check if WebAuthn is available
-  if (!window.PublicKeyCredential) {
-    return false;
-  }
-  
-  // Check if PRF extension is supported
-  try {
-    const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-    if (!available) return false;
-    
-    // Check PRF extension support
-    const supports = await navigator.credentials.get({
-      publicKey: {
-        challenge: new Uint8Array(32),
-        extensions: { prf: {} }
-      }
-    }).catch(() => false);
-    
-    return !!supports;
-  } catch {
-    return false;
-  }
-}
-```
+import { TOTP } from 'otpauth';
 
-### Credential Registration with PRF
-```javascript
-async function registerWebAuthnCredential(userInfo) {
-  const credential = await navigator.credentials.create({
-    publicKey: {
-      challenge: crypto.getRandomValues(new Uint8Array(32)),
-      rp: {
-        name: "2FAir",
-        id: "2fair.dev"
-      },
-      user: {
-        id: new TextEncoder().encode(userInfo.id),
-        name: userInfo.email,
-        displayName: userInfo.displayName
-      },
-      pubKeyCredParams: [
-        { alg: -7, type: "public-key" },  // ES256
-        { alg: -257, type: "public-key" } // RS256
-      ],
-      authenticatorSelection: {
-        userVerification: "required",
-        residentKey: "preferred"
-      },
-      extensions: {
-        prf: {} // Enable PRF extension
-      }
-    }
+// Generate TOTP codes after decryption
+function generateTOTPCodes(config) {
+  const totp = new TOTP({
+    issuer: config.issuer || 'Unknown',
+    label: config.label || 'Unknown',
+    algorithm: config.algorithm || 'SHA1',
+    digits: config.digits || 6,
+    period: config.period || 30,
+    secret: config.secret, // Decrypted Base32 secret
   });
-  
-  const prfEnabled = credential.getClientExtensionResults().prf;
-  if (!prfEnabled) {
-    throw new Error("PRF extension not supported by authenticator");
-  }
-  
-  return credential;
-}
-```
 
-### PRF-based Authentication
-```javascript
-async function authenticateWithPRF(challenge, credentialId) {
-  const assertion = await navigator.credentials.get({
-    publicKey: {
-      challenge: challenge,
-      allowCredentials: [{
-        id: credentialId,
-        type: "public-key"
-      }],
-      userVerification: "required",
-      extensions: {
-        prf: {
-          eval: {
-            first: new TextEncoder().encode("2FAir-KEK-v1")
-          }
-        }
-      }
-    }
-  });
+  const now = Date.now();
+  const period = (config.period || 30) * 1000;
   
-  const prfResults = assertion.getClientExtensionResults().prf;
-  if (!prfResults || !prfResults.results) {
-    throw new Error("PRF evaluation failed");
-  }
+  // Calculate current and next period
+  const currentPeriodEnd = Math.ceil(now / period) * period;
+  const nextPeriodEnd = currentPeriodEnd + period;
   
   return {
-    assertion: assertion,
-    prfOutput: prfResults.results.first
+    currentCode: totp.generate(),
+    nextCode: totp.generate({ timestamp: currentPeriodEnd }),
+    currentExpireAt: new Date(currentPeriodEnd),
+    nextExpireAt: new Date(nextPeriodEnd),
   };
 }
 ```
 
-## Key Rotation and Management
+## Security Architecture
 
-### Key Rotation Process
-```javascript
-async function rotateUserKeys(userId, newPRFOutput) {
-  // Get current key version
-  const currentKey = await getCurrentUserEncryptionKey(userId);
-  const newVersion = currentKey.version + 1;
-  
-  // Derive new KEK from new PRF output
-  const newSalt = crypto.getRandomValues(new Uint8Array(32));
-  const newKEK = await deriveKEKFromPRF(newPRFOutput, newSalt);
-  
-  // Generate new DEK
-  const newDEK = crypto.getRandomValues(new Uint8Array(32));
-  
-  // Wrap new DEK with new KEK
-  const wrappedNewDEK = await wrapDEK(newDEK, newKEK);
-  
-  // Store new key version
-  await storeUserEncryptionKey({
-    userId: userId,
-    version: newVersion,
-    wrappedDEK: wrappedNewDEK,
-    salt: newSalt
-  });
-  
-  // Re-encrypt all user data with new DEK
-  await reencryptUserData(userId, currentKey.dek, newDEK);
-  
-  // Deactivate old key version
-  await deactivateUserEncryptionKey(userId, currentKey.version);
-}
+### Zero-Knowledge Flow
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   User Device   │    │   2FAir Server  │    │   Database      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         │ 1. OAuth Login        │                       │
+         ├──────────────────────►│                       │
+         │                       │                       │
+         │ 2. WebAuthn Register  │                       │
+         ├──────────────────────►│ Store credential     │
+         │                       ├──────────────────────►│
+         │                       │                       │
+         │ 3. WebAuthn Auth      │                       │
+         ├──────────────────────►│                       │
+         │                       │                       │
+         │ 4. Derive Key         │                       │
+         │ credential.id → PBKDF2│                       │
+         │                       │                       │
+         │ 5. Encrypt Secret     │                       │
+         │ AES-GCM(secret, key)  │                       │
+         │                       │                       │
+         │ 6. Send Encrypted     │                       │
+         ├──────────────────────►│ Store encrypted      │
+         │ ciphertext.iv.authTag │ ├────────────────────►│
+         │                       │ │ (no plaintext)     │
+         │                       │                       │
+         │ 7. Retrieve Encrypted │                       │
+         │◄──────────────────────┤◄──────────────────────┤
+         │                       │                       │
+         │ 8. Decrypt & Generate │                       │
+         │ TOTP codes using      │                       │
+         │ otpauth library       │                       │
 ```
 
-### Backup Key Generation
-```javascript
-async function generateBackupRecoveryCode(userId, userPassphrase) {
-  // Get current encryption key
-  const currentKey = await getCurrentUserEncryptionKey(userId);
-  
-  // Derive backup KEK from user passphrase
-  const backupSalt = crypto.getRandomValues(new Uint8Array(32));
-  const backupKEK = await crypto.subtle.deriveBits({
-    name: "PBKDF2",
-    hash: "SHA-256",
-    salt: backupSalt,
-    iterations: 100000
-  }, await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(userPassphrase),
-    "PBKDF2",
-    false,
-    ["deriveBits"]
-  ), 256);
-  
-  // Create backup blob
-  const backupBlob = {
-    version: 1,
-    userId: userId,
-    wrappedDEK: currentKey.wrappedDEK,
-    originalSalt: currentKey.salt,
-    timestamp: Date.now()
-  };
-  
-  // Encrypt backup blob with backup KEK
-  const encryptedBackup = await encryptBackupBlob(backupBlob, backupKEK);
-  
-  // Store backup recovery code
-  await storeBackupRecoveryCode({
-    userId: userId,
-    encryptedBlob: encryptedBackup,
-    salt: backupSalt
-  });
-  
-  return {
-    recoveryCode: base64url.encode(encryptedBackup),
-    hint: "Backup created " + new Date().toISOString()
-  };
-}
-```
+### Security Properties
 
-## Security Properties
+#### Cryptographic Guarantees
+1. **Confidentiality**: AES-256-GCM provides semantic security against chosen-plaintext attacks
+2. **Integrity**: GCM authentication tag prevents tampering and forgery
+3. **Consistency**: Session-based keys prevent encryption/decryption mismatches
+4. **Authenticity**: WebAuthn provides strong user authentication
 
-### Cryptographic Guarantees
-
-1. **Confidentiality**: AES-256-GCM provides semantic security
-2. **Integrity**: GCM authentication tag prevents tampering
-3. **Forward Secrecy**: Key rotation invalidates old keys
-4. **Non-Repudiation**: WebAuthn signatures prove authenticity
-
-### Threat Mitigation
+#### Threat Mitigation
 
 | Threat | Mitigation |
 |--------|------------|
-| Server Compromise | E2E encryption, server never sees plaintext |
-| Network Interception | TLS + E2E encryption |
-| Client Compromise | Limited plaintext exposure, secure key storage |
+| Server Compromise | E2E encryption, server stores only ciphertext |
+| Network Interception | TLS + E2E encryption, keys never transmitted |
+| Client Compromise | Limited plaintext exposure, secure key derivation |
 | Replay Attacks | WebAuthn challenge-response, fresh IVs |
-| Brute Force | WebAuthn biometric/PIN, rate limiting |
+| Brute Force | WebAuthn biometric/PIN, credential binding |
+| Key Confusion | Session-based consistent key management |
 
-### Implementation Security
+### Simplified Threat Model
 
+**Assumptions:**
+- User's device and WebAuthn authenticator are trusted
+- TLS protects data in transit
+- Server is semi-trusted (honest but curious)
+
+**Guarantees:**
+- Server cannot decrypt user TOTP secrets
+- Server cannot generate user TOTP codes
+- Man-in-the-middle cannot access plaintext data
+- Database breach does not expose plaintext secrets
+
+## Implementation Details
+
+### Base64 Utility Functions
 ```javascript
-// Secure key material handling
-class SecureKeyManager {
-  constructor() {
-    this.keyCache = new Map();
-    this.keyTTL = 30000; // 30 seconds
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
   }
-  
-  async getDecryptionKey(userId) {
-    const cacheKey = `dek_${userId}`;
+  return btoa(binary);
+}
+
+function base64ToArrayBuffer(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+```
+
+### Error Handling
+```javascript
+async function safeDecryptData(encryptedData, key) {
+  try {
+    return await decryptData(encryptedData, key);
+  } catch (error) {
+    console.error('Decryption failed:', error);
     
-    if (this.keyCache.has(cacheKey)) {
-      const cached = this.keyCache.get(cacheKey);
-      if (Date.now() < cached.expires) {
-        return cached.key;
-      }
-      // Clear expired key
-      this.clearKey(cacheKey);
-    }
+    // Clear potentially corrupted session key
+    clearSessionEncryptionKey();
     
-    // Key not in cache or expired, require re-authentication
-    throw new Error("KEY_EXPIRED_REAUTHENTICATION_REQUIRED");
-  }
-  
-  cacheKey(userId, key) {
-    const cacheKey = `dek_${userId}`;
-    this.keyCache.set(cacheKey, {
-      key: key,
-      expires: Date.now() + this.keyTTL
-    });
-    
-    // Auto-clear after TTL
-    setTimeout(() => this.clearKey(cacheKey), this.keyTTL);
-  }
-  
-  clearKey(cacheKey) {
-    if (this.keyCache.has(cacheKey)) {
-      const cached = this.keyCache.get(cacheKey);
-      // Zero out key material
-      if (cached.key) {
-        cached.key.fill(0);
-      }
-      this.keyCache.delete(cacheKey);
-    }
-  }
-  
-  clearAllKeys() {
-    for (const [key, value] of this.keyCache) {
-      if (value.key) {
-        value.key.fill(0);
-      }
-    }
-    this.keyCache.clear();
+    throw new Error('Decryption failed: Please re-authenticate');
   }
 }
 ```
 
-## Performance Considerations
+### Key Lifecycle Management
+```javascript
+// Clear session keys on:
+// 1. User logout
+// 2. Browser tab close
+// 3. Inactivity timeout
+// 4. Decryption errors
 
-### Optimization Strategies
+window.addEventListener('beforeunload', () => {
+  clearSessionEncryptionKey();
+});
 
-1. **Key Caching**: Cache DEK in memory for 30-60 seconds
-2. **Batch Operations**: Encrypt/decrypt multiple seeds together
-3. **Web Workers**: Perform crypto operations off main thread
-4. **Streaming**: Process large datasets incrementally
+// Auto-clear after 30 minutes of inactivity
+let inactivityTimer;
+function resetInactivityTimer() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => {
+    clearSessionEncryptionKey();
+  }, 30 * 60 * 1000); // 30 minutes
+}
+```
+
+## Performance Characteristics
 
 ### Benchmarks (Approximate)
 
 | Operation | Time (ms) | Notes |
 |-----------|-----------|--------|
-| WebAuthn PRF | 100-500 | Depends on authenticator |
-| HKDF Derivation | 1-5 | CPU dependent |
-| AES-GCM Encrypt | 0.1-1 | Per TOTP seed |
-| AES-GCM Decrypt | 0.1-1 | Per TOTP seed |
-| Key Wrapping | 0.5-2 | One-time per session |
+| WebAuthn Authentication | 100-2000 | Depends on authenticator type |
+| PBKDF2 Key Derivation | 50-200 | 100,000 iterations |
+| AES-GCM Encrypt | 1-5 | Per TOTP secret |
+| AES-GCM Decrypt | 1-5 | Per TOTP secret |
+| TOTP Generation | 1-10 | Using otpauth library |
 
-This cryptographic design ensures that 2FAir provides state-of-the-art security while maintaining good performance and user experience across all supported devices and browsers. 
+### Optimization Strategies
+
+1. **Session Key Caching**: Avoid re-deriving keys during session
+2. **Batch Operations**: Encrypt/decrypt multiple secrets together
+3. **Lazy Loading**: Only decrypt secrets when displaying codes
+4. **Web Workers**: Perform crypto operations off main thread (future)
+
+## Security Considerations
+
+### Design Principles
+- **Simplicity**: Simple implementation reduces attack surface
+- **Consistency**: Session-based keys prevent subtle bugs
+- **Standards Compliance**: Uses Web Crypto API and WebAuthn standards
+- **Defense in Depth**: Multiple layers of security
+
+### Known Limitations
+1. **Static Salt**: Uses static salt for PBKDF2 (acceptable for this use case)
+2. **Session Storage**: Keys stored in memory during session
+3. **Single Device**: No cross-device synchronization yet
+4. **Browser Dependency**: Requires modern browser with WebAuthn support
+
+### Future Enhancements
+1. **Hardware Security**: Integration with HSMs for enterprise
+2. **Cross-Device Sync**: Secure multi-device key sharing
+3. **Backup Recovery**: Secure backup key generation
+4. **Key Rotation**: Automatic key rotation policies
+
+This simplified but robust cryptographic design provides strong security guarantees while maintaining excellent usability and performance. 

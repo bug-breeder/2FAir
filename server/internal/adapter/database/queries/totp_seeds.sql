@@ -1,57 +1,59 @@
 -- name: CreateEncryptedTOTPSeed :one
 INSERT INTO encrypted_totp_seeds (
-    user_id, key_version, ciphertext, iv, auth_tag,
-    issuer, account_name, icon_url, tags
+    user_id, service_name, account_identifier, encrypted_secret,
+    algorithm, digits, period, issuer, icon_url, is_active
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING *;
 
 -- name: GetEncryptedTOTPSeedByID :one
 SELECT * FROM encrypted_totp_seeds
-WHERE id = $1 AND user_id = $2;
+WHERE id = $1 AND user_id = $2 AND is_active = TRUE;
 
 -- name: GetEncryptedTOTPSeedsByUserID :many
 SELECT * FROM encrypted_totp_seeds
-WHERE user_id = $1
+WHERE user_id = $1 AND is_active = TRUE
 ORDER BY created_at DESC;
 
 -- name: GetEncryptedTOTPSeedsByUserIDSince :many
 SELECT * FROM encrypted_totp_seeds
-WHERE user_id = $1 AND updated_at > $2
+WHERE user_id = $1 AND updated_at > $2 AND is_active = TRUE
 ORDER BY updated_at ASC;
 
 -- name: UpdateEncryptedTOTPSeed :one
 UPDATE encrypted_totp_seeds
-SET ciphertext = COALESCE(sqlc.narg('ciphertext'), ciphertext),
-    iv = COALESCE(sqlc.narg('iv'), iv),
-    auth_tag = COALESCE(sqlc.narg('auth_tag'), auth_tag),
+SET service_name = COALESCE(sqlc.narg('service_name'), service_name),
+    account_identifier = COALESCE(sqlc.narg('account_identifier'), account_identifier),
+    encrypted_secret = COALESCE(sqlc.narg('encrypted_secret'), encrypted_secret),
+    algorithm = COALESCE(sqlc.narg('algorithm'), algorithm),
+    digits = COALESCE(sqlc.narg('digits'), digits),
+    period = COALESCE(sqlc.narg('period'), period),
     issuer = COALESCE(sqlc.narg('issuer'), issuer),
-    account_name = COALESCE(sqlc.narg('account_name'), account_name),
     icon_url = COALESCE(sqlc.narg('icon_url'), icon_url),
-    tags = COALESCE(sqlc.narg('tags'), tags),
-    synced_at = NOW()
-WHERE id = $1 AND user_id = $2
+    updated_at = NOW()
+WHERE id = $1 AND user_id = $2 AND is_active = TRUE
 RETURNING *;
 
 -- name: DeleteEncryptedTOTPSeed :exec
-DELETE FROM encrypted_totp_seeds
+UPDATE encrypted_totp_seeds
+SET is_active = FALSE, updated_at = NOW()
 WHERE id = $1 AND user_id = $2;
 
 -- name: SearchEncryptedTOTPSeeds :many
 SELECT * FROM encrypted_totp_seeds
-WHERE user_id = $1
+WHERE user_id = $1 AND is_active = TRUE
     AND (
         issuer ILIKE '%' || $2 || '%'
-        OR account_name ILIKE '%' || $2 || '%'
-        OR $2 = ANY(tags)
+        OR service_name ILIKE '%' || $2 || '%'
+        OR account_identifier ILIKE '%' || $2 || '%'
     )
 ORDER BY created_at DESC;
 
 -- name: UpdateTOTPSeedSyncTimestamp :exec
 UPDATE encrypted_totp_seeds
-SET synced_at = NOW()
+SET updated_at = NOW()
 WHERE id = $1 AND user_id = $2;
 
 -- name: GetTOTPSeedsCountByUser :one
 SELECT COUNT(*) FROM encrypted_totp_seeds
-WHERE user_id = $1; 
+WHERE user_id = $1 AND is_active = TRUE; 

@@ -13,24 +13,30 @@ import (
 
 const createWebAuthnCredential = `-- name: CreateWebAuthnCredential :one
 INSERT INTO webauthn_credentials (
-    user_id, credential_id, public_key, aaguid, clone_warning,
-    attachment, transport, backup_eligible, backup_state, sign_count
+    user_id, credential_id, public_key, attestation_type,
+    transport, flags, authenticator, device_name,
+    aaguid, clone_warning, sign_count, attachment,
+    backup_eligible, backup_state
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-RETURNING id, user_id, credential_id, public_key, aaguid, clone_warning, attachment, transport, backup_eligible, backup_state, sign_count, created_at, last_used_at
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+RETURNING id, user_id, credential_id, public_key, attestation_type, transport, flags, authenticator, device_name, created_at, last_used_at, aaguid, clone_warning, sign_count, attachment, backup_eligible, backup_state
 `
 
 type CreateWebAuthnCredentialParams struct {
-	UserID         pgtype.UUID `json:"user_id"`
-	CredentialID   []byte      `json:"credential_id"`
-	PublicKey      []byte      `json:"public_key"`
-	Aaguid         pgtype.UUID `json:"aaguid"`
-	CloneWarning   pgtype.Bool `json:"clone_warning"`
-	Attachment     pgtype.Text `json:"attachment"`
-	Transport      []string    `json:"transport"`
-	BackupEligible pgtype.Bool `json:"backup_eligible"`
-	BackupState    pgtype.Bool `json:"backup_state"`
-	SignCount      pgtype.Int8 `json:"sign_count"`
+	UserID          pgtype.UUID `json:"user_id"`
+	CredentialID    []byte      `json:"credential_id"`
+	PublicKey       []byte      `json:"public_key"`
+	AttestationType string      `json:"attestation_type"`
+	Transport       []string    `json:"transport"`
+	Flags           []byte      `json:"flags"`
+	Authenticator   []byte      `json:"authenticator"`
+	DeviceName      pgtype.Text `json:"device_name"`
+	Aaguid          pgtype.UUID `json:"aaguid"`
+	CloneWarning    bool        `json:"clone_warning"`
+	SignCount       int64       `json:"sign_count"`
+	Attachment      pgtype.Text `json:"attachment"`
+	BackupEligible  bool        `json:"backup_eligible"`
+	BackupState     bool        `json:"backup_state"`
 }
 
 func (q *Queries) CreateWebAuthnCredential(ctx context.Context, arg CreateWebAuthnCredentialParams) (WebauthnCredential, error) {
@@ -38,13 +44,17 @@ func (q *Queries) CreateWebAuthnCredential(ctx context.Context, arg CreateWebAut
 		arg.UserID,
 		arg.CredentialID,
 		arg.PublicKey,
+		arg.AttestationType,
+		arg.Transport,
+		arg.Flags,
+		arg.Authenticator,
+		arg.DeviceName,
 		arg.Aaguid,
 		arg.CloneWarning,
+		arg.SignCount,
 		arg.Attachment,
-		arg.Transport,
 		arg.BackupEligible,
 		arg.BackupState,
-		arg.SignCount,
 	)
 	var i WebauthnCredential
 	err := row.Scan(
@@ -52,15 +62,19 @@ func (q *Queries) CreateWebAuthnCredential(ctx context.Context, arg CreateWebAut
 		&i.UserID,
 		&i.CredentialID,
 		&i.PublicKey,
-		&i.Aaguid,
-		&i.CloneWarning,
-		&i.Attachment,
+		&i.AttestationType,
 		&i.Transport,
-		&i.BackupEligible,
-		&i.BackupState,
-		&i.SignCount,
+		&i.Flags,
+		&i.Authenticator,
+		&i.DeviceName,
 		&i.CreatedAt,
 		&i.LastUsedAt,
+		&i.Aaguid,
+		&i.CloneWarning,
+		&i.SignCount,
+		&i.Attachment,
+		&i.BackupEligible,
+		&i.BackupState,
 	)
 	return i, err
 }
@@ -81,7 +95,7 @@ func (q *Queries) DeleteWebAuthnCredential(ctx context.Context, arg DeleteWebAut
 }
 
 const getWebAuthnCredentialByID = `-- name: GetWebAuthnCredentialByID :one
-SELECT id, user_id, credential_id, public_key, aaguid, clone_warning, attachment, transport, backup_eligible, backup_state, sign_count, created_at, last_used_at FROM webauthn_credentials
+SELECT id, user_id, credential_id, public_key, attestation_type, transport, flags, authenticator, device_name, created_at, last_used_at, aaguid, clone_warning, sign_count, attachment, backup_eligible, backup_state FROM webauthn_credentials
 WHERE credential_id = $1
 `
 
@@ -93,21 +107,25 @@ func (q *Queries) GetWebAuthnCredentialByID(ctx context.Context, credentialID []
 		&i.UserID,
 		&i.CredentialID,
 		&i.PublicKey,
-		&i.Aaguid,
-		&i.CloneWarning,
-		&i.Attachment,
+		&i.AttestationType,
 		&i.Transport,
-		&i.BackupEligible,
-		&i.BackupState,
-		&i.SignCount,
+		&i.Flags,
+		&i.Authenticator,
+		&i.DeviceName,
 		&i.CreatedAt,
 		&i.LastUsedAt,
+		&i.Aaguid,
+		&i.CloneWarning,
+		&i.SignCount,
+		&i.Attachment,
+		&i.BackupEligible,
+		&i.BackupState,
 	)
 	return i, err
 }
 
 const getWebAuthnCredentialsByUserID = `-- name: GetWebAuthnCredentialsByUserID :many
-SELECT id, user_id, credential_id, public_key, aaguid, clone_warning, attachment, transport, backup_eligible, backup_state, sign_count, created_at, last_used_at FROM webauthn_credentials
+SELECT id, user_id, credential_id, public_key, attestation_type, transport, flags, authenticator, device_name, created_at, last_used_at, aaguid, clone_warning, sign_count, attachment, backup_eligible, backup_state FROM webauthn_credentials
 WHERE user_id = $1
 ORDER BY created_at DESC
 `
@@ -126,15 +144,19 @@ func (q *Queries) GetWebAuthnCredentialsByUserID(ctx context.Context, userID pgt
 			&i.UserID,
 			&i.CredentialID,
 			&i.PublicKey,
-			&i.Aaguid,
-			&i.CloneWarning,
-			&i.Attachment,
+			&i.AttestationType,
 			&i.Transport,
-			&i.BackupEligible,
-			&i.BackupState,
-			&i.SignCount,
+			&i.Flags,
+			&i.Authenticator,
+			&i.DeviceName,
 			&i.CreatedAt,
 			&i.LastUsedAt,
+			&i.Aaguid,
+			&i.CloneWarning,
+			&i.SignCount,
+			&i.Attachment,
+			&i.BackupEligible,
+			&i.BackupState,
 		); err != nil {
 			return nil, err
 		}
@@ -153,12 +175,23 @@ WHERE credential_id = $1
 `
 
 type UpdateWebAuthnCredentialCloneWarningParams struct {
-	CredentialID []byte      `json:"credential_id"`
-	CloneWarning pgtype.Bool `json:"clone_warning"`
+	CredentialID []byte `json:"credential_id"`
+	CloneWarning bool   `json:"clone_warning"`
 }
 
 func (q *Queries) UpdateWebAuthnCredentialCloneWarning(ctx context.Context, arg UpdateWebAuthnCredentialCloneWarningParams) error {
 	_, err := q.db.Exec(ctx, updateWebAuthnCredentialCloneWarning, arg.CredentialID, arg.CloneWarning)
+	return err
+}
+
+const updateWebAuthnCredentialLastUsed = `-- name: UpdateWebAuthnCredentialLastUsed :exec
+UPDATE webauthn_credentials
+SET last_used_at = NOW()
+WHERE credential_id = $1
+`
+
+func (q *Queries) UpdateWebAuthnCredentialLastUsed(ctx context.Context, credentialID []byte) error {
+	_, err := q.db.Exec(ctx, updateWebAuthnCredentialLastUsed, credentialID)
 	return err
 }
 
@@ -169,8 +202,8 @@ WHERE credential_id = $1
 `
 
 type UpdateWebAuthnCredentialSignCountParams struct {
-	CredentialID []byte      `json:"credential_id"`
-	SignCount    pgtype.Int8 `json:"sign_count"`
+	CredentialID []byte `json:"credential_id"`
+	SignCount    int64  `json:"sign_count"`
 }
 
 func (q *Queries) UpdateWebAuthnCredentialSignCount(ctx context.Context, arg UpdateWebAuthnCredentialSignCountParams) error {

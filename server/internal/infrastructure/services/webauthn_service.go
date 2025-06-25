@@ -129,13 +129,13 @@ func (w *webAuthnService) BeginRegistration(ctx context.Context, user *entities.
 		credentials: existingCreds,
 	}
 
-	// Create registration options
+	// Create registration options with PRF extension
 	registerOptions := func(credCreationOpts *protocol.PublicKeyCredentialCreationOptions) {
 		if authenticatorSelection != nil {
 			credCreationOpts.AuthenticatorSelection = *authenticatorSelection
 		}
 
-		// Enable PRF extension for key derivation
+		// Enable PRF extension for vault key derivation
 		credCreationOpts.Extensions = protocol.AuthenticationExtensions{
 			"prf": map[string]interface{}{},
 		}
@@ -183,16 +183,20 @@ func (w *webAuthnService) FinishRegistration(ctx context.Context, user *entities
 	for _, transport := range credential.Transport {
 		transports = append(transports, string(transport))
 	}
+	// Ensure we always have a non-empty slice to avoid database NULL constraint violation
+	if len(transports) == 0 {
+		transports = []string{"internal"} // Default transport type
+	}
 
-	// Create credential entity with correct field mapping
+	// Create credential entity with actual WebAuthn values
 	credEntity := &entities.WebAuthnCredential{
 		ID:             uuid.New(),
 		UserID:         user.ID,
 		CredentialID:   credential.ID,
 		PublicKey:      credential.PublicKey,
 		AAGUID:         aaguid,
-		CloneWarning:   false,
-		Attachment:     "", // Will be set via SetAttachment if needed
+		CloneWarning:   false, // Initially false
+		Attachment:     "",    // Will be set via SetAttachment if needed
 		Transport:      transports,
 		BackupEligible: credential.Flags.BackupEligible,
 		BackupState:    credential.Flags.BackupState,
@@ -230,17 +234,17 @@ func (w *webAuthnService) BeginAssertion(ctx context.Context, user *entities.Use
 		credentials: existingCreds,
 	}
 
-	// Create assertion options with PRF extension
+	// Create assertion options with PRF extension for key derivation
 	assertionOptions := func(credAssertionOpts *protocol.PublicKeyCredentialRequestOptions) {
 		if len(allowedCredentials) > 0 {
 			credAssertionOpts.AllowedCredentials = allowedCredentials
 		}
 
-		// Enable PRF extension for key derivation
+		// Enable PRF extension for vault key derivation
 		credAssertionOpts.Extensions = protocol.AuthenticationExtensions{
 			"prf": map[string]interface{}{
 				"eval": map[string]interface{}{
-					"first": "dGVzdC1wcmYtaW5wdXQ=", // Base64 encoded PRF input
+					"first": "MkZBaXJWYXVsdEtleURlcml2YXRpb24=", // Base64url: "2FairVaultKeyDerivation"
 				},
 			},
 		}
@@ -288,7 +292,7 @@ func (w *webAuthnService) FinishAssertion(ctx context.Context, user *entities.Us
 		return nil, nil, fmt.Errorf("credential not found")
 	}
 
-	// Update sign count using entity method
+	// Update sign count using entity method (includes clone detection)
 	credEntity.UpdateSignCount(uint64(credential.Authenticator.SignCount))
 
 	if err := w.credRepo.Update(ctx, credEntity); err != nil {

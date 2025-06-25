@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/bug-breeder/2fair/server/internal/domain/services"
@@ -22,6 +23,26 @@ func NewOTPHandler(otpService services.OTPService) *OTPHandler {
 	}
 }
 
+// getUserIDFromContext safely extracts and converts user ID from context
+func getUserIDFromContext(c *gin.Context) (uuid.UUID, error) {
+	userIDInterface, exists := c.Get("user_id")
+	if !exists {
+		return uuid.Nil, fmt.Errorf("user not authenticated")
+	}
+
+	userIDStr, ok := userIDInterface.(string)
+	if !ok {
+		return uuid.Nil, fmt.Errorf("invalid user ID format")
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("invalid user ID format: %w", err)
+	}
+
+	return userID, nil
+}
+
 // ErrorResponse represents an error response
 type ErrorResponse struct {
 	Message string `json:"message"`
@@ -37,35 +58,35 @@ type SuccessResponse struct {
 type CreateOTPRequest struct {
 	Issuer     string `json:"issuer" binding:"required"`
 	Label      string `json:"label" binding:"required"`
-	Secret     string `json:"secret" binding:"required"`
+	Secret     string `json:"secret" binding:"required"` // Client-encrypted: "ciphertext.iv.authTag"
 	Period     int    `json:"period"`
 	Algorithm  string `json:"algorithm"`
 	Digits     int    `json:"digits"`
-	OTPAuthURL string `json:"otpauth_url"` // Alternative to individual fields
+	OTPAuthURL string `json:"otpauth_url"` // Alternative to individual fields (not implemented)
 }
 
 // UpdateOTPRequest represents the request body for updating an OTP
 type UpdateOTPRequest struct {
 	Issuer    string `json:"issuer" binding:"required"`
 	Label     string `json:"label" binding:"required"`
-	Secret    string `json:"secret" binding:"required"`
+	Secret    string `json:"secret" binding:"required"` // Client-encrypted: "ciphertext.iv.authTag"
 	Period    int    `json:"period"`
 	Algorithm string `json:"algorithm"`
 	Digits    int    `json:"digits"`
 }
 
 // CreateOTP creates a new OTP entry
-// @Summary Create a new OTP entry
-// @Description Creates a new encrypted TOTP entry in the user's vault
+// @Summary Create a new encrypted TOTP entry
+// @Description Creates a new TOTP entry with client-side encrypted secret. The secret field should contain pre-encrypted data in format "ciphertext.iv.authTag". Server never sees plaintext TOTP secrets.
 // @Tags otp
 // @Accept json
 // @Produce json
-// @Param otp body CreateOTPRequest true "OTP details"
+// @Param otp body CreateOTPRequest true "OTP details with encrypted secret"
 // @Success 201 {object} entities.OTP
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /v1/api/otp [post]
+// @Router /api/v1/otp [post]
 func (h *OTPHandler) CreateOTP(c *gin.Context) {
 	var req CreateOTPRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -74,8 +95,8 @@ func (h *OTPHandler) CreateOTP(c *gin.Context) {
 	}
 
 	// Get user ID from context (set by auth middleware)
-	userID, exists := c.Get("user_id")
-	if !exists {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
 		return
 	}
@@ -117,7 +138,7 @@ func (h *OTPHandler) CreateOTP(c *gin.Context) {
 	}
 
 	// Create OTP
-	otp, err := h.otpService.CreateOTP(c.Request.Context(), userID.(uuid.UUID), req.Issuer, req.Label, req.Secret, req.Period, req.Algorithm, req.Digits)
+	otp, err := h.otpService.CreateOTP(c.Request.Context(), userID, req.Issuer, req.Label, req.Secret, req.Period, req.Algorithm, req.Digits)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create OTP", "details": err.Error()})
 		return
@@ -127,15 +148,24 @@ func (h *OTPHandler) CreateOTP(c *gin.Context) {
 }
 
 // GetOTPs retrieves all OTPs for the authenticated user
+// @Summary List all TOTP entries
+// @Description Retrieves all TOTP entries for the authenticated user. Secrets are returned in encrypted format and must be decrypted client-side.
+// @Tags otp
+// @Accept json
+// @Produce json
+// @Success 200 {array} entities.OTP
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /api/v1/otp [get]
 func (h *OTPHandler) GetOTPs(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
-	userID, exists := c.Get("user_id")
-	if !exists {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
 		return
 	}
 
-	otps, err := h.otpService.ListOTPs(c.Request.Context(), userID.(uuid.UUID))
+	otps, err := h.otpService.ListOTPs(c.Request.Context(), userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve OTPs", "details": err.Error()})
 		return
@@ -148,8 +178,8 @@ func (h *OTPHandler) GetOTPs(c *gin.Context) {
 // GetOTP retrieves a specific OTP by ID
 func (h *OTPHandler) GetOTP(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
-	userID, exists := c.Get("user_id")
-	if !exists {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
 		return
 	}
@@ -162,7 +192,7 @@ func (h *OTPHandler) GetOTP(c *gin.Context) {
 		return
 	}
 
-	otp, err := h.otpService.GetOTP(c.Request.Context(), otpID, userID.(uuid.UUID))
+	otp, err := h.otpService.GetOTP(c.Request.Context(), otpID, userID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "OTP not found", "details": err.Error()})
 		return
@@ -175,23 +205,23 @@ func (h *OTPHandler) GetOTP(c *gin.Context) {
 // TOTP code generation should happen client-side only for true E2E encryption
 
 // UpdateOTP updates an existing OTP entry
-// @Summary Update an OTP entry
-// @Description Updates an existing encrypted TOTP entry in the user's vault
+// @Summary Update an encrypted TOTP entry
+// @Description Updates an existing TOTP entry with client-side encrypted secret. The secret field should contain pre-encrypted data in format "ciphertext.iv.authTag".
 // @Tags otp
 // @Accept json
 // @Produce json
 // @Param id path string true "OTP ID"
-// @Param otp body UpdateOTPRequest true "Updated OTP details"
+// @Param otp body UpdateOTPRequest true "Updated OTP details with encrypted secret"
 // @Success 200 {object} entities.OTP
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /v1/api/otp/{id} [put]
+// @Router /api/v1/otp/{id} [put]
 func (h *OTPHandler) UpdateOTP(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
-	userID, exists := c.Get("user_id")
-	if !exists {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
 		return
 	}
@@ -221,7 +251,7 @@ func (h *OTPHandler) UpdateOTP(c *gin.Context) {
 		req.Period = 30
 	}
 
-	otp, err := h.otpService.UpdateOTP(c.Request.Context(), otpID, userID.(uuid.UUID), req.Issuer, req.Label, req.Secret, req.Period, req.Algorithm, req.Digits)
+	otp, err := h.otpService.UpdateOTP(c.Request.Context(), otpID, userID, req.Issuer, req.Label, req.Secret, req.Period, req.Algorithm, req.Digits)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update OTP", "details": err.Error()})
 		return
@@ -231,8 +261,8 @@ func (h *OTPHandler) UpdateOTP(c *gin.Context) {
 }
 
 // InactivateOTP soft deletes an OTP entry
-// @Summary Inactivate an OTP entry
-// @Description Soft deletes an OTP entry by marking it as inactive
+// @Summary Inactivate a TOTP entry
+// @Description Soft deletes a TOTP entry by marking it as inactive. The encrypted secret is permanently removed.
 // @Tags otp
 // @Param id path string true "OTP ID"
 // @Success 200 {object} SuccessResponse
@@ -240,11 +270,11 @@ func (h *OTPHandler) UpdateOTP(c *gin.Context) {
 // @Failure 401 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /v1/api/otp/{id}/inactivate [post]
+// @Router /api/v1/otp/{id}/inactivate [post]
 func (h *OTPHandler) InactivateOTP(c *gin.Context) {
 	// Get user ID from context (set by auth middleware)
-	userID, exists := c.Get("user_id")
-	if !exists {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
 		return
 	}
@@ -257,7 +287,7 @@ func (h *OTPHandler) InactivateOTP(c *gin.Context) {
 		return
 	}
 
-	err = h.otpService.DeleteOTP(c.Request.Context(), otpID, userID.(uuid.UUID))
+	err = h.otpService.DeleteOTP(c.Request.Context(), otpID, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to inactivate OTP", "details": err.Error()})
 		return

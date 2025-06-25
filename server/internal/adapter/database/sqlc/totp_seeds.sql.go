@@ -13,58 +13,61 @@ import (
 
 const createEncryptedTOTPSeed = `-- name: CreateEncryptedTOTPSeed :one
 INSERT INTO encrypted_totp_seeds (
-    user_id, key_version, ciphertext, iv, auth_tag,
-    issuer, account_name, icon_url, tags
+    user_id, service_name, account_identifier, encrypted_secret,
+    algorithm, digits, period, issuer, icon_url, is_active
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, user_id, key_version, ciphertext, iv, auth_tag, issuer, account_name, icon_url, tags, created_at, updated_at, synced_at
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+RETURNING id, user_id, service_name, account_identifier, encrypted_secret, algorithm, digits, period, issuer, icon_url, is_active, created_at, updated_at
 `
 
 type CreateEncryptedTOTPSeedParams struct {
-	UserID      pgtype.UUID `json:"user_id"`
-	KeyVersion  int32       `json:"key_version"`
-	Ciphertext  []byte      `json:"ciphertext"`
-	Iv          []byte      `json:"iv"`
-	AuthTag     []byte      `json:"auth_tag"`
-	Issuer      string      `json:"issuer"`
-	AccountName string      `json:"account_name"`
-	IconUrl     pgtype.Text `json:"icon_url"`
-	Tags        []string    `json:"tags"`
+	UserID            pgtype.UUID `json:"user_id"`
+	ServiceName       string      `json:"service_name"`
+	AccountIdentifier string      `json:"account_identifier"`
+	EncryptedSecret   []byte      `json:"encrypted_secret"`
+	Algorithm         string      `json:"algorithm"`
+	Digits            int32       `json:"digits"`
+	Period            int32       `json:"period"`
+	Issuer            pgtype.Text `json:"issuer"`
+	IconUrl           pgtype.Text `json:"icon_url"`
+	IsActive          pgtype.Bool `json:"is_active"`
 }
 
 func (q *Queries) CreateEncryptedTOTPSeed(ctx context.Context, arg CreateEncryptedTOTPSeedParams) (EncryptedTotpSeed, error) {
 	row := q.db.QueryRow(ctx, createEncryptedTOTPSeed,
 		arg.UserID,
-		arg.KeyVersion,
-		arg.Ciphertext,
-		arg.Iv,
-		arg.AuthTag,
+		arg.ServiceName,
+		arg.AccountIdentifier,
+		arg.EncryptedSecret,
+		arg.Algorithm,
+		arg.Digits,
+		arg.Period,
 		arg.Issuer,
-		arg.AccountName,
 		arg.IconUrl,
-		arg.Tags,
+		arg.IsActive,
 	)
 	var i EncryptedTotpSeed
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.KeyVersion,
-		&i.Ciphertext,
-		&i.Iv,
-		&i.AuthTag,
+		&i.ServiceName,
+		&i.AccountIdentifier,
+		&i.EncryptedSecret,
+		&i.Algorithm,
+		&i.Digits,
+		&i.Period,
 		&i.Issuer,
-		&i.AccountName,
 		&i.IconUrl,
-		&i.Tags,
+		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.SyncedAt,
 	)
 	return i, err
 }
 
 const deleteEncryptedTOTPSeed = `-- name: DeleteEncryptedTOTPSeed :exec
-DELETE FROM encrypted_totp_seeds
+UPDATE encrypted_totp_seeds
+SET is_active = FALSE, updated_at = NOW()
 WHERE id = $1 AND user_id = $2
 `
 
@@ -79,8 +82,8 @@ func (q *Queries) DeleteEncryptedTOTPSeed(ctx context.Context, arg DeleteEncrypt
 }
 
 const getEncryptedTOTPSeedByID = `-- name: GetEncryptedTOTPSeedByID :one
-SELECT id, user_id, key_version, ciphertext, iv, auth_tag, issuer, account_name, icon_url, tags, created_at, updated_at, synced_at FROM encrypted_totp_seeds
-WHERE id = $1 AND user_id = $2
+SELECT id, user_id, service_name, account_identifier, encrypted_secret, algorithm, digits, period, issuer, icon_url, is_active, created_at, updated_at FROM encrypted_totp_seeds
+WHERE id = $1 AND user_id = $2 AND is_active = TRUE
 `
 
 type GetEncryptedTOTPSeedByIDParams struct {
@@ -94,24 +97,24 @@ func (q *Queries) GetEncryptedTOTPSeedByID(ctx context.Context, arg GetEncrypted
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.KeyVersion,
-		&i.Ciphertext,
-		&i.Iv,
-		&i.AuthTag,
+		&i.ServiceName,
+		&i.AccountIdentifier,
+		&i.EncryptedSecret,
+		&i.Algorithm,
+		&i.Digits,
+		&i.Period,
 		&i.Issuer,
-		&i.AccountName,
 		&i.IconUrl,
-		&i.Tags,
+		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.SyncedAt,
 	)
 	return i, err
 }
 
 const getEncryptedTOTPSeedsByUserID = `-- name: GetEncryptedTOTPSeedsByUserID :many
-SELECT id, user_id, key_version, ciphertext, iv, auth_tag, issuer, account_name, icon_url, tags, created_at, updated_at, synced_at FROM encrypted_totp_seeds
-WHERE user_id = $1
+SELECT id, user_id, service_name, account_identifier, encrypted_secret, algorithm, digits, period, issuer, icon_url, is_active, created_at, updated_at FROM encrypted_totp_seeds
+WHERE user_id = $1 AND is_active = TRUE
 ORDER BY created_at DESC
 `
 
@@ -127,17 +130,17 @@ func (q *Queries) GetEncryptedTOTPSeedsByUserID(ctx context.Context, userID pgty
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
-			&i.KeyVersion,
-			&i.Ciphertext,
-			&i.Iv,
-			&i.AuthTag,
+			&i.ServiceName,
+			&i.AccountIdentifier,
+			&i.EncryptedSecret,
+			&i.Algorithm,
+			&i.Digits,
+			&i.Period,
 			&i.Issuer,
-			&i.AccountName,
 			&i.IconUrl,
-			&i.Tags,
+			&i.IsActive,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.SyncedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -150,8 +153,8 @@ func (q *Queries) GetEncryptedTOTPSeedsByUserID(ctx context.Context, userID pgty
 }
 
 const getEncryptedTOTPSeedsByUserIDSince = `-- name: GetEncryptedTOTPSeedsByUserIDSince :many
-SELECT id, user_id, key_version, ciphertext, iv, auth_tag, issuer, account_name, icon_url, tags, created_at, updated_at, synced_at FROM encrypted_totp_seeds
-WHERE user_id = $1 AND updated_at > $2
+SELECT id, user_id, service_name, account_identifier, encrypted_secret, algorithm, digits, period, issuer, icon_url, is_active, created_at, updated_at FROM encrypted_totp_seeds
+WHERE user_id = $1 AND updated_at > $2 AND is_active = TRUE
 ORDER BY updated_at ASC
 `
 
@@ -172,17 +175,17 @@ func (q *Queries) GetEncryptedTOTPSeedsByUserIDSince(ctx context.Context, arg Ge
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
-			&i.KeyVersion,
-			&i.Ciphertext,
-			&i.Iv,
-			&i.AuthTag,
+			&i.ServiceName,
+			&i.AccountIdentifier,
+			&i.EncryptedSecret,
+			&i.Algorithm,
+			&i.Digits,
+			&i.Period,
 			&i.Issuer,
-			&i.AccountName,
 			&i.IconUrl,
-			&i.Tags,
+			&i.IsActive,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.SyncedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -196,7 +199,7 @@ func (q *Queries) GetEncryptedTOTPSeedsByUserIDSince(ctx context.Context, arg Ge
 
 const getTOTPSeedsCountByUser = `-- name: GetTOTPSeedsCountByUser :one
 SELECT COUNT(*) FROM encrypted_totp_seeds
-WHERE user_id = $1
+WHERE user_id = $1 AND is_active = TRUE
 `
 
 func (q *Queries) GetTOTPSeedsCountByUser(ctx context.Context, userID pgtype.UUID) (int64, error) {
@@ -207,12 +210,12 @@ func (q *Queries) GetTOTPSeedsCountByUser(ctx context.Context, userID pgtype.UUI
 }
 
 const searchEncryptedTOTPSeeds = `-- name: SearchEncryptedTOTPSeeds :many
-SELECT id, user_id, key_version, ciphertext, iv, auth_tag, issuer, account_name, icon_url, tags, created_at, updated_at, synced_at FROM encrypted_totp_seeds
-WHERE user_id = $1
+SELECT id, user_id, service_name, account_identifier, encrypted_secret, algorithm, digits, period, issuer, icon_url, is_active, created_at, updated_at FROM encrypted_totp_seeds
+WHERE user_id = $1 AND is_active = TRUE
     AND (
         issuer ILIKE '%' || $2 || '%'
-        OR account_name ILIKE '%' || $2 || '%'
-        OR $2 = ANY(tags)
+        OR service_name ILIKE '%' || $2 || '%'
+        OR account_identifier ILIKE '%' || $2 || '%'
     )
 ORDER BY created_at DESC
 `
@@ -234,17 +237,17 @@ func (q *Queries) SearchEncryptedTOTPSeeds(ctx context.Context, arg SearchEncryp
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
-			&i.KeyVersion,
-			&i.Ciphertext,
-			&i.Iv,
-			&i.AuthTag,
+			&i.ServiceName,
+			&i.AccountIdentifier,
+			&i.EncryptedSecret,
+			&i.Algorithm,
+			&i.Digits,
+			&i.Period,
 			&i.Issuer,
-			&i.AccountName,
 			&i.IconUrl,
-			&i.Tags,
+			&i.IsActive,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.SyncedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -258,64 +261,67 @@ func (q *Queries) SearchEncryptedTOTPSeeds(ctx context.Context, arg SearchEncryp
 
 const updateEncryptedTOTPSeed = `-- name: UpdateEncryptedTOTPSeed :one
 UPDATE encrypted_totp_seeds
-SET ciphertext = COALESCE($3, ciphertext),
-    iv = COALESCE($4, iv),
-    auth_tag = COALESCE($5, auth_tag),
-    issuer = COALESCE($6, issuer),
-    account_name = COALESCE($7, account_name),
-    icon_url = COALESCE($8, icon_url),
-    tags = COALESCE($9, tags),
-    synced_at = NOW()
-WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, key_version, ciphertext, iv, auth_tag, issuer, account_name, icon_url, tags, created_at, updated_at, synced_at
+SET service_name = COALESCE($3, service_name),
+    account_identifier = COALESCE($4, account_identifier),
+    encrypted_secret = COALESCE($5, encrypted_secret),
+    algorithm = COALESCE($6, algorithm),
+    digits = COALESCE($7, digits),
+    period = COALESCE($8, period),
+    issuer = COALESCE($9, issuer),
+    icon_url = COALESCE($10, icon_url),
+    updated_at = NOW()
+WHERE id = $1 AND user_id = $2 AND is_active = TRUE
+RETURNING id, user_id, service_name, account_identifier, encrypted_secret, algorithm, digits, period, issuer, icon_url, is_active, created_at, updated_at
 `
 
 type UpdateEncryptedTOTPSeedParams struct {
-	ID          pgtype.UUID `json:"id"`
-	UserID      pgtype.UUID `json:"user_id"`
-	Ciphertext  []byte      `json:"ciphertext"`
-	Iv          []byte      `json:"iv"`
-	AuthTag     []byte      `json:"auth_tag"`
-	Issuer      pgtype.Text `json:"issuer"`
-	AccountName pgtype.Text `json:"account_name"`
-	IconUrl     pgtype.Text `json:"icon_url"`
-	Tags        []string    `json:"tags"`
+	ID                pgtype.UUID `json:"id"`
+	UserID            pgtype.UUID `json:"user_id"`
+	ServiceName       pgtype.Text `json:"service_name"`
+	AccountIdentifier pgtype.Text `json:"account_identifier"`
+	EncryptedSecret   []byte      `json:"encrypted_secret"`
+	Algorithm         pgtype.Text `json:"algorithm"`
+	Digits            pgtype.Int4 `json:"digits"`
+	Period            pgtype.Int4 `json:"period"`
+	Issuer            pgtype.Text `json:"issuer"`
+	IconUrl           pgtype.Text `json:"icon_url"`
 }
 
 func (q *Queries) UpdateEncryptedTOTPSeed(ctx context.Context, arg UpdateEncryptedTOTPSeedParams) (EncryptedTotpSeed, error) {
 	row := q.db.QueryRow(ctx, updateEncryptedTOTPSeed,
 		arg.ID,
 		arg.UserID,
-		arg.Ciphertext,
-		arg.Iv,
-		arg.AuthTag,
+		arg.ServiceName,
+		arg.AccountIdentifier,
+		arg.EncryptedSecret,
+		arg.Algorithm,
+		arg.Digits,
+		arg.Period,
 		arg.Issuer,
-		arg.AccountName,
 		arg.IconUrl,
-		arg.Tags,
 	)
 	var i EncryptedTotpSeed
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.KeyVersion,
-		&i.Ciphertext,
-		&i.Iv,
-		&i.AuthTag,
+		&i.ServiceName,
+		&i.AccountIdentifier,
+		&i.EncryptedSecret,
+		&i.Algorithm,
+		&i.Digits,
+		&i.Period,
 		&i.Issuer,
-		&i.AccountName,
 		&i.IconUrl,
-		&i.Tags,
+		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.SyncedAt,
 	)
 	return i, err
 }
 
 const updateTOTPSeedSyncTimestamp = `-- name: UpdateTOTPSeedSyncTimestamp :exec
 UPDATE encrypted_totp_seeds
-SET synced_at = NOW()
+SET updated_at = NOW()
 WHERE id = $1 AND user_id = $2
 `
 

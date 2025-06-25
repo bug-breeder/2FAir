@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/bug-breeder/2fair/server/internal/adapter/api/middleware"
 	"github.com/bug-breeder/2fair/server/internal/domain/entities"
@@ -74,7 +75,7 @@ func (h *WebAuthnHandler) BeginRegistration(c *gin.Context) {
 	// Begin registration
 	credentialCreation, err := h.webAuthnService.BeginRegistration(c.Request.Context(), user, authenticatorSelection)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to begin registration"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to begin registration", "details": err.Error()})
 		return
 	}
 
@@ -83,8 +84,10 @@ func (h *WebAuthnHandler) BeginRegistration(c *gin.Context) {
 	sessionStore[sessionKey] = credentialCreation.SessionData
 
 	// Return only the public credential creation options
+	// Note: credentialCreation.PublicKeyCredentialCreationOptions is *protocol.CredentialCreation
+	// which has a Response field containing the actual PublicKeyCredentialCreationOptions
 	c.JSON(http.StatusOK, gin.H{
-		"publicKey": credentialCreation.PublicKeyCredentialCreationOptions,
+		"publicKey": credentialCreation.PublicKeyCredentialCreationOptions.Response,
 	})
 }
 
@@ -131,7 +134,7 @@ func (h *WebAuthnHandler) FinishRegistration(c *gin.Context) {
 	// Finish registration using the HTTP request directly
 	credential, err := h.webAuthnService.FinishRegistration(c.Request.Context(), user, sessionData, c.Request)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to complete registration"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to complete registration", "details": err.Error()})
 		return
 	}
 
@@ -158,6 +161,7 @@ func (h *WebAuthnHandler) FinishRegistration(c *gin.Context) {
 // @Security BearerAuth
 // @Success 200 {object} services.WebAuthnCredentialAssertion
 // @Failure 401 {object} map[string]string
+// @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /v1/webauthn/assert/begin [post]
 func (h *WebAuthnHandler) BeginAssertion(c *gin.Context) {
@@ -185,7 +189,16 @@ func (h *WebAuthnHandler) BeginAssertion(c *gin.Context) {
 	// Begin assertion
 	credentialAssertion, err := h.webAuthnService.BeginAssertion(c.Request.Context(), user, nil)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to begin assertion"})
+		// Check for specific "no credentials found" error
+		if strings.Contains(err.Error(), "no credentials found for user") {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "no_webauthn_credentials",
+				"message": "No WebAuthn credentials found. Please register a WebAuthn credential first to enable TOTP encryption.",
+				"action":  "register_webauthn",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to begin assertion", "details": err.Error()})
 		return
 	}
 
@@ -194,8 +207,10 @@ func (h *WebAuthnHandler) BeginAssertion(c *gin.Context) {
 	sessionStore[sessionKey] = credentialAssertion.SessionData
 
 	// Return only the public credential request options
+	// Note: credentialAssertion.PublicKeyCredentialRequestOptions is *protocol.CredentialAssertion
+	// which has a Response field containing the actual PublicKeyCredentialRequestOptions
 	c.JSON(http.StatusOK, gin.H{
-		"publicKey": credentialAssertion.PublicKeyCredentialRequestOptions,
+		"publicKey": credentialAssertion.PublicKeyCredentialRequestOptions.Response,
 	})
 }
 
@@ -242,7 +257,7 @@ func (h *WebAuthnHandler) FinishAssertion(c *gin.Context) {
 	// Finish assertion using the HTTP request directly
 	credential, prfOutput, err := h.webAuthnService.FinishAssertion(c.Request.Context(), user, sessionData, c.Request)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to complete assertion"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to complete assertion", "details": err.Error()})
 		return
 	}
 

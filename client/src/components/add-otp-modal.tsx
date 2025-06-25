@@ -15,7 +15,8 @@ import { useAddOtp, useListOtps } from "../hooks/otp";
 import { toast } from "../lib/toast";
 import { validateTOTPSecret, normalizeTOTPSecret } from "../lib/totp";
 import { encryptData } from "../lib/crypto";
-import { authenticateWebAuthn, isWebAuthnSupported } from "../lib/webauthn";
+import { getSessionEncryptionKey, isWebAuthnSupported } from "../lib/webauthn";
+import WebAuthnRegistrationModal from "./webauthn-registration-modal";
 
 interface AddOtpModalProps {
   isOpen: boolean;
@@ -64,6 +65,7 @@ const AddOtpModal: React.FC<AddOtpModalProps> = ({ isOpen, onClose }) => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isEncrypting, setIsEncrypting] = useState(false);
+  const [showWebAuthnRegistration, setShowWebAuthnRegistration] = useState(false);
   const addOtpMutation = useAddOtp();
   const { refetch } = useListOtps(); // Hook to refetch the OTP list
 
@@ -108,9 +110,8 @@ const AddOtpModal: React.FC<AddOtpModalProps> = ({ isOpen, onClose }) => {
     setIsEncrypting(true);
 
     try {
-      // Authenticate with WebAuthn to get encryption key
-      console.log('Authenticating with WebAuthn for encryption...');
-      const encryptionKey = await authenticateWebAuthn();
+      // Get session encryption key (will authenticate if needed)
+      const encryptionKey = await getSessionEncryptionKey();
 
       // Normalize and encrypt the TOTP secret
       const normalizedSecret = normalizeTOTPSecret(formData.secret);
@@ -132,7 +133,6 @@ const AddOtpModal: React.FC<AddOtpModalProps> = ({ isOpen, onClose }) => {
         secret: secretForBackend, // Encrypted TOTP secret
       };
 
-      console.log('Adding OTP with encrypted secret...');
       addOtpMutation.mutate(otpData, {
         onSuccess: () => {
           refetch(); // Refetch the OTP list
@@ -157,6 +157,14 @@ const AddOtpModal: React.FC<AddOtpModalProps> = ({ isOpen, onClose }) => {
       });
     } catch (error) {
       console.error('Encryption or authentication failed:', error);
+      
+      // Check if this is a "no credentials" error
+      if (error instanceof Error && error.message.includes('WebAuthn authentication failed')) {
+        // This could be because the user doesn't have WebAuthn credentials registered
+        setShowWebAuthnRegistration(true);
+        return;
+      }
+      
       toast.error(`Failed to encrypt OTP secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsEncrypting(false);
@@ -186,98 +194,114 @@ const AddOtpModal: React.FC<AddOtpModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleWebAuthnRegistrationSuccess = () => {
+    setShowWebAuthnRegistration(false);
+    toast.success("WebAuthn registered! Now you can add encrypted TOTPs.");
+    // Optionally retry the OTP addition automatically
+    // handleAddOtp();
+  };
+
   return (
-    <Modal isOpen={isOpen} placement="center" onOpenChange={handleClose}>
-      <ModalContent>
-        <>
-          <ModalHeader className="flex flex-col gap-1">
-            <span>Add New OTP</span>
-            <p className="text-sm text-default-500 font-normal">
-              🔒 Your TOTP secret will be encrypted client-side before storage
-            </p>
-          </ModalHeader>
-          <ModalBody>
-            <Input
-              description="The service provider name"
-              errorMessage={errors.issuer}
-              isInvalid={!!errors.issuer}
-              label="Issuer"
-              placeholder="e.g., Google, GitHub, Microsoft"
-              value={formData.issuer}
-              onChange={(e) => handleInputChange("issuer", e.target.value)}
-            />
-            <Input
-              description="Your account identifier"
-              errorMessage={errors.label}
-              isInvalid={!!errors.label}
-              label="Label"
-              placeholder="e.g., john@example.com, username"
-              value={formData.label}
-              onChange={(e) => handleInputChange("label", e.target.value)}
-            />
-            <Input
-              description="Base32 encoded secret key (A-Z, 2-7) - will be encrypted"
-              errorMessage={errors.secret}
-              isInvalid={!!errors.secret}
-              label="Secret"
-              placeholder="e.g., JBSWY3DPEHPK3PXP"
-              type="password"
-              value={formData.secret}
-              onChange={(e) => handleInputChange("secret", e.target.value)}
-            />
-            <div className="flex gap-2">
-              <Select
-                label="Algorithm"
-                selectedKeys={[formData.algorithm]}
-                onSelectionChange={(keys) => {
-                  const value = Array.from(keys)[0] as string;
-                  handleInputChange("algorithm", value);
-                }}
-              >
-                <SelectItem key="SHA1">SHA1</SelectItem>
-                <SelectItem key="SHA256">SHA256</SelectItem>
-                <SelectItem key="SHA512">SHA512</SelectItem>
-              </Select>
+    <>
+      <Modal isOpen={isOpen} placement="center" onOpenChange={handleClose}>
+        <ModalContent>
+          <>
+            <ModalHeader className="flex flex-col gap-1">
+              <span>Add New OTP</span>
+              <p className="text-sm text-default-500 font-normal">
+                🔒 Your TOTP secret will be encrypted client-side before storage
+              </p>
+            </ModalHeader>
+            <ModalBody>
               <Input
-                errorMessage={errors.digits}
-                isInvalid={!!errors.digits}
-                label="Digits"
-                max="8"
-                min="6"
-                placeholder="6"
-                type="number"
-                value={formData.digits}
-                onChange={(e) => handleInputChange("digits", e.target.value)}
+                description="The service provider name"
+                errorMessage={errors.issuer}
+                isInvalid={!!errors.issuer}
+                label="Issuer"
+                placeholder="e.g., Google, GitHub, Microsoft"
+                value={formData.issuer}
+                onChange={(e) => handleInputChange("issuer", e.target.value)}
               />
-            </div>
-            <Input
-              description="Time interval for code generation (15-300 seconds)"
-              errorMessage={errors.period}
-              isInvalid={!!errors.period}
-              label="Period (seconds)"
-              max="300"
-              min="15"
-              placeholder="30"
-              type="number"
-              value={formData.period}
-              onChange={(e) => handleInputChange("period", e.target.value)}
-            />
-          </ModalBody>
-          <ModalFooter>
-            <Button color="danger" variant="light" onPress={handleClose}>
-              Cancel
-            </Button>
-            <Button
-              color="success"
-              isDisabled={addOtpMutation.isPending || isEncrypting}
-              onPress={handleAddOtp}
-            >
-              {isEncrypting ? "🔐 Encrypting..." : addOtpMutation.isPending ? "Adding..." : "🔒 Add OTP (Encrypted)"}
-            </Button>
-          </ModalFooter>
-        </>
-      </ModalContent>
-    </Modal>
+              <Input
+                description="Your account identifier"
+                errorMessage={errors.label}
+                isInvalid={!!errors.label}
+                label="Label"
+                placeholder="e.g., john@example.com, username"
+                value={formData.label}
+                onChange={(e) => handleInputChange("label", e.target.value)}
+              />
+              <Input
+                description="Base32 encoded secret key (A-Z, 2-7) - will be encrypted"
+                errorMessage={errors.secret}
+                isInvalid={!!errors.secret}
+                label="Secret"
+                placeholder="e.g., JBSWY3DPEHPK3PXP"
+                type="password"
+                value={formData.secret}
+                onChange={(e) => handleInputChange("secret", e.target.value)}
+              />
+              <div className="flex gap-2">
+                <Select
+                  label="Algorithm"
+                  selectedKeys={[formData.algorithm]}
+                  onSelectionChange={(keys) => {
+                    const value = Array.from(keys)[0] as string;
+                    handleInputChange("algorithm", value);
+                  }}
+                >
+                  <SelectItem key="SHA1">SHA1</SelectItem>
+                  <SelectItem key="SHA256">SHA256</SelectItem>
+                  <SelectItem key="SHA512">SHA512</SelectItem>
+                </Select>
+                <Input
+                  errorMessage={errors.digits}
+                  isInvalid={!!errors.digits}
+                  label="Digits"
+                  max="8"
+                  min="6"
+                  placeholder="6"
+                  type="number"
+                  value={formData.digits}
+                  onChange={(e) => handleInputChange("digits", e.target.value)}
+                />
+              </div>
+              <Input
+                description="Time interval for code generation (15-300 seconds)"
+                errorMessage={errors.period}
+                isInvalid={!!errors.period}
+                label="Period (seconds)"
+                max="300"
+                min="15"
+                placeholder="30"
+                type="number"
+                value={formData.period}
+                onChange={(e) => handleInputChange("period", e.target.value)}
+              />
+            </ModalBody>
+            <ModalFooter>
+              <Button color="danger" variant="light" onPress={handleClose}>
+                Cancel
+              </Button>
+              <Button
+                color="success"
+                isDisabled={addOtpMutation.isPending || isEncrypting}
+                onPress={handleAddOtp}
+              >
+                {isEncrypting ? "🔐 Encrypting..." : addOtpMutation.isPending ? "Adding..." : "🔒 Add OTP (Encrypted)"}
+              </Button>
+            </ModalFooter>
+          </>
+        </ModalContent>
+      </Modal>
+
+      {/* WebAuthn Registration Modal */}
+      <WebAuthnRegistrationModal
+        isOpen={showWebAuthnRegistration}
+        onClose={() => setShowWebAuthnRegistration(false)}
+        onSuccess={handleWebAuthnRegistrationSuccess}
+      />
+    </>
   );
 };
 

@@ -10,7 +10,7 @@ import FAB from "../components/fab";
 import { Navbar } from "../components/navbar";
 import { generateTOTPCodes, TOTPConfig } from "../lib/totp";
 import { decryptData, EncryptedData } from "../lib/crypto";
-import { authenticateWebAuthn } from "../lib/webauthn";
+import { getSessionEncryptionKey } from "../lib/webauthn";
 
 function HomePage() {
   const {
@@ -50,10 +50,8 @@ function HomePage() {
         setDecryptionError(null);
         
         try {
-          console.log('Authenticating with WebAuthn to decrypt TOTP secrets...');
-          const key = await authenticateWebAuthn();
+          const key = await getSessionEncryptionKey();
           setEncryptionKey(key);
-          console.log('WebAuthn authentication successful, decryption key obtained');
         } catch (error) {
           console.error('WebAuthn authentication failed:', error);
           setDecryptionError(`Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -75,10 +73,12 @@ function HomePage() {
             otps.map(async (otp: OTP) => {
               try {
                 // Decrypt the TOTP secret
+                const secretParts = otp.Secret.split('.');
+                
                 const encryptedData: EncryptedData = {
-                  ciphertext: otp.Secret.split('.')[0] || '',
-                  iv: otp.Secret.split('.')[1] || '',
-                  authTag: otp.Secret.split('.')[2] || '',
+                  ciphertext: secretParts[0] || '',
+                  iv: secretParts[1] || '',
+                  authTag: secretParts[2] || '',
                 };
 
                 const decryptedSecret = await decryptData(encryptedData, encryptionKey);
@@ -123,7 +123,6 @@ function HomePage() {
           );
 
           setCombinedData(combined);
-          console.log("TOTP codes generated successfully from decrypted secrets");
         } catch (error) {
           console.error('Failed to generate TOTP codes:', error);
         }
@@ -149,56 +148,70 @@ function HomePage() {
 
   // Auto-refresh TOTP codes every 30 seconds
   useEffect(() => {
-    if (combinedData.length > 0 && encryptionKey) {
-      const interval = setInterval(() => {
-        // Regenerate codes for all OTPs
-        const updatedData = combinedData.map(({ otp }) => {
-          try {
-            // Parse the encrypted secret (assuming format: ciphertext.iv.authTag)
-            const encryptedData: EncryptedData = {
-              ciphertext: otp.Secret.split('.')[0] || '',
-              iv: otp.Secret.split('.')[1] || '',
-              authTag: otp.Secret.split('.')[2] || '',
-            };
+    if (otps && Array.isArray(otps) && encryptionKey) {
+      const interval = setInterval(async () => {
+        try {
+          const refreshedData = await Promise.all(
+            otps.map(async (otp: OTP) => {
+              try {
+                // Decrypt the TOTP secret
+                const encryptedData: EncryptedData = {
+                  ciphertext: otp.Secret.split('.')[0] || '',
+                  iv: otp.Secret.split('.')[1] || '',
+                  authTag: otp.Secret.split('.')[2] || '',
+                };
 
-            // For simplicity, we'll just update the existing codes
-            // In a real implementation, you'd decrypt and regenerate
-            const existing = combinedData.find(item => item.otp.Id === otp.Id);
-            if (existing) {
-              return existing;
-            }
+                const decryptedSecret = await decryptData(encryptedData, encryptionKey);
+                
+                // Generate fresh TOTP codes
+                const totpConfig: TOTPConfig = {
+                  secret: decryptedSecret,
+                  issuer: otp.Issuer,
+                  label: otp.Label,
+                  algorithm: 'SHA1',
+                  digits: 6,
+                  period: otp.Period,
+                };
 
-            return {
-              otp,
-              secret: {
-                Id: otp.Id,
-                CurrentCode: "------",
-                CurrentExpireAt: new Date().toISOString(),
-                NextCode: "------",
-                NextExpireAt: new Date().toISOString(),
-              },
-            };
-          } catch (error) {
-            console.error(`Failed to refresh codes for OTP ${otp.Id}:`, error);
-            return combinedData.find(item => item.otp.Id === otp.Id) || {
-              otp,
-              secret: {
-                Id: otp.Id,
-                CurrentCode: "ERROR",
-                CurrentExpireAt: new Date().toISOString(),
-                NextCode: "ERROR",
-                NextExpireAt: new Date().toISOString(),
-              },
-            };
-          }
-        });
+                const codes = generateTOTPCodes(totpConfig);
 
-        setCombinedData(updatedData);
+                return {
+                  otp,
+                  secret: {
+                    Id: otp.Id,
+                    CurrentCode: codes.currentCode,
+                    CurrentExpireAt: codes.currentExpireAt.toISOString(),
+                    NextCode: codes.nextCode,
+                    NextExpireAt: codes.nextExpireAt.toISOString(),
+                  },
+                };
+              } catch (error) {
+                console.error(`Failed to refresh codes for OTP ${otp.Id}:`, error);
+                // Keep existing data on error
+                const existing = combinedData.find(item => item.otp.Id === otp.Id);
+                return existing || {
+                  otp,
+                  secret: {
+                    Id: otp.Id,
+                    CurrentCode: "ERROR",
+                    CurrentExpireAt: new Date().toISOString(),
+                    NextCode: "ERROR",
+                    NextExpireAt: new Date().toISOString(),
+                  },
+                };
+              }
+            })
+          );
+
+          setCombinedData(refreshedData);
+        } catch (error) {
+          console.error('Failed to refresh TOTP codes:', error);
+        }
       }, 30000); // Refresh every 30 seconds
 
       return () => clearInterval(interval);
     }
-  }, [combinedData, encryptionKey]);
+  }, [otps, encryptionKey, combinedData]);
 
   // Filter data based on search query
   const filteredData = useMemo(() => {

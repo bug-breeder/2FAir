@@ -11,52 +11,29 @@ import (
 )
 
 type Querier interface {
-	CleanupExpiredDeviceSessions(ctx context.Context) error
-	CreateAuditLog(ctx context.Context, arg CreateAuditLogParams) (AuditLog, error)
-	CreateBackupRecoveryCode(ctx context.Context, arg CreateBackupRecoveryCodeParams) (BackupRecoveryCode, error)
-	CreateDeviceSession(ctx context.Context, arg CreateDeviceSessionParams) (DeviceSession, error)
 	CreateEncryptedTOTPSeed(ctx context.Context, arg CreateEncryptedTOTPSeedParams) (EncryptedTotpSeed, error)
-	CreateSyncOperation(ctx context.Context, arg CreateSyncOperationParams) (SyncOperation, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	CreateUserEncryptionKey(ctx context.Context, arg CreateUserEncryptionKeyParams) (UserEncryptionKey, error)
 	CreateWebAuthnCredential(ctx context.Context, arg CreateWebAuthnCredentialParams) (WebauthnCredential, error)
-	DeactivateDeviceSession(ctx context.Context, arg DeactivateDeviceSessionParams) error
-	DeactivateOldBackupRecoveryCodes(ctx context.Context, arg DeactivateOldBackupRecoveryCodesParams) error
-	DeactivateOldUserEncryptionKeys(ctx context.Context, arg DeactivateOldUserEncryptionKeysParams) error
 	DeactivateUser(ctx context.Context, id pgtype.UUID) error
 	DeleteEncryptedTOTPSeed(ctx context.Context, arg DeleteEncryptedTOTPSeedParams) error
 	DeleteWebAuthnCredential(ctx context.Context, arg DeleteWebAuthnCredentialParams) error
-	GetActiveBackupRecoveryCode(ctx context.Context, userID pgtype.UUID) (BackupRecoveryCode, error)
-	GetActiveDeviceSessionsByUserID(ctx context.Context, userID pgtype.UUID) ([]DeviceSession, error)
-	GetActiveUserEncryptionKey(ctx context.Context, userID pgtype.UUID) (UserEncryptionKey, error)
-	GetAuditLogsByEventType(ctx context.Context, arg GetAuditLogsByEventTypeParams) ([]AuditLog, error)
-	GetAuditLogsByUserID(ctx context.Context, arg GetAuditLogsByUserIDParams) ([]AuditLog, error)
-	GetBackupRecoveryCodeByID(ctx context.Context, arg GetBackupRecoveryCodeByIDParams) (BackupRecoveryCode, error)
-	GetDeviceSession(ctx context.Context, arg GetDeviceSessionParams) (DeviceSession, error)
 	GetEncryptedTOTPSeedByID(ctx context.Context, arg GetEncryptedTOTPSeedByIDParams) (EncryptedTotpSeed, error)
 	GetEncryptedTOTPSeedsByUserID(ctx context.Context, userID pgtype.UUID) ([]EncryptedTotpSeed, error)
 	GetEncryptedTOTPSeedsByUserIDSince(ctx context.Context, arg GetEncryptedTOTPSeedsByUserIDSinceParams) ([]EncryptedTotpSeed, error)
-	GetLatestSyncTimestamp(ctx context.Context, userID pgtype.UUID) (interface{}, error)
-	GetRecentAuditLogs(ctx context.Context, arg GetRecentAuditLogsParams) ([]GetRecentAuditLogsRow, error)
-	GetSyncOperationsSince(ctx context.Context, arg GetSyncOperationsSinceParams) ([]GetSyncOperationsSinceRow, error)
 	GetTOTPSeedsCountByUser(ctx context.Context, userID pgtype.UUID) (int64, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
-	GetUserEncryptionKeyByVersion(ctx context.Context, arg GetUserEncryptionKeyByVersionParams) (UserEncryptionKey, error)
-	GetUserEncryptionKeys(ctx context.Context, userID pgtype.UUID) ([]UserEncryptionKey, error)
 	GetWebAuthnCredentialByID(ctx context.Context, credentialID []byte) (WebauthnCredential, error)
 	GetWebAuthnCredentialsByUserID(ctx context.Context, userID pgtype.UUID) ([]WebauthnCredential, error)
-	RotateUserEncryptionKey(ctx context.Context, arg RotateUserEncryptionKeyParams) (RotateUserEncryptionKeyRow, error)
 	SearchEncryptedTOTPSeeds(ctx context.Context, arg SearchEncryptedTOTPSeedsParams) ([]EncryptedTotpSeed, error)
-	UpdateDeviceSessionLastSync(ctx context.Context, arg UpdateDeviceSessionLastSyncParams) error
 	UpdateEncryptedTOTPSeed(ctx context.Context, arg UpdateEncryptedTOTPSeedParams) (EncryptedTotpSeed, error)
 	UpdateTOTPSeedSyncTimestamp(ctx context.Context, arg UpdateTOTPSeedSyncTimestampParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 	UpdateUserLastLogin(ctx context.Context, id pgtype.UUID) error
 	UpdateWebAuthnCredentialCloneWarning(ctx context.Context, arg UpdateWebAuthnCredentialCloneWarningParams) error
+	UpdateWebAuthnCredentialLastUsed(ctx context.Context, credentialID []byte) error
 	UpdateWebAuthnCredentialSignCount(ctx context.Context, arg UpdateWebAuthnCredentialSignCountParams) error
-	UseBackupRecoveryCode(ctx context.Context, arg UseBackupRecoveryCodeParams) error
 }
 
 var _ Querier = (*Queries)(nil)

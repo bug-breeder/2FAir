@@ -23,6 +23,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { RiVipCrown2Fill } from "react-icons/ri";
 import { MdSecurity, MdSettings, MdLogout, MdHelp } from "react-icons/md";
+import { SiWebauthn } from "react-icons/si";
 
 import { siteConfig } from "../config/site";
 import { useAuth } from "../providers/auth-provider";
@@ -32,10 +33,12 @@ import { toast } from "../lib/toast";
 
 import { FAir, SearchIcon } from "./icons";
 import { ThemeSwitch } from "./theme-switch";
+import WebAuthnRegistrationModal from "./webauthn-registration-modal";
 
 export const Navbar = () => {
   const searchRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showWebAuthnRegistration, setShowWebAuthnRegistration] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
   const { searchQuery, setSearchQuery, clearSearch, isSearchActive } = useSearch();
   const { data: otps = [] } = useListOtps();
@@ -49,6 +52,15 @@ export const Navbar = () => {
       console.error("Logout failed:", error);
       toast.error("Logout failed");
     }
+  };
+
+  const handleWebAuthnRegistration = () => {
+    setShowWebAuthnRegistration(true);
+  };
+
+  const handleWebAuthnRegistrationSuccess = () => {
+    setShowWebAuthnRegistration(false);
+    toast.success("WebAuthn credential registered successfully!");
   };
 
   const handleSearch = (searchTerm: string) => {
@@ -206,6 +218,13 @@ export const Navbar = () => {
                 Security
               </DropdownItem>
               <DropdownItem
+                key="webauthn"
+                startContent={<SiWebauthn className="text-lg" />}
+                onPress={handleWebAuthnRegistration}
+              >
+                Setup WebAuthn
+              </DropdownItem>
+              <DropdownItem
                 key="help"
                 startContent={<MdHelp className="text-lg" />}
                 onPress={() => window.open(siteConfig.links.docs, "_blank")}
@@ -293,6 +312,13 @@ export const Navbar = () => {
           </NavbarMenuItem>
         </div>
       </NavbarMenu>
+
+      {/* WebAuthn Registration Modal */}
+      <WebAuthnRegistrationModal
+        isOpen={showWebAuthnRegistration}
+        onClose={() => setShowWebAuthnRegistration(false)}
+        onSuccess={handleWebAuthnRegistrationSuccess}
+      />
     </HeroUINavbar>
   );
 };

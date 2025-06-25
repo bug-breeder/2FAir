@@ -17,6 +17,7 @@ import (
 	"github.com/bug-breeder/2fair/server/internal/adapter/api/handlers"
 	"github.com/bug-breeder/2fair/server/internal/adapter/api/middleware"
 	database_adapters "github.com/bug-breeder/2fair/server/internal/adapter/database"
+	service_adapters "github.com/bug-breeder/2fair/server/internal/adapter/services"
 	"github.com/bug-breeder/2fair/server/internal/infrastructure/config"
 	"github.com/bug-breeder/2fair/server/internal/infrastructure/database"
 	"github.com/bug-breeder/2fair/server/internal/infrastructure/services"
@@ -54,11 +55,11 @@ func NewServer(cfg *config.Config, db *database.DB) *Server {
 	// Initialize repositories
 	userRepo := database_adapters.NewUserRepository(db)
 	credRepo := database_adapters.NewWebAuthnCredentialRepository(db)
-	// otpRepo := database_adapters.NewOTPRepository(db, services.NewCryptoService()) // TODO: Fix missing implementation
+	cryptoService := services.NewCryptoService()
+	otpRepo := database_adapters.NewOTPRepository(db, cryptoService)
 
 	// Initialize infrastructure services
-	_ = services.NewCryptoService() // TODO: Use cryptoService when OTP service is implemented
-	// totpService := services.NewTOTPService() // TODO: Fix missing implementation
+	totpService := services.NewTOTPService()
 
 	// Initialize domain services
 	authService := services.NewAuthService(
@@ -73,7 +74,7 @@ func NewServer(cfg *config.Config, db *database.DB) *Server {
 	)
 
 	// Initialize OTP service
-	// otpService := service_adapters.NewOTPService(otpRepo, cryptoService, totpService) // TODO: Fix missing implementation
+	otpService := service_adapters.NewOTPService(otpRepo, cryptoService, totpService)
 
 	// Initialize WebAuthn service
 	webAuthnService, err := services.NewWebAuthnService(
@@ -95,10 +96,10 @@ func NewServer(cfg *config.Config, db *database.DB) *Server {
 	healthHandler := handlers.NewHealthHandler(db)
 	authHandler := handlers.NewAuthHandler(authService, cfg)
 	webAuthnHandler := handlers.NewWebAuthnHandler(webAuthnService, authService)
-	// otpHandler := handlers.NewOTPHandler(otpService, totpService) // TODO: Fix missing OTP service
+	otpHandler := handlers.NewOTPHandler(otpService)
 
 	// Setup routes
-	setupRoutes(router, healthHandler, authHandler, webAuthnHandler, nil, authMiddleware) // TODO: Pass otpHandler when implemented
+	setupRoutes(router, healthHandler, authHandler, webAuthnHandler, otpHandler, authMiddleware)
 
 	// Create HTTP server
 	httpServer := &http.Server{

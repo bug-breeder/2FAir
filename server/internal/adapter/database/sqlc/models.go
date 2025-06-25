@@ -12,66 +12,72 @@ import (
 )
 
 type AuditLog struct {
-	ID              pgtype.UUID        `json:"id"`
-	UserID          pgtype.UUID        `json:"user_id"`
-	DeviceSessionID pgtype.UUID        `json:"device_session_id"`
-	EventType       string             `json:"event_type"`
-	EventDetails    []byte             `json:"event_details"`
-	IpAddress       *netip.Addr        `json:"ip_address"`
-	UserAgent       pgtype.Text        `json:"user_agent"`
-	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	ID           pgtype.UUID        `json:"id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	Action       string             `json:"action"`
+	ResourceType string             `json:"resource_type"`
+	ResourceID   pgtype.UUID        `json:"resource_id"`
+	Metadata     []byte             `json:"metadata"`
+	IpAddress    *netip.Addr        `json:"ip_address"`
+	UserAgent    pgtype.Text        `json:"user_agent"`
+	Timestamp    pgtype.Timestamptz `json:"timestamp"`
 }
 
 type BackupRecoveryCode struct {
-	ID                    pgtype.UUID        `json:"id"`
-	UserID                pgtype.UUID        `json:"user_id"`
-	EncryptedRecoveryBlob []byte             `json:"encrypted_recovery_blob"`
-	Salt                  []byte             `json:"salt"`
-	Hint                  pgtype.Text        `json:"hint"`
-	CreatedAt             pgtype.Timestamptz `json:"created_at"`
-	UsedAt                pgtype.Timestamptz `json:"used_at"`
-	IsActive              pgtype.Bool        `json:"is_active"`
+	ID                  pgtype.UUID        `json:"id"`
+	UserID              pgtype.UUID        `json:"user_id"`
+	EncryptedBackupData []byte             `json:"encrypted_backup_data"`
+	RecoveryCodeHash    []byte             `json:"recovery_code_hash"`
+	IsUsed              pgtype.Bool        `json:"is_used"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	UsedAt              pgtype.Timestamptz `json:"used_at"`
 }
 
 type DeviceSession struct {
-	ID         pgtype.UUID        `json:"id"`
-	UserID     pgtype.UUID        `json:"user_id"`
-	DeviceID   string             `json:"device_id"`
-	DeviceName string             `json:"device_name"`
-	DeviceType string             `json:"device_type"`
-	UserAgent  pgtype.Text        `json:"user_agent"`
-	IpAddress  *netip.Addr        `json:"ip_address"`
-	LastSyncAt pgtype.Timestamptz `json:"last_sync_at"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	ExpiresAt  time.Time          `json:"expires_at"`
-	IsActive   pgtype.Bool        `json:"is_active"`
+	ID                pgtype.UUID        `json:"id"`
+	UserID            pgtype.UUID        `json:"user_id"`
+	DeviceFingerprint string             `json:"device_fingerprint"`
+	DeviceName        pgtype.Text        `json:"device_name"`
+	LastSyncAt        pgtype.Timestamptz `json:"last_sync_at"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 }
 
 type EncryptedTotpSeed struct {
-	ID          pgtype.UUID        `json:"id"`
-	UserID      pgtype.UUID        `json:"user_id"`
-	KeyVersion  int32              `json:"key_version"`
-	Ciphertext  []byte             `json:"ciphertext"`
-	Iv          []byte             `json:"iv"`
-	AuthTag     []byte             `json:"auth_tag"`
-	Issuer      string             `json:"issuer"`
-	AccountName string             `json:"account_name"`
-	IconUrl     pgtype.Text        `json:"icon_url"`
-	Tags        []string           `json:"tags"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-	SyncedAt    pgtype.Timestamptz `json:"synced_at"`
+	ID                pgtype.UUID        `json:"id"`
+	UserID            pgtype.UUID        `json:"user_id"`
+	ServiceName       string             `json:"service_name"`
+	AccountIdentifier string             `json:"account_identifier"`
+	EncryptedSecret   []byte             `json:"encrypted_secret"`
+	Algorithm         string             `json:"algorithm"`
+	Digits            int32              `json:"digits"`
+	Period            int32              `json:"period"`
+	Issuer            pgtype.Text        `json:"issuer"`
+	IconUrl           pgtype.Text        `json:"icon_url"`
+	IsActive          pgtype.Bool        `json:"is_active"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+}
+
+type LinkingCode struct {
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	Code      string             `json:"code"`
+	IsUsed    bool               `json:"is_used"`
+	ExpiresAt time.Time          `json:"expires_at"`
+	UsedAt    pgtype.Timestamptz `json:"used_at"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at"`
 }
 
 type SyncOperation struct {
-	ID              pgtype.UUID        `json:"id"`
-	UserID          pgtype.UUID        `json:"user_id"`
-	DeviceSessionID pgtype.UUID        `json:"device_session_id"`
-	OperationType   string             `json:"operation_type"`
-	ResourceType    string             `json:"resource_type"`
-	ResourceID      pgtype.UUID        `json:"resource_id"`
-	TimestampVector int64              `json:"timestamp_vector"`
-	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	ID                pgtype.UUID        `json:"id"`
+	UserID            pgtype.UUID        `json:"user_id"`
+	OperationType     string             `json:"operation_type"`
+	EntityType        string             `json:"entity_type"`
+	EntityID          pgtype.UUID        `json:"entity_id"`
+	OperationData     []byte             `json:"operation_data"`
+	DeviceFingerprint string             `json:"device_fingerprint"`
+	Timestamp         pgtype.Timestamptz `json:"timestamp"`
 }
 
 type User struct {
@@ -86,27 +92,30 @@ type User struct {
 }
 
 type UserEncryptionKey struct {
-	ID         pgtype.UUID        `json:"id"`
-	UserID     pgtype.UUID        `json:"user_id"`
-	KeyVersion int32              `json:"key_version"`
-	WrappedDek []byte             `json:"wrapped_dek"`
-	Salt       []byte             `json:"salt"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	IsActive   pgtype.Bool        `json:"is_active"`
+	ID                   pgtype.UUID        `json:"id"`
+	UserID               pgtype.UUID        `json:"user_id"`
+	WebauthnCredentialID pgtype.UUID        `json:"webauthn_credential_id"`
+	EncryptedDek         []byte             `json:"encrypted_dek"`
+	KeyVersion           int32              `json:"key_version"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
 }
 
 type WebauthnCredential struct {
-	ID             pgtype.UUID        `json:"id"`
-	UserID         pgtype.UUID        `json:"user_id"`
-	CredentialID   []byte             `json:"credential_id"`
-	PublicKey      []byte             `json:"public_key"`
-	Aaguid         pgtype.UUID        `json:"aaguid"`
-	CloneWarning   pgtype.Bool        `json:"clone_warning"`
-	Attachment     pgtype.Text        `json:"attachment"`
-	Transport      []string           `json:"transport"`
-	BackupEligible pgtype.Bool        `json:"backup_eligible"`
-	BackupState    pgtype.Bool        `json:"backup_state"`
-	SignCount      pgtype.Int8        `json:"sign_count"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	LastUsedAt     pgtype.Timestamptz `json:"last_used_at"`
+	ID              pgtype.UUID        `json:"id"`
+	UserID          pgtype.UUID        `json:"user_id"`
+	CredentialID    []byte             `json:"credential_id"`
+	PublicKey       []byte             `json:"public_key"`
+	AttestationType string             `json:"attestation_type"`
+	Transport       []string           `json:"transport"`
+	Flags           []byte             `json:"flags"`
+	Authenticator   []byte             `json:"authenticator"`
+	DeviceName      pgtype.Text        `json:"device_name"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	LastUsedAt      pgtype.Timestamptz `json:"last_used_at"`
+	Aaguid          pgtype.UUID        `json:"aaguid"`
+	CloneWarning    bool               `json:"clone_warning"`
+	SignCount       int64              `json:"sign_count"`
+	Attachment      pgtype.Text        `json:"attachment"`
+	BackupEligible  bool               `json:"backup_eligible"`
+	BackupState     bool               `json:"backup_state"`
 }
