@@ -20,6 +20,18 @@ export interface WebAuthnAuthenticationOptions {
   publicKey: PublicKeyCredentialRequestOptions;
 }
 
+export interface WebAuthnAuthenticationResponse {
+  success: boolean;
+  message: string;
+  credential: {
+    id: string;
+    credentialId: Uint8Array;
+    lastUsedAt?: Date;
+    signCount: number;
+  };
+  prfOutput?: string; // Base64-encoded PRF output from server
+}
+
 /**
  * Starts WebAuthn registration process
  */
@@ -54,8 +66,6 @@ export async function finishWebAuthnRegistration(credential: PublicKeyCredential
     },
     type: credential.type,
   };
-
-
 
   const response = await fetch('/api/v1/webauthn/register/finish', {
     method: 'POST',
@@ -96,33 +106,63 @@ export async function beginWebAuthnAuthentication(): Promise<WebAuthnAuthenticat
  * Completes WebAuthn authentication and derives encryption key
  */
 export async function finishWebAuthnAuthentication(credential: PublicKeyCredential): Promise<Uint8Array> {
+  // Get client extension results
+  const clientExtensionResults = credential.getClientExtensionResults?.();
+  
+  const requestData: any = {
+    id: credential.id,
+    rawId: uint8ArrayToBase64Url(new Uint8Array(credential.rawId)),
+    response: {
+      authenticatorData: uint8ArrayToBase64Url(new Uint8Array((credential.response as AuthenticatorAssertionResponse).authenticatorData)),
+      clientDataJSON: uint8ArrayToBase64Url(new Uint8Array(credential.response.clientDataJSON)),
+      signature: uint8ArrayToBase64Url(new Uint8Array((credential.response as AuthenticatorAssertionResponse).signature)),
+      userHandle: (credential.response as AuthenticatorAssertionResponse).userHandle ? 
+        uint8ArrayToBase64Url(new Uint8Array((credential.response as AuthenticatorAssertionResponse).userHandle!)) : null,
+    },
+    type: credential.type,
+  };
+
+  // Include client extension results if present
+  if (clientExtensionResults) {
+    requestData.clientExtensionResults = clientExtensionResults;
+    // Also add as getClientExtensionResults for compatibility
+    requestData.getClientExtensionResults = clientExtensionResults;
+  }
+
   const response = await fetch('/api/v1/webauthn/authenticate/finish', {
     method: 'POST',
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      id: credential.id,
-      rawId: uint8ArrayToBase64Url(new Uint8Array(credential.rawId)),
-      response: {
-        authenticatorData: uint8ArrayToBase64Url(new Uint8Array((credential.response as AuthenticatorAssertionResponse).authenticatorData)),
-        clientDataJSON: uint8ArrayToBase64Url(new Uint8Array(credential.response.clientDataJSON)),
-        signature: uint8ArrayToBase64Url(new Uint8Array((credential.response as AuthenticatorAssertionResponse).signature)),
-        userHandle: (credential.response as AuthenticatorAssertionResponse).userHandle ? 
-          uint8ArrayToBase64Url(new Uint8Array((credential.response as AuthenticatorAssertionResponse).userHandle!)) : null,
-      },
-      type: credential.type,
-    }),
+    body: JSON.stringify(requestData),
   });
 
   if (!response.ok) {
     throw new Error(`WebAuthn authentication completion failed: ${response.statusText}`);
   }
 
-  // Use the consistent credential ID for key derivation (not rawId which changes)
-  const consistentCredentialId = new TextEncoder().encode(credential.id);
-  const key = await deriveEncryptionKey(consistentCredentialId);
+  const result: WebAuthnAuthenticationResponse = await response.json();
+
+  // Decode PRF output from base64 if present
+  let prfOutput: Uint8Array | undefined;
+  if (result.prfOutput) {
+    const prfBase64 = typeof result.prfOutput === 'string' ? result.prfOutput : '';
+    if (prfBase64) {
+      try {
+        const prfBinary = atob(prfBase64);
+        prfOutput = new Uint8Array(prfBinary.length);
+        for (let i = 0; i < prfBinary.length; i++) {
+          prfOutput[i] = prfBinary.charCodeAt(i);
+        }
+      } catch (error) {
+        console.warn('Failed to decode PRF output from server:', error);
+      }
+    }
+  }
+
+  // Use PRF-based key derivation with credential.id fallback
+  const key = await deriveEncryptionKey(credential, prfOutput);
   
   return key;
 }
@@ -164,10 +204,70 @@ export async function deleteWebAuthnCredential(credentialId: string): Promise<vo
 }
 
 /**
- * Derives encryption key from WebAuthn credential ID
+ * Derives encryption key from WebAuthn credential with PRF support
+ * Uses PRF when available, falls back to credential.id for compatibility
+ */
+async function deriveEncryptionKey(credential: PublicKeyCredential, prfOutput?: Uint8Array): Promise<Uint8Array> {
+  // Try PRF first (more secure)
+  const clientExtensionResults = credential.getClientExtensionResults?.();
+  const prfResults = clientExtensionResults?.prf?.results;
+  
+  // Check for PRF output from client extension results
+  if (prfResults?.first) {
+    console.log('Using PRF from client extension results for key derivation');
+    const prfData = bufferSourceToUint8Array(prfResults.first);
+    return await deriveKeyFromPRF(prfData);
+  }
+  
+  // Check for PRF output from server response
+  if (prfOutput) {
+    console.log('Using PRF from server response for key derivation');
+    return await deriveKeyFromPRF(prfOutput);
+  }
+  
+  // Fallback to credential.id (current implementation)
+  console.log('Using credential.id fallback for key derivation');
+  const credentialId = new TextEncoder().encode(credential.id);
+  return await deriveKeyFromCredentialId(credentialId);
+}
+
+/**
+ * Derives encryption key from WebAuthn PRF output
+ * Uses HKDF for key derivation from PRF data
+ */
+async function deriveKeyFromPRF(prfOutput: Uint8Array): Promise<Uint8Array> {
+  // PRF output is already cryptographically strong
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    prfOutput,
+    { name: 'HKDF' },
+    false,
+    ['deriveKey']
+  );
+
+  const key = await crypto.subtle.deriveKey(
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: new TextEncoder().encode('2fair-prf-salt'),
+      info: new TextEncoder().encode('2fair-encryption-key'),
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt', 'decrypt']
+  );
+
+  // Export key as raw bytes
+  const keyBytes = await crypto.subtle.exportKey('raw', key);
+  return new Uint8Array(keyBytes);
+}
+
+/**
+ * Derives encryption key from WebAuthn credential ID (fallback method)
  * Uses PBKDF2 with the credential ID as consistent key material
  */
-async function deriveEncryptionKey(credentialId: Uint8Array): Promise<Uint8Array> {
+async function deriveKeyFromCredentialId(credentialId: Uint8Array): Promise<Uint8Array> {
   // Import credential ID as key material
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
@@ -177,7 +277,7 @@ async function deriveEncryptionKey(credentialId: Uint8Array): Promise<Uint8Array
     ['deriveKey']
   );
 
-  // Derive AES-GCM key for encryption
+  // Derive AES-GCM key using PBKDF2
   const key = await crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
@@ -209,6 +309,22 @@ export function isWebAuthnSupported(): boolean {
 function uint8ArrayToBase64Url(uint8Array: Uint8Array): string {
   const base64 = btoa(String.fromCharCode(...uint8Array));
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+/**
+ * Converts BufferSource to Uint8Array
+ */
+function bufferSourceToUint8Array(bufferSource: BufferSource): Uint8Array {
+  if (bufferSource instanceof Uint8Array) {
+    return bufferSource;
+  }
+  if (bufferSource instanceof ArrayBuffer) {
+    return new Uint8Array(bufferSource);
+  }
+  if (ArrayBuffer.isView(bufferSource)) {
+    return new Uint8Array(bufferSource.buffer, bufferSource.byteOffset, bufferSource.byteLength);
+  }
+  throw new Error(`Unsupported BufferSource type`);
 }
 
 /**
@@ -299,9 +415,8 @@ export async function registerWebAuthnCredential(): Promise<Uint8Array> {
     // Complete registration
     await finishWebAuthnRegistration(credential);
 
-    // Derive and return encryption key using consistent credential ID
-    const consistentCredentialId = new TextEncoder().encode(credential.id);
-    const encryptionKey = await deriveEncryptionKey(consistentCredentialId);
+    // Derive and return encryption key using PRF if available
+    const encryptionKey = await deriveEncryptionKey(credential);
     
     return encryptionKey;
   } catch (error) {

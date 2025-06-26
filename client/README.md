@@ -1,16 +1,26 @@
 # 2FAir - React Frontend
 
-A secure and modern 2FA token management application built with React, Vite, HeroUI, and TanStack Query.
+**Status**: 🚧 **Phase 3 Complete - PRF Implementation** (Not Yet Production Ready)
+
+A secure and modern 2FA token management application built with React, Vite, HeroUI, and TanStack Query with enhanced WebAuthn PRF support.
 
 ## Features
 
-- 🔐 Secure 2FA token management
+- 🔐 Enhanced secure 2FA token management with PRF key derivation
+- 🛡️ WebAuthn PRF support with credential.id fallback for universal compatibility
 - 🎨 Modern UI with HeroUI components
 - 🌙 Dark/Light theme support
 - 📱 Responsive design
 - ⚡ Fast development with Vite
 - 🔄 Efficient data fetching with TanStack Query
-- 🛡️ OAuth authentication (Google, Microsoft)
+- 🛡️ OAuth authentication (Google) with WebAuthn enhancement
+
+## Enhanced Security (Phase 3)
+
+- **PRF-First Key Derivation**: WebAuthn PRF → HKDF → AES-256-GCM key (when available)
+- **Universal Fallback**: credential.id → PBKDF2 → AES-256-GCM key (for compatibility)
+- **Zero-Knowledge Architecture**: TOTP secrets never leave client in plaintext
+- **Client-side TOTP Generation**: All codes generated using `otpauth` library
 
 ## Tech Stack
 

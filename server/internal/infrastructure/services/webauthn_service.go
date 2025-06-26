@@ -1,8 +1,12 @@
 package services
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -217,6 +221,37 @@ func (w *webAuthnService) FinishRegistration(ctx context.Context, user *entities
 	return credEntity, nil
 }
 
+// ClientExtensionResults represents the client extension results from WebAuthn response
+type ClientExtensionResults struct {
+	PRF *PRFExtensionResults `json:"prf,omitempty"`
+}
+
+// PRFExtensionResults represents the PRF extension results
+type PRFExtensionResults struct {
+	Results *PRFResults `json:"results,omitempty"`
+}
+
+// PRFResults represents the PRF results
+type PRFResults struct {
+	First  string `json:"first,omitempty"`  // Base64url encoded PRF output
+	Second string `json:"second,omitempty"` // Base64url encoded PRF output (optional)
+}
+
+// WebAuthnAssertionRequest represents the WebAuthn assertion request from client
+type WebAuthnAssertionRequest struct {
+	ID       string `json:"id"`
+	RawID    string `json:"rawId"`
+	Response struct {
+		AuthenticatorData string `json:"authenticatorData"`
+		ClientDataJSON    string `json:"clientDataJSON"`
+		Signature         string `json:"signature"`
+		UserHandle        string `json:"userHandle,omitempty"`
+	} `json:"response"`
+	Type                      string                  `json:"type"`
+	ClientExtensionResults    *ClientExtensionResults `json:"clientExtensionResults,omitempty"`
+	GetClientExtensionResults *ClientExtensionResults `json:"getClientExtensionResults,omitempty"`
+}
+
 // BeginAssertion starts WebAuthn credential assertion
 func (w *webAuthnService) BeginAssertion(ctx context.Context, user *entities.User, allowedCredentials []protocol.CredentialDescriptor) (*services.WebAuthnCredentialAssertion, error) {
 	// Get existing credentials for the user
@@ -274,6 +309,23 @@ func (w *webAuthnService) FinishAssertion(ctx context.Context, user *entities.Us
 		credentials: existingCreds,
 	}
 
+	// Parse the request body to extract PRF extension results before WebAuthn processing
+	var prfOutput []byte
+	if request.Body != nil {
+		// Read the request body
+		bodyBytes, err := io.ReadAll(request.Body)
+		if err == nil {
+			// Parse the WebAuthn assertion request
+			var assertionReq WebAuthnAssertionRequest
+			if err := json.Unmarshal(bodyBytes, &assertionReq); err == nil {
+				// Extract PRF output from client extension results
+				prfOutput = w.extractPRFOutput(&assertionReq)
+			}
+		}
+		// Create a new reader for the WebAuthn library to use
+		request.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+	}
+
 	credential, err := w.webAuthn.FinishLogin(webAuthnUser, *sessionData, request)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to finish assertion: %w", err)
@@ -299,13 +351,37 @@ func (w *webAuthnService) FinishAssertion(ctx context.Context, user *entities.Us
 		return nil, nil, fmt.Errorf("failed to update credential: %w", err)
 	}
 
-	// For PRF extension support, the output would be available in the credential response
-	// This is a simplified implementation - actual PRF output extraction would require
-	// parsing the credential response for PRF extension data
-	var prfOutput []byte
-	// TODO: Extract PRF output from credential response when PRF extension is used
-
 	return credEntity, prfOutput, nil
+}
+
+// extractPRFOutput extracts PRF output from WebAuthn assertion request
+func (w *webAuthnService) extractPRFOutput(req *WebAuthnAssertionRequest) []byte {
+	// Try to get PRF results from different possible locations
+	var prfResults *PRFResults
+
+	// Check clientExtensionResults field
+	if req.ClientExtensionResults != nil && req.ClientExtensionResults.PRF != nil {
+		prfResults = req.ClientExtensionResults.PRF.Results
+	}
+
+	// Check getClientExtensionResults field (alternative naming)
+	if prfResults == nil && req.GetClientExtensionResults != nil && req.GetClientExtensionResults.PRF != nil {
+		prfResults = req.GetClientExtensionResults.PRF.Results
+	}
+
+	// Extract the first PRF result (main key derivation output)
+	if prfResults != nil && prfResults.First != "" {
+		// Decode base64url encoded PRF output
+		if prfData, err := base64.RawURLEncoding.DecodeString(prfResults.First); err == nil {
+			return prfData
+		}
+		// Try standard base64 if base64url fails
+		if prfData, err := base64.StdEncoding.DecodeString(prfResults.First); err == nil {
+			return prfData
+		}
+	}
+
+	return nil
 }
 
 // DeriveVaultKey derives a vault encryption key using PRF
