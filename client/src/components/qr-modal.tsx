@@ -1,33 +1,27 @@
-
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-} from "@heroui/react";
+import { Modal, ModalContent } from "@heroui/react";
 import QRCode from "qrcode.react";
-
-import { OTP } from "../types/otp";
 
 interface QRModalProps {
   showQR: boolean;
   closeQR: () => void;
-  otp: OTP;
+  otp: {
+    Issuer: string;
+    Label: string;
+    Secret: string;
+    Period: number;
+  };
 }
 
 export function QRModal({ showQR, closeQR, otp }: QRModalProps) {
-  const otpAuthUrl = `otpauth://totp/${encodeURIComponent(otp.Label)}?secret=${otp.Secret}&issuer=${encodeURIComponent(otp.Issuer)}&algorithm=SHA1&digits=6&period=${otp.Period}`;
-
   return (
-    <Modal isOpen={showQR} placement="center" onOpenChange={closeQR}>
+    <Modal isOpen={showQR} placement="center" onClose={closeQR}>
       <ModalContent>
-        <ModalHeader>QR Code - {otp.Issuer}</ModalHeader>
-        <ModalBody className="items-center pb-6">
+        <div className="p-6 flex justify-center">
           <QRCode
             size={256}
-            value={otpAuthUrl}
+            value={`otpauth://totp/${otp.Issuer}:${otp.Label}?secret=${otp.Secret}&issuer=${otp.Issuer}&algorithm=SHA1&digits=6&period=${otp.Period}`}
           />
-        </ModalBody>
+        </div>
       </ModalContent>
     </Modal>
   );

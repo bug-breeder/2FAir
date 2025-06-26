@@ -1,112 +1,153 @@
 import { useState, useCallback } from "react";
-import { Button } from "@heroui/react";
-import { FiPlus, FiUpload, FiCamera } from "react-icons/fi";
+import { Button, Chip } from "@heroui/react";
+import { FaPlus, FaEdit } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
+import { LuFileImage, LuCamera } from "react-icons/lu";
 
 import { AddOtpModal } from "./add-otp-modal";
 import { QrScannerModal } from "./qr-scanner";
 import { QRImageUploaderModal } from "./qr-uploader";
 
 export function FAB() {
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showScanner, setShowScanner] = useState(false);
-  const [showUploader, setShowUploader] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showQRUploader, setShowQRUploader] = useState(false);
 
-  const handleToggle = useCallback(() => {
-    setIsOpen(!isOpen);
-  }, [isOpen]);
+  const toggleExpand = useCallback(() => setIsExpanded(!isExpanded), [isExpanded]);
+  const closeExpand = useCallback(() => setIsExpanded(false), []);
 
   const handleAddManual = useCallback(() => {
-    setShowAddModal(true);
-    setIsOpen(false);
-  }, []);
+    setShowModal(true);
+    closeExpand();
+  }, [closeExpand]);
 
   const handleScanQR = useCallback(() => {
-    setShowScanner(true);
-    setIsOpen(false);
-  }, []);
+    setShowQRScanner(true);
+    closeExpand();
+  }, [closeExpand]);
 
   const handleUploadQR = useCallback(() => {
-    setShowUploader(true);
-    setIsOpen(false);
-  }, []);
+    setShowQRUploader(true);
+    closeExpand();
+  }, [closeExpand]);
 
-  const handleCloseAddModal = useCallback(() => {
-    setShowAddModal(false);
-  }, []);
-
-  const handleCloseScanner = useCallback(() => {
-    setShowScanner(false);
-  }, []);
-
-  const handleCloseUploader = useCallback(() => {
-    setShowUploader(false);
-  }, []);
+  const handleCloseModal = useCallback(() => setShowModal(false), []);
+  const handleCloseScanner = useCallback(() => setShowQRScanner(false), []);
+  const handleCloseUploader = useCallback(() => setShowQRUploader(false), []);
 
   return (
     <>
-      <div className="fixed bottom-6 right-6 z-40">
-        <div className="flex flex-col-reverse items-end gap-3">
-          {/* Sub-buttons */}
-          {isOpen && (
-            <>
-              <Button
-                className="bg-blue-500 hover:bg-blue-600"
-                isIconOnly
-                radius="full"
-                size="md"
-                onPress={handleAddManual}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            animate={{ opacity: 0.5 }}
+            className="fixed inset-0 z-10"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            onClick={closeExpand}
+          />
+        )}
+      </AnimatePresence>
+      <div className="fixed bottom-5 sm:bottom-10 right-5 sm:right-10 flex flex-col items-end space-y-4 z-20">
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center space-x-2"
+              exit={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 20 }}
+            >
+              <Chip
+                className="text-sm text-default-500"
+                radius="sm"
+                variant="solid"
               >
-                <FiPlus className="text-white text-xl" />
-              </Button>
+                Scan QR Code
+              </Chip>
               <Button
-                className="bg-green-500 hover:bg-green-600"
                 isIconOnly
-                radius="full"
-                size="md"
+                className="rounded-full w-14 h-14"
+                size="lg"
+                variant="shadow"
                 onPress={handleScanQR}
               >
-                <FiCamera className="text-white text-xl" />
+                <LuCamera />
               </Button>
+            </motion.div>
+          )}
+          {isExpanded && (
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center space-x-2"
+              exit={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 20 }}
+            >
+              <Chip
+                className="text-sm text-default-500"
+                radius="sm"
+                variant="solid"
+              >
+                Read QR Image
+              </Chip>
               <Button
-                className="bg-purple-500 hover:bg-purple-600"
                 isIconOnly
-                radius="full"
-                size="md"
+                className="rounded-full w-14 h-14"
+                size="lg"
+                variant="shadow"
                 onPress={handleUploadQR}
               >
-                <FiUpload className="text-white text-xl" />
+                <LuFileImage />
               </Button>
-            </>
+            </motion.div>
           )}
-
-          {/* Main FAB */}
-          <Button
-            className={`bg-primary hover:bg-primary-600 transition-transform ${
-              isOpen ? "rotate-45" : ""
-            }`}
-            isIconOnly
-            radius="full"
-            size="lg"
-            onPress={handleToggle}
-          >
-            <FiPlus className="text-white text-2xl" />
-          </Button>
-        </div>
+          {isExpanded && (
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center space-x-2"
+              exit={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 20 }}
+            >
+              <Chip
+                className="text-sm text-default-500"
+                radius="sm"
+                variant="solid"
+              >
+                Add Manually
+              </Chip>
+              <Button
+                isIconOnly
+                className="rounded-full w-14 h-14"
+                size="lg"
+                variant="shadow"
+                onPress={handleAddManual}
+              >
+                <FaEdit />
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <Button
+          isIconOnly
+          className="rounded-full w-14 h-14"
+          color="success"
+          size="lg"
+          variant="shadow"
+          onPress={toggleExpand}
+        >
+          <FaPlus className={isExpanded ? "rotate-45" : ""} />
+        </Button>
       </div>
 
-      {/* Backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-20 z-30"
-          onClick={handleToggle}
-        />
-      )}
-
-      {/* Modals */}
-      <AddOtpModal isOpen={showAddModal} onClose={handleCloseAddModal} />
-      <QrScannerModal isOpen={showScanner} onClose={handleCloseScanner} />
-      <QRImageUploaderModal isOpen={showUploader} onClose={handleCloseUploader} />
+      <QrScannerModal
+        isOpen={showQRScanner}
+        onClose={handleCloseScanner}
+      />
+      <QRImageUploaderModal
+        isOpen={showQRUploader}
+        onClose={handleCloseUploader}
+      />
+      <AddOtpModal isOpen={showModal} onClose={handleCloseModal} />
     </>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Tooltip, Avatar, Card, CardBody, CardFooter } from "@heroui/react";
 import { MdContentCopy } from "react-icons/md";
 import { FiMenu } from "react-icons/fi";
@@ -26,132 +26,6 @@ interface SmartOTPCardProps {
   closeMenu: () => void;
 }
 
-interface OTPDisplayData {
-  displayCode: string;
-  timeRemaining: number;
-  isUsingNext: boolean;
-  progressValue: number;
-}
-
-// Helper components
-function OTPInstructions({ copied }: { copied: boolean }) {
-  if (copied) {
-    return <span>Copied!</span>;
-  }
-
-  return (
-    <span className="flex items-center">
-      <PiHandTapLight />,
-      <PiMouseLeftClickFill className="mr-1" />
-      <CgArrowRight />
-      <MdContentCopy className="ml-1" />
-      <RxDividerVertical className="mx-1" />
-      <PiHandTapFill />,
-      <PiMouseRightClickFill className="mr-1" />
-      <CgArrowRight />
-      <FiMenu className="ml-1" />
-    </span>
-  );
-}
-
-function ProgressBar({ progressValue, timeRemaining }: { progressValue: number; timeRemaining: number }) {
-  return (
-    <div className="flex flex-col items-end gap-1">
-      <div className="w-20 h-2 bg-default-200 rounded-full overflow-hidden">
-        <div
-          className={`h-full transition-all duration-1000 ${
-            timeRemaining <= 5 ? "bg-danger" : "bg-success"
-          }`}
-          style={{ width: `${progressValue}%` }}
-        />
-      </div>
-      <span className="text-xs text-default-400">{timeRemaining}s</span>
-    </div>
-  );
-}
-
-function OTPHeader({ otp }: { otp: OTP }) {
-  return (
-    <div className="flex gap-3 items-center flex-grow overflow-hidden">
-      <Avatar
-        alt={otp.Issuer}
-        className="flex-shrink-0"
-        radius="full"
-        size="md"
-        src={`/providers/SVG/${otp.Issuer}.svg`}
-      />
-      <div className="flex flex-col gap-1 items-start justify-center flex-grow overflow-hidden">
-        <h4 className="text-md leading-none">{otp.Issuer}</h4>
-        <h5 className="text-small text-default-500 tracking-tight truncate w-full">
-          {otp.Label}
-        </h5>
-      </div>
-    </div>
-  );
-}
-
-function OTPCodeDisplay({ displayCode, isUsingNext }: { displayCode: string; isUsingNext: boolean }) {
-  return (
-    <div className="flex flex-col items-end gap-1">
-      <div className="flex items-center font-bold text-xl mx-1">
-        {displayCode}
-      </div>
-      {isUsingNext && (
-        <span className="text-xs text-warning">Next Code</span>
-      )}
-    </div>
-  );
-}
-
-// Custom hook for OTP display logic
-function useOTPDisplay(otpSecret: OTPSecret, otp: OTP): OTPDisplayData {
-  const [currentTime, setCurrentTime] = useState(Date.now());
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(Date.now());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return useMemo(() => {
-    const now = currentTime;
-    const currentExpiry = new Date(otpSecret.CurrentExpireAt).getTime();
-    const nextExpiry = new Date(otpSecret.NextExpireAt).getTime();
-
-    let displayCode: string;
-    let timeRemaining: number;
-    let isUsingNext: boolean;
-
-    if (now < currentExpiry) {
-      // Still in current period
-      displayCode = otpSecret.CurrentCode;
-      timeRemaining = Math.ceil((currentExpiry - now) / 1000);
-      isUsingNext = false;
-    } else if (now < nextExpiry) {
-      // In next period
-      displayCode = otpSecret.NextCode;
-      timeRemaining = Math.ceil((nextExpiry - now) / 1000);
-      isUsingNext = true;
-    } else {
-      // Both codes expired, show next code but with 0 time
-      displayCode = otpSecret.NextCode;
-      timeRemaining = 0;
-      isUsingNext = true;
-    }
-
-    const progressValue = ((otp.Period - timeRemaining) / otp.Period) * 100;
-
-    return {
-      displayCode,
-      timeRemaining,
-      isUsingNext,
-      progressValue,
-    };
-  }, [currentTime, otpSecret, otp.Period]);
-}
-
 export function SmartOTPCard({
   otp,
   otpSecret,
@@ -163,8 +37,46 @@ export function SmartOTPCard({
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [currentTime, setCurrentTime] = useState(Date.now());
 
-  const { displayCode, timeRemaining, isUsingNext, progressValue } = useOTPDisplay(otpSecret, otp);
+  // Update current time every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Calculate which code to display and time remaining
+  const { displayCode, timeRemaining, isUsingNext } = useMemo(() => {
+    const now = currentTime;
+    const currentExpiry = new Date(otpSecret.CurrentExpireAt).getTime();
+    const nextExpiry = new Date(otpSecret.NextExpireAt).getTime();
+
+    if (now < currentExpiry) {
+      // Still in current period
+      return {
+        displayCode: otpSecret.CurrentCode,
+        timeRemaining: Math.ceil((currentExpiry - now) / 1000),
+        isUsingNext: false,
+      };
+    } else if (now < nextExpiry) {
+      // In next period
+      return {
+        displayCode: otpSecret.NextCode,
+        timeRemaining: Math.ceil((nextExpiry - now) / 1000),
+        isUsingNext: true,
+      };
+    } else {
+      // Both codes expired, show next code but with 0 time
+      return {
+        displayCode: otpSecret.NextCode,
+        timeRemaining: 0,
+        isUsingNext: true,
+      };
+    }
+  }, [currentTime, otpSecret]);
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(displayCode).then(() => {
@@ -181,21 +93,15 @@ export function SmartOTPCard({
     }, 50);
   }, [setActiveMenu]);
 
-  const handleSetShowQR = useCallback((show: boolean) => {
-    setShowQR(show);
-  }, []);
-
-  const handleSetShowEdit = useCallback((show: boolean) => {
-    setShowEdit(show);
-  }, []);
-
-  const tooltipContent = useMemo(() => {
-    return copied ? "Copied!" : "Click to copy, right click to open menu";
-  }, [copied]);
+  // Calculate progress (0-100)
+  const progressValue = ((otp.Period - timeRemaining) / otp.Period) * 100;
 
   return (
     <div>
-      <Tooltip content={tooltipContent} placement="top">
+      <Tooltip
+        content={copied ? "Copied!" : "Click to copy, right click to open menu"}
+        placement="top"
+      >
         <Card
           isHoverable
           isPressable
@@ -204,14 +110,59 @@ export function SmartOTPCard({
           onPress={handleCopy}
         >
           <CardBody className="flex flex-row gap-5 justify-between items-center pt-3 pl-3 pr-3 pb-1">
-            <OTPHeader otp={otp} />
-            <OTPCodeDisplay displayCode={displayCode} isUsingNext={isUsingNext} />
+            <div className="flex gap-3 items-center flex-grow overflow-hidden">
+              <Avatar
+                alt={otp.Issuer}
+                className="flex-shrink-0"
+                radius="full"
+                size="md"
+                src={`/providers/SVG/${otp.Issuer}.svg`}
+              />
+              <div className="flex flex-col gap-1 items-start justify-center flex-grow overflow-hidden">
+                <h4 className="text-md leading-none">{otp.Issuer}</h4>
+                <h5 className="text-small text-default-500 tracking-tight truncate w-full">
+                  {otp.Label}
+                </h5>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center font-bold text-xl mx-1">
+                {displayCode}
+              </div>
+              {isUsingNext && (
+                <span className="text-xs text-warning">Next Code</span>
+              )}
+            </div>
           </CardBody>
           <CardFooter className="flex items-center justify-between py-2">
             <p className="text-small text-default-300">
-              <OTPInstructions copied={copied} />
+              {copied ? (
+                "Copied!"
+              ) : (
+                <span className="flex items-center">
+                  <PiHandTapLight />,
+                  <PiMouseLeftClickFill className="mr-1" />
+                  <CgArrowRight />
+                  <MdContentCopy className="ml-1" />
+                  <RxDividerVertical className="mx-1" />
+                  <PiHandTapFill />,
+                  <PiMouseRightClickFill className="mr-1" />
+                  <CgArrowRight />
+                  <FiMenu className="ml-1" />
+                </span>
+              )}
             </p>
-            <ProgressBar progressValue={progressValue} timeRemaining={timeRemaining} />
+            <div className="flex flex-col items-end gap-1">
+              <div className="w-20 h-2 bg-default-200 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-1000 ${
+                    timeRemaining <= 5 ? "bg-danger" : "bg-success"
+                  }`}
+                  style={{ width: `${progressValue}%` }}
+                />
+              </div>
+              <span className="text-xs text-default-400">{timeRemaining}s</span>
+            </div>
           </CardFooter>
         </Card>
       </Tooltip>
@@ -220,8 +171,8 @@ export function SmartOTPCard({
           activeMenu={activeMenu}
           closeMenu={closeMenu}
           otpID={otp.Id}
-          setShowEdit={handleSetShowEdit}
-          setShowQR={handleSetShowQR}
+          setShowEdit={setShowEdit}
+          setShowQR={setShowQR}
         />
       )}
       {showQR && (
