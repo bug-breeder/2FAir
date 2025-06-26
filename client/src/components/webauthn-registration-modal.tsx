@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Modal,
   ModalContent,
@@ -18,18 +18,18 @@ import { toast } from "../lib/toast";
 interface WebAuthnRegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess: () => void;
 }
 
-export default function WebAuthnRegistrationModal({ 
-  isOpen, 
-  onClose, 
-  onSuccess 
+export function WebAuthnRegistrationModal({
+  isOpen,
+  onClose,
+  onSuccess,
 }: WebAuthnRegistrationModalProps) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [step, setStep] = useState<'intro' | 'registering' | 'success'>('intro');
 
-  const handleRegister = async () => {
+  const handleRegister = useCallback(async () => {
     if (!isWebAuthnSupported()) {
       toast.error("WebAuthn is not supported in this browser");
       return;
@@ -40,14 +40,14 @@ export default function WebAuthnRegistrationModal({
       setStep('registering');
 
       // Register WebAuthn credential
-      const encryptionKey = await registerWebAuthnCredential();
+      await registerWebAuthnCredential();
       
       setStep('success');
       toast.success("WebAuthn credential registered successfully!");
       
       // Call success callback after a short delay
       setTimeout(() => {
-        onSuccess?.();
+        onSuccess();
         onClose();
       }, 2000);
       
@@ -58,26 +58,22 @@ export default function WebAuthnRegistrationModal({
     } finally {
       setIsRegistering(false);
     }
-  };
+  }, [onSuccess, onClose]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (!isRegistering) {
       setStep('intro');
       onClose();
     }
-  };
+  }, [isRegistering, onClose]);
 
   return (
     <Modal 
       isOpen={isOpen} 
-      onClose={handleClose}
-      closeButton={!isRegistering}
+      placement="center" 
+      onOpenChange={handleClose}
       isDismissable={!isRegistering}
-      size="lg"
-      classNames={{
-        body: "py-6",
-        header: "border-b border-divider",
-      }}
+      hideCloseButton={isRegistering}
     >
       <ModalContent>
         <ModalHeader className="flex flex-col gap-1">
@@ -190,7 +186,12 @@ export default function WebAuthnRegistrationModal({
         <ModalFooter>
           {step === 'intro' && (
             <>
-              <Button variant="light" onPress={handleClose}>
+              <Button 
+                color="danger" 
+                variant="light" 
+                onPress={handleClose}
+                isDisabled={isRegistering}
+              >
                 Cancel
               </Button>
               <Button 
@@ -219,7 +220,7 @@ export default function WebAuthnRegistrationModal({
               color="success" 
               variant="light"
               onPress={() => {
-                onSuccess?.();
+                onSuccess();
                 onClose();
               }}
             >

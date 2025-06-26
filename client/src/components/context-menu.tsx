@@ -1,18 +1,13 @@
-import React from "react";
+import { useCallback } from "react";
 import {
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
   Button,
 } from "@heroui/react";
-import { MdDeleteSweep, MdQrCode } from "react-icons/md";
-import { FaEdit } from "react-icons/fa";
-import { useMediaQuery } from "@react-hook/media-query";
+import { FiShare2 } from "react-icons/fi";
+import { MdEdit, MdDelete } from "react-icons/md";
 
 import { useInactivateOtp } from "../hooks/otp";
 import { toast } from "../lib/toast";
@@ -20,132 +15,117 @@ import { toast } from "../lib/toast";
 interface ContextMenuProps {
   activeMenu: { idx: number; x: number; y: number } | null;
   closeMenu: () => void;
+  otpID: string;
   setShowQR: (show: boolean) => void;
   setShowEdit: (show: boolean) => void;
-  otpID: string;
 }
 
-const ContextMenu: React.FC<ContextMenuProps> = ({
+export function ContextMenu({
   activeMenu,
   closeMenu,
+  otpID,
   setShowQR,
   setShowEdit,
-  otpID,
-}) => {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+}: ContextMenuProps) {
   const inactivateOtpMutation = useInactivateOtp();
 
-  const handleDelete = () => {
-    inactivateOtpMutation.mutate(otpID, {
-      onSuccess: () => {
-        closeMenu();
-        toast.success("OTP deleted successfully");
-      },
-      onError: (error) => {
-        console.error("Error deleting OTP:", error);
-        toast.error("Failed to delete OTP");
-      },
-    });
-  };
-
-  const handleEdit = () => {
-    setShowEdit(true);
-    closeMenu();
-  };
-
-  const handleShowQR = () => {
+  const handleShowQR = useCallback(() => {
     setShowQR(true);
     closeMenu();
-  };
+  }, [setShowQR, closeMenu]);
 
-  const handleAction = (key: React.Key) => {
-    switch (key) {
-      case "qr":
-        handleShowQR();
-        break;
-      case "edit":
-        handleEdit();
-        break;
-      case "delete":
-        handleDelete();
-        break;
-    }
-  };
+  const handleEdit = useCallback(() => {
+    setShowEdit(true);
+    closeMenu();
+  }, [setShowEdit, closeMenu]);
 
-  if (isMobile) {
-    return (
-      <Modal isOpen={true} placement="bottom-center" onClose={closeMenu}>
-        <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">Actions</ModalHeader>
-          <ModalBody className="gap-4 mb-6">
-            <Button
-              startContent={<MdQrCode className="text-2xl" />}
-              variant="flat"
-              onPress={handleShowQR}
-            >
-              Show QR code
-            </Button>
-            <Button
-              startContent={<FaEdit />}
-              variant="flat"
-              onPress={handleEdit}
-            >
-              Edit
-            </Button>
-            <Button
-              className="text-danger"
-              isDisabled={inactivateOtpMutation.isPending}
-              startContent={<MdDeleteSweep className="text-2xl text-danger" />}
-              variant="flat"
-              onPress={handleDelete}
-            >
-              {inactivateOtpMutation.isPending ? "Deleting..." : "Delete"}
-            </Button>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+  const handleInactivate = useCallback(() => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this OTP? This action cannot be undone."
     );
-  }
+
+    if (!confirmed) {
+      closeMenu();
+      return;
+    }
+
+    inactivateOtpMutation.mutate(otpID, {
+      onSuccess: () => {
+        toast.success("OTP deleted successfully");
+        closeMenu();
+      },
+      onError: (error: any) => {
+        console.error("Error deleting OTP:", error);
+        const errorMessage = error.response?.data?.error || "Failed to delete OTP";
+        toast.error(errorMessage);
+        closeMenu();
+      },
+    });
+  }, [otpID, inactivateOtpMutation, closeMenu]);
+
+  if (!activeMenu) return null;
 
   return (
-    <Dropdown isOpen={true} onOpenChange={(open) => !open && closeMenu()}>
-      <DropdownTrigger>
-        {activeMenu && (
-          <div
-            style={{
-              position: "absolute",
-              top: activeMenu.y,
-              left: activeMenu.x,
-              width: 0,
-              height: 0,
+    <div
+      className="fixed inset-0 z-50"
+      onClick={closeMenu}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      <div
+        className="absolute z-50"
+        style={{
+          left: `${activeMenu.x}px`,
+          top: `${activeMenu.y}px`,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Dropdown isOpen placement="bottom-start">
+          <DropdownTrigger>
+            <Button className="invisible" size="sm" />
+          </DropdownTrigger>
+          <DropdownMenu
+            aria-label="OTP Actions"
+            variant="faded"
+            onAction={(key) => {
+              switch (key) {
+                case "qr":
+                  handleShowQR();
+                  break;
+                case "edit":
+                  handleEdit();
+                  break;
+                case "delete":
+                  handleInactivate();
+                  break;
+              }
             }}
-          />
-        )}
-      </DropdownTrigger>
-      <DropdownMenu aria-label="Actions" onAction={handleAction}>
-        <DropdownItem
-          key="qr"
-          className="text-xl"
-          startContent={<MdQrCode className="text-2xl" />}
-        >
-          <span className="text-lg lg:text-sm">Show QR code</span>
-        </DropdownItem>
-        <DropdownItem key="edit" className="text-xl" startContent={<FaEdit />}>
-          <span className="text-lg lg:text-sm">Edit</span>
-        </DropdownItem>
-        <DropdownItem
-          key="delete"
-          className="text-danger"
-          isDisabled={inactivateOtpMutation.isPending}
-          startContent={<MdDeleteSweep className="text-2xl text-danger" />}
-        >
-          <span className="text-lg lg:text-sm text-danger">
-            {inactivateOtpMutation.isPending ? "Deleting..." : "Delete"}
-          </span>
-        </DropdownItem>
-      </DropdownMenu>
-    </Dropdown>
+          >
+            <DropdownItem
+              key="qr"
+              description="Show QR code for this OTP"
+              startContent={<FiShare2 className="text-lg" />}
+            >
+              Show QR Code
+            </DropdownItem>
+            <DropdownItem
+              key="edit"
+              description="Edit OTP details"
+              startContent={<MdEdit className="text-lg" />}
+            >
+              Edit
+            </DropdownItem>
+            <DropdownItem
+              key="delete"
+              className="text-danger"
+              color="danger"
+              description="Permanently delete this OTP"
+              startContent={<MdDelete className="text-lg" />}
+            >
+              Delete
+            </DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
+      </div>
+    </div>
   );
-};
-
-export default ContextMenu;
+}
