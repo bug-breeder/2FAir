@@ -4,7 +4,7 @@
 
 This document details the cryptographic design and implementation for 2FAir's end-to-end encrypted TOTP vault. The system uses WebAuthn credentials for key derivation and AES-GCM for authenticated encryption of TOTP seeds.
 
-**Implementation Status**: ✅ **Production Ready** - Simple, secure, and working implementation
+**Implementation Status**: 🚧 **Phase 3 Complete - PRF Implementation** (Not Yet Production Ready)
 
 ## Cryptographic Primitives
 
@@ -12,9 +12,9 @@ This document details the cryptographic design and implementation for 2FAir's en
 
 | Operation | Algorithm | Key Size | Notes |
 |-----------|-----------|----------|--------|
-| Key Derivation | PBKDF2-SHA256 | 256-bit | RFC 2898, 100,000 iterations |
+| Key Derivation | HKDF-SHA256 / PBKDF2-SHA256 | 256-bit | HKDF for PRF, PBKDF2 for fallback |
 | Symmetric Encryption | AES-256-GCM | 256-bit | NIST SP 800-38D |
-| WebAuthn Source | credential.id | Variable | Consistent identifier |
+| WebAuthn Source | PRF / credential.id | Variable | PRF preferred, credential.id fallback |
 | Random Generation | CSPRNG | - | Web Crypto API |
 
 ### Security Parameters
@@ -27,9 +27,126 @@ This document details the cryptographic design and implementation for 2FAir's en
 | Encryption Key Size | 256 bits | AES-256 key size |
 | Auth Tag Size | 128 bits | AES-GCM default |
 
-## Key Derivation (Implemented)
+## Key Derivation (Current + Future Implementation)
 
-### Simple and Effective Key Hierarchy
+### Preferred: WebAuthn PRF with Fallback
+
+The optimal approach uses WebAuthn PRF (Pseudo-Random Function) when available, with fallback to credential.id for compatibility:
+
+```javascript
+async function deriveEncryptionKey(credential) {
+  // Try PRF first (more secure)
+  if (credential.getClientExtensionResults?.()?.prf?.results?.first) {
+    const prfOutput = credential.getClientExtensionResults().prf.results.first;
+    return await deriveKeyFromPRF(prfOutput);
+  }
+  
+  // Fallback to credential.id (current implementation)
+  const credentialId = new TextEncoder().encode(credential.id);
+  return await deriveKeyFromCredentialId(credentialId);
+}
+
+async function deriveKeyFromPRF(prfOutput) {
+  // PRF output is already cryptographically strong
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    prfOutput,
+    { name: 'HKDF' },
+    false,
+    ['deriveKey']
+  );
+
+  return await crypto.subtle.deriveKey(
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: new TextEncoder().encode('2fair-prf-salt'),
+      info: new TextEncoder().encode('2fair-encryption-key'),
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function deriveKeyFromCredentialId(credentialIdBytes) {
+  // Current implementation - PBKDF2 for additional security
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    credentialIdBytes,
+    { name: 'PBKDF2' },
+    false,
+    ['deriveKey']
+  );
+
+  return await crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: new TextEncoder().encode('2fair-webauthn-salt'),
+      iterations: 100000,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt', 'decrypt']
+  );
+}
+```
+
+### Security Comparison
+
+| Approach | Security Level | Compatibility | Implementation |
+|----------|---------------|---------------|----------------|
+| **WebAuthn PRF** | ⭐⭐⭐⭐⭐ Very High | ⭐⭐⭐ Moderate | ⭐⭐ Complex |
+| **credential.id + PBKDF2** | ⭐⭐⭐⭐ High | ⭐⭐⭐⭐⭐ Universal | ⭐⭐⭐⭐⭐ Simple |
+
+### Current vs Future Implementation
+
+#### Phase 1: Fallback (Compatibility) ✅
+```
+WebAuthn credential.id → PBKDF2 → AES-256-GCM key → Encrypt/Decrypt
+```
+
+#### Phase 2: Enhanced (Current Implementation) ✅
+```
+WebAuthn PRF (preferred) ──► HKDF ──► AES-256-GCM key
+         │                             ↑
+         └── credential.id + PBKDF2 ────┘ (fallback)
+```
+
+### WebAuthn PRF Registration
+```javascript
+// Enhanced registration with PRF support
+async function registerWebAuthnCredential() {
+  const credential = await navigator.credentials.create({
+    publicKey: {
+      // ... standard options
+      extensions: {
+        prf: {} // Request PRF support
+      }
+    }
+  });
+  
+  const prfAvailable = credential.getClientExtensionResults().prf;
+  console.log('PRF support:', prfAvailable ? 'Available' : 'Not available');
+  
+  return credential;
+}
+```
+
+### Migration Strategy
+
+1. **Keep current implementation** working for all users
+2. **Add PRF detection** during WebAuthn registration  
+3. **Use PRF when available** for new encryptions
+4. **Maintain backward compatibility** with credential.id approach
+5. **Gradual migration** as authenticator support improves
+
+This approach provides the best of both worlds: maximum security when possible, universal compatibility when needed.
+
+## Simple and Effective Key Hierarchy (Current Implementation)
 
 ```
 WebAuthn credential.id (consistent string)

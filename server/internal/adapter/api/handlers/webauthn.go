@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"net/http"
 	"strings"
 
@@ -277,7 +278,8 @@ func (h *WebAuthnHandler) FinishAssertion(c *gin.Context) {
 
 	// Include PRF output if available (for vault key derivation)
 	if len(prfOutput) > 0 {
-		response["prfOutput"] = prfOutput
+		// Encode PRF output as base64 for JSON response
+		response["prfOutput"] = base64.StdEncoding.EncodeToString(prfOutput)
 		response["message"] = "WebAuthn assertion completed with PRF key derivation"
 	}
 
