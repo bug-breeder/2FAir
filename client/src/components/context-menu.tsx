@@ -1,4 +1,4 @@
-import React from "react";
+import { useCallback } from "react";
 import {
   Dropdown,
   DropdownTrigger,
@@ -25,40 +25,41 @@ interface ContextMenuProps {
   otpID: string;
 }
 
-const ContextMenu: React.FC<ContextMenuProps> = ({
+export function ContextMenu({
   activeMenu,
   closeMenu,
   setShowQR,
   setShowEdit,
   otpID,
-}) => {
+}: ContextMenuProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const inactivateOtpMutation = useInactivateOtp();
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     inactivateOtpMutation.mutate(otpID, {
       onSuccess: () => {
         closeMenu();
         toast.success("OTP deleted successfully");
       },
-      onError: (error) => {
+      onError: (error: any) => {
         console.error("Error deleting OTP:", error);
-        toast.error("Failed to delete OTP");
+        const errorMessage = error.response?.data?.error || "Failed to delete OTP";
+        toast.error(errorMessage);
       },
     });
-  };
+  }, [otpID, inactivateOtpMutation, closeMenu]);
 
-  const handleEdit = () => {
+  const handleEdit = useCallback(() => {
     setShowEdit(true);
     closeMenu();
-  };
+  }, [setShowEdit, closeMenu]);
 
-  const handleShowQR = () => {
+  const handleShowQR = useCallback(() => {
     setShowQR(true);
     closeMenu();
-  };
+  }, [setShowQR, closeMenu]);
 
-  const handleAction = (key: React.Key) => {
+  const handleAction = useCallback((key: React.Key) => {
     switch (key) {
       case "qr":
         handleShowQR();
@@ -70,7 +71,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
         handleDelete();
         break;
     }
-  };
+  }, [handleShowQR, handleEdit, handleDelete]);
 
   if (isMobile) {
     return (
@@ -146,6 +147,4 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
       </DropdownMenu>
     </Dropdown>
   );
-};
-
-export default ContextMenu;
+}

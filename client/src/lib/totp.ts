@@ -61,7 +61,7 @@ export function generateTOTPCodes(config: TOTPConfig): TOTPCodes {
   
   // Generate next code by using the next period timestamp
   const nextCode = totp.generate({ timestamp: currentPeriodEnd * 1000 });
-  
+
   return {
     currentCode,
     nextCode,

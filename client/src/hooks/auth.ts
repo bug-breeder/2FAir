@@ -125,17 +125,18 @@ export function useAuth() {
 
   // Configure fetch to include auth header
   const authenticatedFetch = (url: string, options: RequestInit = {}) => {
-    const authHeaders = authState.token 
-      ? { 'Authorization': `Bearer ${authState.token}` }
-      : {};
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    if (authState.token) {
+      (headers as Record<string, string>)['Authorization'] = `Bearer ${authState.token}`;
+    }
 
     return fetch(url, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-        ...authHeaders,
-      },
+      headers,
     });
   };
 

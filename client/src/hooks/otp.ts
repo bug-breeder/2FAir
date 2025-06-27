@@ -5,14 +5,34 @@ import {
   inactivateOtp,
   editOtp,
   listOtps,
-  generateOtpCodes,
 } from "../lib/api/otp";
+import { generateAllClientTOTPCodes } from "../lib/totp-client";
 import { useAuth } from "../providers/auth-provider";
+import { OTP } from "../types/otp";
+
+// Types for better type safety
+interface OTPInput {
+  active: boolean;
+  algorithm: string;
+  counter: number;
+  createdAt: string;
+  digits: number;
+  issuer: string;
+  label: string;
+  method: string;
+  period: number;
+  secret: string;
+}
+
+interface EditOTPParams {
+  otpID: string;
+  otp: Partial<OTP>;
+}
 
 export const useAddOtp = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<unknown, Error, OTPInput>({
     mutationFn: addOtp,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["otps"] });
@@ -24,7 +44,7 @@ export const useAddOtp = () => {
 export const useInactivateOtp = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<unknown, Error, string>({
     mutationFn: inactivateOtp,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["otps"] });
@@ -36,9 +56,8 @@ export const useInactivateOtp = () => {
 export const useEditOtp = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({ otpID, otp }: { otpID: string; otp: any }) =>
-      editOtp(otpID, otp),
+  return useMutation<unknown, Error, EditOTPParams>({
+    mutationFn: ({ otpID, otp }: EditOTPParams) => editOtp(otpID, otp),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["otps"] });
       queryClient.invalidateQueries({ queryKey: ["otpCodes"] });
@@ -60,12 +79,18 @@ export const useListOtps = () => {
 
 export const useGenerateOtpCodes = () => {
   const { isAuthenticated } = useAuth();
+  const { data: otps } = useListOtps();
 
   return useQuery({
-    queryKey: ["otpCodes"],
-    queryFn: generateOtpCodes,
-    enabled: isAuthenticated, // Only run when authenticated
-    refetchInterval: 30000, // Refetch every 30 seconds to get fresh next codes
+    queryKey: ["otpCodes", otps],
+    queryFn: async () => {
+      if (!otps || !Array.isArray(otps) || otps.length === 0) {
+        return [];
+      }
+      return await generateAllClientTOTPCodes(otps);
+    },
+    enabled: isAuthenticated && !!otps && Array.isArray(otps) && otps.length > 0,
+    refetchInterval: 5000, // Refresh every 5 seconds for accurate countdown
     staleTime: 0, // Always consider data stale so it refetches when needed
     gcTime: 60000, // Keep in cache for 1 minute
   });

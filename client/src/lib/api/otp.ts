@@ -16,6 +16,4 @@ export const listOtps = async () => {
   return await apiClient.get("/api/v1/otp");
 };
 
-export const generateOtpCodes = async () => {
-  return await apiClient.get("/api/v1/otp/codes");
-};
+// generateOtpCodes removed - now using client-side generation for zero-knowledge architecture

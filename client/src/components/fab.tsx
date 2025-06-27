@@ -1,21 +1,40 @@
-import React, { useState } from "react";
+import { useState, useCallback } from "react";
 import { Button, Chip } from "@heroui/react";
 import { FaPlus, FaEdit } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { LuFileImage, LuCamera } from "react-icons/lu";
 
-import AddOtpModal from "./add-otp-modal";
-import QrScannerModal from "./qr-scanner";
-import QRImageUploaderModal from "./qr-uploader";
+import { AddOtpModal } from "./add-otp-modal";
+import { QrScannerModal } from "./qr-scanner";
+import { QRImageUploaderModal } from "./qr-uploader";
 
-const FAB = () => {
+export function FAB() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showQRUploader, setShowQRUploader] = useState(false);
 
-  const toggleExpand = () => setIsExpanded(!isExpanded);
-  const closeExpand = () => setIsExpanded(false);
+  const toggleExpand = useCallback(() => setIsExpanded(!isExpanded), [isExpanded]);
+  const closeExpand = useCallback(() => setIsExpanded(false), []);
+
+  const handleAddManual = useCallback(() => {
+    setShowModal(true);
+    closeExpand();
+  }, [closeExpand]);
+
+  const handleScanQR = useCallback(() => {
+    setShowQRScanner(true);
+    closeExpand();
+  }, [closeExpand]);
+
+  const handleUploadQR = useCallback(() => {
+    setShowQRUploader(true);
+    closeExpand();
+  }, [closeExpand]);
+
+  const handleCloseModal = useCallback(() => setShowModal(false), []);
+  const handleCloseScanner = useCallback(() => setShowQRScanner(false), []);
+  const handleCloseUploader = useCallback(() => setShowQRUploader(false), []);
 
   return (
     <>
@@ -51,10 +70,7 @@ const FAB = () => {
                 className="rounded-full w-14 h-14"
                 size="lg"
                 variant="shadow"
-                onPress={() => {
-                  setShowQRScanner(true);
-                  closeExpand();
-                }}
+                onPress={handleScanQR}
               >
                 <LuCamera />
               </Button>
@@ -79,10 +95,7 @@ const FAB = () => {
                 className="rounded-full w-14 h-14"
                 size="lg"
                 variant="shadow"
-                onPress={() => {
-                  setShowQRUploader(true);
-                  closeExpand();
-                }}
+                onPress={handleUploadQR}
               >
                 <LuFileImage />
               </Button>
@@ -107,10 +120,7 @@ const FAB = () => {
                 className="rounded-full w-14 h-14"
                 size="lg"
                 variant="shadow"
-                onPress={() => {
-                  setShowModal(true);
-                  closeExpand();
-                }}
+                onPress={handleAddManual}
               >
                 <FaEdit />
               </Button>
@@ -131,15 +141,13 @@ const FAB = () => {
 
       <QrScannerModal
         isOpen={showQRScanner}
-        onClose={() => setShowQRScanner(false)}
+        onClose={handleCloseScanner}
       />
       <QRImageUploaderModal
         isOpen={showQRUploader}
-        onClose={() => setShowQRUploader(false)}
+        onClose={handleCloseUploader}
       />
-      <AddOtpModal isOpen={showModal} onClose={() => setShowModal(false)} />
+      <AddOtpModal isOpen={showModal} onClose={handleCloseModal} />
     </>
   );
-};
-
-export default FAB;
+}

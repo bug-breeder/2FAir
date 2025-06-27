@@ -1,4 +1,3 @@
-import React from "react";
 import { Modal, ModalContent } from "@heroui/react";
 import QRCode from "qrcode.react";
 
@@ -13,7 +12,7 @@ interface QRModalProps {
   };
 }
 
-const QRModal: React.FC<QRModalProps> = ({ showQR, closeQR, otp }) => {
+export function QRModal({ showQR, closeQR, otp }: QRModalProps) {
   return (
     <Modal isOpen={showQR} placement="center" onClose={closeQR}>
       <ModalContent>
@@ -26,6 +25,4 @@ const QRModal: React.FC<QRModalProps> = ({ showQR, closeQR, otp }) => {
       </ModalContent>
     </Modal>
   );
-};
-
-export default QRModal;
+}

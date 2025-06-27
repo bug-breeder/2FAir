@@ -83,7 +83,7 @@ export const mockAddOtp = vi.fn();
 export const mockInactivateOtp = vi.fn();
 export const mockEditOtp = vi.fn();
 export const mockListOtps = vi.fn();
-export const mockGenerateOtpCodes = vi.fn();
+// mockGenerateOtpCodes removed - now using client-side generation
 
 // Mock the API functions
 vi.mock("../lib/api/otp", () => ({
@@ -91,7 +91,7 @@ vi.mock("../lib/api/otp", () => ({
   inactivateOtp: mockInactivateOtp,
   editOtp: mockEditOtp,
   listOtps: mockListOtps,
-  generateOtpCodes: mockGenerateOtpCodes,
+  // generateOtpCodes removed - now using client-side generation
 }));
 
 // Mock react-router-dom hooks

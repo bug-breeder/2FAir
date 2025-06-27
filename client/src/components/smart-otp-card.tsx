@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Tooltip, Avatar, Card, CardBody, CardFooter } from "@heroui/react";
 import { MdContentCopy } from "react-icons/md";
 import { FiMenu } from "react-icons/fi";
@@ -13,9 +13,9 @@ import { CgArrowRight } from "react-icons/cg";
 
 import { OTP, OTPSecret } from "../types/otp";
 
-import ContextMenu from "./context-menu";
-import QRModal from "./qr-modal";
-import EditOtpModal from "./edit-otp-modal";
+import { ContextMenu } from "./context-menu";
+import { QRModal } from "./qr-modal";
+import { EditOtpModal } from "./edit-otp-modal";
 
 interface SmartOTPCardProps {
   otp: OTP;
@@ -26,14 +26,14 @@ interface SmartOTPCardProps {
   closeMenu: () => void;
 }
 
-const SmartOTPCard: React.FC<SmartOTPCardProps> = ({
+export function SmartOTPCard({
   otp,
   otpSecret,
   isActive,
   activeMenu,
   setActiveMenu,
   closeMenu,
-}) => {
+}: SmartOTPCardProps) {
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -78,20 +78,20 @@ const SmartOTPCard: React.FC<SmartOTPCardProps> = ({
     }
   }, [currentTime, otpSecret]);
 
-  const handleCopy = () => {
+  const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(displayCode).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
-  };
+  }, [displayCode]);
 
-  const handleContextMenu = (event: React.MouseEvent) => {
+  const handleContextMenu = useCallback((event: React.MouseEvent) => {
     event.nativeEvent.stopImmediatePropagation();
     event.preventDefault();
     setTimeout(() => {
       setActiveMenu(event.clientX, event.clientY);
     }, 50);
-  };
+  }, [setActiveMenu]);
 
   // Calculate progress (0-100)
   const progressValue = ((otp.Period - timeRemaining) / otp.Period) * 100;
@@ -187,6 +187,4 @@ const SmartOTPCard: React.FC<SmartOTPCardProps> = ({
       )}
     </div>
   );
-};
-
-export default SmartOTPCard;
+}

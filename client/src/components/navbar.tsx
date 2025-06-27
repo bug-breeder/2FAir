@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import {
   Navbar as HeroUINavbar,
   NavbarBrand,
@@ -33,14 +33,14 @@ import { toast } from "../lib/toast";
 
 import { FAir, SearchIcon } from "./icons";
 import { ThemeSwitch } from "./theme-switch";
-import WebAuthnRegistrationModal from "./webauthn-registration-modal";
+import { WebAuthnRegistrationModal } from "./webauthn-registration-modal";
 
 export const Navbar = () => {
   const searchRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showWebAuthnRegistration, setShowWebAuthnRegistration] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
-  const { searchQuery, setSearchQuery, clearSearch, isSearchActive } = useSearch();
+  const { searchQuery, setSearchQuery, clearSearch } = useSearch();
   const { data: otps = [] } = useListOtps();
   const navigate = useNavigate();
 
@@ -193,9 +193,8 @@ export const Navbar = () => {
                 as="button"
                 className="transition-transform hover:scale-105"
                 color="primary"
-                name={user?.name || user?.email || "User"}
+                name={user?.display_name || user?.email || "User"}
                 size="sm"
-                src={user?.picture}
               />
             </DropdownTrigger>
             <DropdownMenu aria-label="User menu" variant="flat">
@@ -259,12 +258,11 @@ export const Navbar = () => {
           <div className="flex items-center gap-3">
             <Avatar
               showFallback
-              name={user?.name || user?.email || "User"}
+              name={user?.display_name || user?.email || "User"}
               size="sm"
-              src={user?.picture}
             />
             <div>
-              <p className="font-semibold text-sm">{user?.name || "User"}</p>
+              <p className="font-semibold text-sm">{user?.display_name || "User"}</p>
               <p className="text-xs text-default-500">{user?.email}</p>
             </div>
           </div>
