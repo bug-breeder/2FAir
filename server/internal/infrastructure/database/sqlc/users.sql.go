@@ -11,9 +11,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countUsers = `-- name: CountUsers :one
+SELECT COUNT(*) FROM users
+`
+
+func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countUsers)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (username, email, display_name)
-VALUES ($1, $2, $3)
+INSERT INTO users (
+    username, email, display_name
+) VALUES (
+    $1, $2, $3
+)
 RETURNING id, username, email, display_name, created_at, updated_at, last_login_at, is_active
 `
 
@@ -40,8 +54,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const deactivateUser = `-- name: DeactivateUser :exec
-UPDATE users
-SET is_active = FALSE
+UPDATE users 
+SET is_active = FALSE, updated_at = NOW()
 WHERE id = $1
 `
 
@@ -50,9 +64,19 @@ func (q *Queries) DeactivateUser(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
+const deleteUser = `-- name: DeleteUser :exec
+DELETE FROM users 
+WHERE id = $1
+`
+
+func (q *Queries) DeleteUser(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteUser, id)
+	return err
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, username, email, display_name, created_at, updated_at, last_login_at, is_active FROM users
-WHERE email = $1 AND is_active = TRUE
+SELECT id, username, email, display_name, created_at, updated_at, last_login_at, is_active FROM users 
+WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -72,8 +96,8 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, username, email, display_name, created_at, updated_at, last_login_at, is_active FROM users
-WHERE id = $1 AND is_active = TRUE
+SELECT id, username, email, display_name, created_at, updated_at, last_login_at, is_active FROM users 
+WHERE id = $1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error) {
@@ -93,8 +117,8 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, email, display_name, created_at, updated_at, last_login_at, is_active FROM users
-WHERE username = $1 AND is_active = TRUE
+SELECT id, username, email, display_name, created_at, updated_at, last_login_at, is_active FROM users 
+WHERE username = $1
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -113,20 +137,58 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 	return i, err
 }
 
+const listUsers = `-- name: ListUsers :many
+SELECT id, username, email, display_name, created_at, updated_at, last_login_at, is_active FROM users 
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListUsersParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listUsers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.Email,
+			&i.DisplayName,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.LastLoginAt,
+			&i.IsActive,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateUser = `-- name: UpdateUser :one
-UPDATE users
-SET username = COALESCE($2, username),
-    email = COALESCE($3, email),
-    display_name = COALESCE($4, display_name)
+UPDATE users 
+SET username = $2, email = $3, display_name = $4, updated_at = NOW()
 WHERE id = $1
 RETURNING id, username, email, display_name, created_at, updated_at, last_login_at, is_active
 `
 
 type UpdateUserParams struct {
 	ID          pgtype.UUID `json:"id"`
-	Username    pgtype.Text `json:"username"`
-	Email       pgtype.Text `json:"email"`
-	DisplayName pgtype.Text `json:"display_name"`
+	Username    string      `json:"username"`
+	Email       string      `json:"email"`
+	DisplayName string      `json:"display_name"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
@@ -151,8 +213,8 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 }
 
 const updateUserLastLogin = `-- name: UpdateUserLastLogin :exec
-UPDATE users
-SET last_login_at = NOW()
+UPDATE users 
+SET last_login_at = NOW(), updated_at = NOW()
 WHERE id = $1
 `
 

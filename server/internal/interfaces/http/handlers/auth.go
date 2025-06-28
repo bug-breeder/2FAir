@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	infraServices "github.com/bug-breeder/2fair/server/internal/infrastructure/services"
+	"github.com/bug-breeder/2fair/server/internal/domain/interfaces"
 	"github.com/bug-breeder/2fair/server/internal/infrastructure/config"
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth/gothic"
@@ -13,12 +13,12 @@ import (
 
 // AuthHandler handles authentication endpoints
 type AuthHandler struct {
-	authService infraServices.AuthService
+	authService interfaces.AuthService
 	config      *config.Config
 }
 
 // NewAuthHandler creates a new auth handler
-func NewAuthHandler(authService infraServices.AuthService, cfg *config.Config) *AuthHandler {
+func NewAuthHandler(authService interfaces.AuthService, cfg *config.Config) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
 		config:      cfg,
@@ -110,7 +110,7 @@ func (h *AuthHandler) OAuthCallback(c *gin.Context) {
 		displayName = username
 	}
 
-	oauthData := &infraServices.OAuthProvider{
+	oauthData := &interfaces.OAuthProvider{
 		Provider:    provider,
 		UserID:      gothUser.UserID,
 		Email:       gothUser.Email,
@@ -248,7 +248,7 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 		return
 	}
 
-	claims, ok := userInterface.(*infraServices.JWTClaims)
+	claims, ok := userInterface.(*interfaces.JWTClaims)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user context"})
 		return

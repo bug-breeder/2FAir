@@ -14,13 +14,15 @@ import (
 	"github.com/markbates/goth/providers/github"
 	"github.com/markbates/goth/providers/google"
 
+	appServices "github.com/bug-breeder/2fair/server/internal/application/usecases"
+	"github.com/bug-breeder/2fair/server/internal/infrastructure/config"
+	"github.com/bug-breeder/2fair/server/internal/infrastructure/crypto"
+	"github.com/bug-breeder/2fair/server/internal/infrastructure/database"
+	database_adapters "github.com/bug-breeder/2fair/server/internal/infrastructure/database"
+	"github.com/bug-breeder/2fair/server/internal/infrastructure/totp"
+	"github.com/bug-breeder/2fair/server/internal/infrastructure/webauthn"
 	"github.com/bug-breeder/2fair/server/internal/interfaces/http/handlers"
 	"github.com/bug-breeder/2fair/server/internal/interfaces/http/middleware"
-	database_adapters "github.com/bug-breeder/2fair/server/internal/infrastructure/database"
-        appServices "github.com/bug-breeder/2fair/server/internal/application/services"
-        infraServices "github.com/bug-breeder/2fair/server/internal/infrastructure/services"
-	"github.com/bug-breeder/2fair/server/internal/infrastructure/config"
-	"github.com/bug-breeder/2fair/server/internal/infrastructure/database"
 )
 
 // Server represents the HTTP server
@@ -55,11 +57,11 @@ func NewServer(cfg *config.Config, db *database.DB) *Server {
 	// Initialize repositories
 	userRepo := database_adapters.NewUserRepository(db)
 	credRepo := database_adapters.NewWebAuthnCredentialRepository(db)
-	cryptoService := infraServices.NewCryptoService()
+	cryptoService := crypto.NewCryptoService()
 	otpRepo := database_adapters.NewOTPRepository(db, cryptoService)
 
 	// Initialize infrastructure services
-	totpService := infraServices.NewTOTPService()
+	totpService := totp.NewTOTPService()
 
 	// Initialize domain services
 	authService := appServices.NewAuthService(
@@ -77,7 +79,7 @@ func NewServer(cfg *config.Config, db *database.DB) *Server {
 	otpService := appServices.NewOTPService(otpRepo, cryptoService, totpService)
 
 	// Initialize WebAuthn service
-	webAuthnService, err := infraServices.NewWebAuthnService(
+	webAuthnService, err := webauthn.NewWebAuthnService(
 		cfg.WebAuthn.RPID,
 		cfg.WebAuthn.RPDisplayName,
 		cfg.WebAuthn.RPOrigins,

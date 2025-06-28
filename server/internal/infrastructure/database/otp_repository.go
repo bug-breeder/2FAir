@@ -5,10 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	db "github.com/bug-breeder/2fair/server/internal/infrastructure/database/sqlc"
 	"github.com/bug-breeder/2fair/server/internal/domain/entities"
 	"github.com/bug-breeder/2fair/server/internal/domain/interfaces"
-        infraServices "github.com/bug-breeder/2fair/server/internal/infrastructure/services"
+	db "github.com/bug-breeder/2fair/server/internal/infrastructure/database/sqlc"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -16,11 +15,11 @@ import (
 type otpRepository struct {
 	db            *DB
 	queries       *db.Queries
-	cryptoService infraServices.CryptoService
+	cryptoService interfaces.CryptoService
 }
 
 // NewOTPRepository creates a new OTP repository
-func NewOTPRepository(database *DB, cryptoService infraServices.CryptoService) interfaces.OTPRepository {
+func NewOTPRepository(database *DB, cryptoService interfaces.CryptoService) interfaces.OTPRepository {
 	return &otpRepository{
 		db:            database,
 		queries:       db.New(database.Pool),

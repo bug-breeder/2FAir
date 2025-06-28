@@ -10,9 +10,9 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	db "github.com/bug-breeder/2fair/server/internal/infrastructure/database/sqlc"
 	"github.com/bug-breeder/2fair/server/internal/domain/entities"
 	"github.com/bug-breeder/2fair/server/internal/domain/interfaces"
+	db "github.com/bug-breeder/2fair/server/internal/infrastructure/database/sqlc"
 )
 
 // UserRepository implements the domain user repository interface
@@ -95,9 +95,9 @@ func (r *UserRepository) Update(ctx context.Context, user *entities.User) error 
 	// Use the generated UpdateUser query
 	dbUser, err := r.queries.UpdateUser(ctx, db.UpdateUserParams{
 		ID:          convertUUIDToPG(user.ID),
-		Username:    pgtype.Text{String: user.Username, Valid: true},
-		Email:       pgtype.Text{String: user.Email, Valid: true},
-		DisplayName: pgtype.Text{String: user.DisplayName, Valid: true},
+		Username:    user.Username,
+		Email:       user.Email,
+		DisplayName: user.DisplayName,
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

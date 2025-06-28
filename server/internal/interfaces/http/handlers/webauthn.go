@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/bug-breeder/2fair/server/internal/interfaces/http/middleware"
 	"github.com/bug-breeder/2fair/server/internal/domain/entities"
-	infraServices "github.com/bug-breeder/2fair/server/internal/infrastructure/services"
+	"github.com/bug-breeder/2fair/server/internal/domain/interfaces"
+	"github.com/bug-breeder/2fair/server/internal/interfaces/http/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
@@ -16,12 +16,12 @@ import (
 
 // WebAuthnHandler handles WebAuthn endpoints
 type WebAuthnHandler struct {
-	webAuthnService infraServices.WebAuthnService
-	userRepo        infraServices.AuthService // Use auth service to get user info
+	webAuthnService interfaces.WebAuthnService
+	userRepo        interfaces.AuthService // Use auth service to get user info
 }
 
 // NewWebAuthnHandler creates a new WebAuthn handler
-func NewWebAuthnHandler(webAuthnService infraServices.WebAuthnService, authService infraServices.AuthService) *WebAuthnHandler {
+func NewWebAuthnHandler(webAuthnService interfaces.WebAuthnService, authService interfaces.AuthService) *WebAuthnHandler {
 	return &WebAuthnHandler{
 		webAuthnService: webAuthnService,
 		userRepo:        authService,
@@ -38,7 +38,7 @@ var sessionStore = make(map[string]*webauthn.SessionData)
 // @Tags webauthn
 // @Security BearerAuth
 // @Param authenticatorSelection body protocol.AuthenticatorSelection false "Authenticator selection criteria"
-// @Success 200 {object} infraServices.WebAuthnCredentialCreation
+// @Success 200 {object} interfaces.WebAuthnCredentialCreation
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /v1/webauthn/register/begin [post]
@@ -160,7 +160,7 @@ func (h *WebAuthnHandler) FinishRegistration(c *gin.Context) {
 // @Description Begins WebAuthn credential assertion for vault key derivation
 // @Tags webauthn
 // @Security BearerAuth
-// @Success 200 {object} infraServices.WebAuthnCredentialAssertion
+// @Success 200 {object} interfaces.WebAuthnCredentialAssertion
 // @Failure 401 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string

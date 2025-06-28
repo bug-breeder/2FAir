@@ -4,17 +4,17 @@ import (
 	"net/http"
 	"strings"
 
-	infraServices "github.com/bug-breeder/2fair/server/internal/infrastructure/services"
+	"github.com/bug-breeder/2fair/server/internal/domain/interfaces"
 	"github.com/gin-gonic/gin"
 )
 
 // AuthMiddleware provides JWT authentication middleware
 type AuthMiddleware struct {
-	authService infraServices.AuthService
+	authService interfaces.AuthService
 }
 
 // NewAuthMiddleware creates a new auth middleware
-func NewAuthMiddleware(authService infraServices.AuthService) *AuthMiddleware {
+func NewAuthMiddleware(authService interfaces.AuthService) *AuthMiddleware {
 	return &AuthMiddleware{
 		authService: authService,
 	}
@@ -102,13 +102,13 @@ func (m *AuthMiddleware) extractToken(c *gin.Context) string {
 }
 
 // GetCurrentUser helper function to get current user from context
-func GetCurrentUser(c *gin.Context) (*infraServices.JWTClaims, bool) {
+func GetCurrentUser(c *gin.Context) (*interfaces.JWTClaims, bool) {
 	userInterface, exists := c.Get("user")
 	if !exists {
 		return nil, false
 	}
 
-	claims, ok := userInterface.(*infraServices.JWTClaims)
+	claims, ok := userInterface.(*interfaces.JWTClaims)
 	if !ok {
 		return nil, false
 	}

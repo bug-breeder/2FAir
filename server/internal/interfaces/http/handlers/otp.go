@@ -3,18 +3,18 @@ package handlers
 import (
 	"net/http"
 
-	infraServices "github.com/bug-breeder/2fair/server/internal/infrastructure/services"
+	"github.com/bug-breeder/2fair/server/internal/domain/interfaces"
 	"github.com/gin-gonic/gin"
 )
 
 // OTPHandler handles OTP/TOTP vault endpoints
 type OTPHandler struct {
-	otpService infraServices.OTPService
-	// totpService infraServices.TOTPService // TODO: Re-enable when TOTP service is implemented
+	otpService interfaces.OTPService
+	// totpService interfaces.TOTPService // TODO: Re-enable when TOTP service is implemented
 }
 
 // NewOTPHandler creates a new OTP handler
-func NewOTPHandler(otpService infraServices.OTPService) *OTPHandler {
+func NewOTPHandler(otpService interfaces.OTPService) *OTPHandler {
 	return &OTPHandler{
 		otpService: otpService,
 		// totpService: totpService, // TODO: Re-enable when TOTP service is implemented
