@@ -91,6 +91,7 @@ describe("search utilities", () => {
 ```
 
 **Best Practices**:
+
 - Test pure functions thoroughly
 - Use descriptive test names
 - Test edge cases (empty strings, null values)
@@ -120,7 +121,7 @@ describe("ComponentName", () => {
   it("should handle user interactions", async () => {
     const mockFn = vi.fn();
     render(<ComponentName onAction={mockFn} />);
-    
+
     await user.click(screen.getByRole("button"));
     expect(mockFn).toHaveBeenCalled();
   });
@@ -128,6 +129,7 @@ describe("ComponentName", () => {
 ```
 
 **Testing Priorities for Components**:
+
 1. **Rendering**: Component renders without crashing
 2. **Props**: Component handles different prop combinations
 3. **User Interactions**: Click, input, form submissions
@@ -148,7 +150,7 @@ const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } }
   });
-  
+
   return ({ children }) => (
     <QueryClientProvider client={queryClient}>
       {children}
@@ -255,7 +257,7 @@ export function AllTheProviders({ children }) {
   );
 }
 
-export const customRender = (ui, options) => 
+export const customRender = (ui, options) =>
   render(ui, { wrapper: AllTheProviders, ...options });
 
 export { customRender as render };
@@ -294,12 +296,14 @@ export const mockOtpData = {
 ## Testing Checklist
 
 ### Before Writing Tests
+
 - [ ] Identify the component's responsibilities
 - [ ] List all props and their expected behaviors
 - [ ] Identify user interactions to test
 - [ ] Consider error states and edge cases
 
 ### Component Test Checklist
+
 - [ ] Renders without crashing
 - [ ] Displays expected content
 - [ ] Handles props correctly
@@ -309,6 +313,7 @@ export const mockOtpData = {
 - [ ] Is accessible (ARIA labels, keyboard navigation)
 
 ### Hook Test Checklist
+
 - [ ] Returns expected initial state
 - [ ] Updates state correctly
 - [ ] Handles async operations
@@ -404,4 +409,4 @@ await screen.findByText("Expected text", {}, { timeout: 5000 });
 - [Vitest Documentation](https://vitest.dev/)
 - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
 - [Jest DOM Matchers](https://github.com/testing-library/jest-dom)
-- [Testing Best Practices](https://kentcdodds.com/blog/common-mistakes-with-react-testing-library) 
+- [Testing Best Practices](https://kentcdodds.com/blog/common-mistakes-with-react-testing-library)
