@@ -15,7 +15,7 @@ interface OAuthProvider {
 
 function LoginPage() {
   const [providers, setProviders] = useState<OAuthProvider[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,7 +41,7 @@ function LoginPage() {
 
   const handleLogin = async (provider: OAuthProvider) => {
     try {
-      setIsLoading(true);
+      setLoadingProvider(provider.provider);
 
       // Store the current URL in sessionStorage for redirect after login
       sessionStorage.setItem("redirectAfterLogin", window.location.pathname);
@@ -61,7 +61,7 @@ function LoginPage() {
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login failed. Please try again.");
-      setIsLoading(false);
+      setLoadingProvider(null);
     }
   };
 
@@ -120,8 +120,8 @@ function LoginPage() {
           {providers.map((provider) => (
             <Button
               key={provider.provider}
-              disabled={isLoading}
-              isLoading={isLoading}
+              disabled={loadingProvider !== null}
+              isLoading={loadingProvider === provider.provider}
               startContent={getProviderIcon(provider.provider)}
               variant="bordered"
               onPress={() => handleLogin(provider)}

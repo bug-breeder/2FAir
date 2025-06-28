@@ -8,7 +8,8 @@
 const PROVIDER_SLUG_MAP: Record<string, string> = {};
 
 // Base CDN URL for Aegis Icons
-const AEGIS_ICONS_CDN_BASE = 'https://cdn.jsdelivr.net/gh/bug-breeder/aegis-icons@latest/SVG';
+const AEGIS_ICONS_CDN_BASE =
+  "https://cdn.jsdelivr.net/gh/bug-breeder/aegis-icons@latest/SVG";
 
 /**
  * Get Aegis Icons filename for a provider name
@@ -17,7 +18,7 @@ const AEGIS_ICONS_CDN_BASE = 'https://cdn.jsdelivr.net/gh/bug-breeder/aegis-icon
  */
 export function getAegisIconsSlug(providerName: string): string {
   const normalizedName = providerName.toLowerCase().trim();
-  
+
   // Return mapped filename if exists, otherwise use the normalized name directly
   return PROVIDER_SLUG_MAP[normalizedName] || normalizedName;
 }
@@ -32,12 +33,12 @@ export function getAegisIconsCDNUrl(
   providerName: string,
   options: {
     fallbackIcon?: string;
-  } = {}
+  } = {},
 ): string {
-  const { fallbackIcon = 'generic' } = options;
-  
+  const { fallbackIcon = "generic" } = options;
+
   const slug = getAegisIconsSlug(providerName);
-  
+
   return `${AEGIS_ICONS_CDN_BASE}/${slug}.svg`;
 }
 
@@ -56,6 +57,7 @@ export function getSupportedProviders(): string[] {
  */
 export function isProviderSupported(providerName: string): boolean {
   const normalizedName = providerName.toLowerCase().trim();
+
   return PROVIDER_SLUG_MAP[normalizedName] !== undefined;
 }
 
@@ -83,7 +85,7 @@ export function getAegisIconImgProps(props: AegisIconProps): {
   className?: string;
 } {
   const { provider, size, className, alt, fallbackIcon } = props;
-  
+
   return {
     src: getAegisIconsCDNUrl(provider, { fallbackIcon }),
     alt: alt || provider,
@@ -91,4 +93,4 @@ export function getAegisIconImgProps(props: AegisIconProps): {
     height: size,
     className,
   };
-} 
+}
