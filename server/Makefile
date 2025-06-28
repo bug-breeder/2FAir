@@ -4,7 +4,7 @@
 BINARY_NAME=2fair-server
 MAIN_PATH=./cmd/server
 BUILD_DIR=./bin
-MIGRATION_DIR=./internal/adapter/database/migrations
+MIGRATION_DIR=./internal/infrastructure/database/migrations
 
 # Default target
 .PHONY: help

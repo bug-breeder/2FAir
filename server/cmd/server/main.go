@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/bug-breeder/2fair/server/internal/adapter/api"
+	"github.com/bug-breeder/2fair/server/internal/interfaces/http"
 	"github.com/bug-breeder/2fair/server/internal/infrastructure/config"
 	"github.com/bug-breeder/2fair/server/internal/infrastructure/database"
 

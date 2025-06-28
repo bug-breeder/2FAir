@@ -44,7 +44,7 @@ func (m *MigrationManager) Up() error {
 	}
 
 	// Migration files are located in the migrations directory
-	migrationDir := "internal/adapter/database/migrations"
+	migrationDir := "internal/infrastructure/database/migrations"
 
 	if err := goose.Up(m.db, migrationDir); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
@@ -61,7 +61,7 @@ func (m *MigrationManager) Down() error {
 		return fmt.Errorf("failed to set dialect: %w", err)
 	}
 
-	migrationDir := "internal/adapter/database/migrations"
+	migrationDir := "internal/infrastructure/database/migrations"
 
 	if err := goose.Down(m.db, migrationDir); err != nil {
 		return fmt.Errorf("failed to rollback migration: %w", err)
@@ -78,7 +78,7 @@ func (m *MigrationManager) Status() error {
 		return fmt.Errorf("failed to set dialect: %w", err)
 	}
 
-	migrationDir := "internal/adapter/database/migrations"
+	migrationDir := "internal/infrastructure/database/migrations"
 
 	if err := goose.Status(m.db, migrationDir); err != nil {
 		return fmt.Errorf("failed to get migration status: %w", err)
@@ -105,7 +105,7 @@ func (m *MigrationManager) Version() (int64, error) {
 
 // Create creates a new migration file
 func (m *MigrationManager) Create(name string) error {
-	migrationDir := "internal/adapter/database/migrations"
+	migrationDir := "internal/infrastructure/database/migrations"
 
 	if err := goose.Create(m.db, migrationDir, name, "sql"); err != nil {
 		return fmt.Errorf("failed to create migration: %w", err)

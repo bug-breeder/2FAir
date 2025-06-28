@@ -15,7 +15,7 @@ import (
 	"github.com/markbates/goth/providers/google"
 
 	"github.com/bug-breeder/2fair/server/internal/domain/entities"
-	"github.com/bug-breeder/2fair/server/internal/domain/repositories"
+	"github.com/bug-breeder/2fair/server/internal/domain/interfaces"
 )
 
 var (
