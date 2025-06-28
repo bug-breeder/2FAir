@@ -38,7 +38,8 @@ import { WebAuthnRegistrationModal } from "./webauthn-registration-modal";
 export const Navbar = () => {
   const searchRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showWebAuthnRegistration, setShowWebAuthnRegistration] = useState(false);
+  const [showWebAuthnRegistration, setShowWebAuthnRegistration] =
+    useState(false);
   const { user, logout, isAuthenticated } = useAuth();
   const { searchQuery, setSearchQuery, clearSearch } = useSearch();
   const { data: otps = [] } = useListOtps();
@@ -65,6 +66,7 @@ export const Navbar = () => {
 
   const handleSearch = (searchTerm: string) => {
     const trimmedTerm = searchTerm.trim();
+
     setSearchQuery(trimmedTerm);
   };
 
@@ -262,7 +264,9 @@ export const Navbar = () => {
               size="sm"
             />
             <div>
-              <p className="font-semibold text-sm">{user?.display_name || "User"}</p>
+              <p className="font-semibold text-sm">
+                {user?.display_name || "User"}
+              </p>
               <p className="text-xs text-default-500">{user?.email}</p>
             </div>
           </div>

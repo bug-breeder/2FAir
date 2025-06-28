@@ -11,19 +11,19 @@ export default mergeConfig(
     server: {
       proxy: {
         // Proxy API requests to backend server
-        '/api': {
-          target: 'http://localhost:8080',
+        "/api": {
+          target: "http://localhost:8080",
           changeOrigin: true,
           secure: false,
         },
         // Also proxy OAuth callback routes
-        '/v1': {
-          target: 'http://localhost:8080',
+        "/v1": {
+          target: "http://localhost:8080",
           changeOrigin: true,
           secure: false,
-        }
-      }
-    }
+        },
+      },
+    },
   }),
   defineTestConfig({
     test: {
@@ -37,12 +37,12 @@ export default mergeConfig(
         exclude: [
           "node_modules/",
           "src/test/",
-          "**/*.d.ts", 
+          "**/*.d.ts",
           "**/*.config.*",
           "**/main.tsx",
           "**/vite-env.d.ts",
         ],
       },
     },
-  })
+  }),
 );

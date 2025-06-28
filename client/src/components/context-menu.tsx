@@ -43,7 +43,9 @@ export function ContextMenu({
       },
       onError: (error: any) => {
         console.error("Error deleting OTP:", error);
-        const errorMessage = error.response?.data?.error || "Failed to delete OTP";
+        const errorMessage =
+          error.response?.data?.error || "Failed to delete OTP";
+
         toast.error(errorMessage);
       },
     });
@@ -59,19 +61,22 @@ export function ContextMenu({
     closeMenu();
   }, [setShowQR, closeMenu]);
 
-  const handleAction = useCallback((key: React.Key) => {
-    switch (key) {
-      case "qr":
-        handleShowQR();
-        break;
-      case "edit":
-        handleEdit();
-        break;
-      case "delete":
-        handleDelete();
-        break;
-    }
-  }, [handleShowQR, handleEdit, handleDelete]);
+  const handleAction = useCallback(
+    (key: React.Key) => {
+      switch (key) {
+        case "qr":
+          handleShowQR();
+          break;
+        case "edit":
+          handleEdit();
+          break;
+        case "delete":
+          handleDelete();
+          break;
+      }
+    },
+    [handleShowQR, handleEdit, handleDelete],
+  );
 
   if (isMobile) {
     return (

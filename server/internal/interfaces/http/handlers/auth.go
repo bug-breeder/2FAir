@@ -255,11 +255,9 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user": gin.H{
-			"id":       claims.UserID,
-			"username": claims.Username,
-			"email":    claims.Email,
-		},
+		"id":       claims.UserID,
+		"username": claims.Username,
+		"email":    claims.Email,
 	})
 }
 

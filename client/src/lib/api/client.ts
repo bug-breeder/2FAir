@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
 
 import { toast } from "../toast";
 
-const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:8080";
 
 interface ApiErrorResponse {
   message: string;
@@ -30,10 +30,12 @@ class ApiClient {
     this.client.interceptors.request.use(
       (config) => {
         // Get token from localStorage and add to Authorization header
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem("authToken");
+
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+
         return config;
       },
       (error) => {
@@ -47,10 +49,10 @@ class ApiClient {
       (error: AxiosError<ApiErrorResponse>) => {
         // Handle 401 errors by clearing token
         if (error.response?.status === 401) {
-          localStorage.removeItem('authToken');
+          localStorage.removeItem("authToken");
           // Redirect to login if not already there
-          if (!window.location.pathname.includes('/login')) {
-            window.location.href = '/login';
+          if (!window.location.pathname.includes("/login")) {
+            window.location.href = "/login";
           }
         } else {
           // Show error toast for other errors

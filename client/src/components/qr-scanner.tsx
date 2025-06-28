@@ -22,63 +22,71 @@ export function QrScannerModal({ isOpen, onClose }: QrScannerModalProps) {
   const qrScannerRef = useRef<QrScanner | null>(null);
   const [hasFlash, setHasFlash] = useState<boolean>(false);
   const [isFlashOn, setIsFlashOn] = useState<boolean>(false);
-  const [currentFacingMode, setCurrentFacingMode] = useState<QrScanner.FacingMode>("environment");
+  const [currentFacingMode, setCurrentFacingMode] =
+    useState<QrScanner.FacingMode>("environment");
 
   const parseOTPAuth = useCallback((url: string) => {
     try {
       const urlObj = new URL(url);
-      
-      if (urlObj.protocol !== 'otpauth:') {
-        throw new Error('Not an OTP Auth URL');
+
+      if (urlObj.protocol !== "otpauth:") {
+        throw new Error("Not an OTP Auth URL");
       }
 
       const type = urlObj.host;
-      if (type !== 'totp') {
-        throw new Error('Only TOTP is supported');
+
+      if (type !== "totp") {
+        throw new Error("Only TOTP is supported");
       }
 
-      const pathParts = urlObj.pathname.split('/');
-      const label = decodeURIComponent(pathParts[1] || '');
-      
+      const pathParts = urlObj.pathname.split("/");
+      const label = decodeURIComponent(pathParts[1] || "");
+
       const params = new URLSearchParams(urlObj.search);
-      const secret = params.get('secret');
-      const issuer = params.get('issuer') || label.split(':')[0] || 'Unknown';
-      const algorithm = params.get('algorithm') || 'SHA1';
-      const digits = params.get('digits') || '6';
-      const period = params.get('period') || '30';
+      const secret = params.get("secret");
+      const issuer = params.get("issuer") || label.split(":")[0] || "Unknown";
+      const algorithm = params.get("algorithm") || "SHA1";
+      const digits = params.get("digits") || "6";
+      const period = params.get("period") || "30";
 
       if (!secret) {
-        throw new Error('Secret is required');
+        throw new Error("Secret is required");
       }
 
       return {
         secret,
         issuer,
-        label: label.includes(':') ? label.split(':')[1] : label,
+        label: label.includes(":") ? label.split(":")[1] : label,
         algorithm,
         digits,
         period,
       };
     } catch (error) {
-      console.error('Failed to parse OTP Auth URL:', error);
+      console.error("Failed to parse OTP Auth URL:", error);
       throw error;
     }
   }, []);
 
-  const handleQrCodeScan = useCallback((data: string) => {
-    try {
-      const otpData = parseOTPAuth(data);
-      toast.success(`QR code scanned: ${otpData.issuer}`);
-      
-      // Here you would typically open the add OTP modal with pre-filled data
-      // For now, we'll just show a success message and close
-      
-      onClose();
-    } catch (error) {
-      console.error("Error parsing OTP QR Code:", error);
-      toast.error(`Invalid QR code: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }, [parseOTPAuth, onClose]);
+  const handleQrCodeScan = useCallback(
+    (data: string) => {
+      try {
+        const otpData = parseOTPAuth(data);
+
+        toast.success(`QR code scanned: ${otpData.issuer}`);
+
+        // Here you would typically open the add OTP modal with pre-filled data
+        // For now, we'll just show a success message and close
+
+        onClose();
+      } catch (error) {
+        console.error("Error parsing OTP QR Code:", error);
+        toast.error(
+          `Invalid QR code: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+      }
+    },
+    [parseOTPAuth, onClose],
+  );
 
   const toggleFlash = useCallback(() => {
     if (qrScannerRef.current) {
@@ -96,7 +104,8 @@ export function QrScannerModal({ isOpen, onClose }: QrScannerModalProps) {
 
   const switchCamera = useCallback(() => {
     if (qrScannerRef.current) {
-      const newFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+      const newFacingMode =
+        currentFacingMode === "environment" ? "user" : "environment";
 
       qrScannerRef.current.setCamera(newFacingMode).then(() => {
         setCurrentFacingMode(newFacingMode);
@@ -131,12 +140,15 @@ export function QrScannerModal({ isOpen, onClose }: QrScannerModalProps) {
         },
       );
 
-      qrScannerRef.current.start().then(() => {
-        qrScannerRef.current?.hasFlash().then(setHasFlash);
-      }).catch((error) => {
-        console.error('Error starting QR scanner:', error);
-        toast.error('Failed to start camera. Please check permissions.');
-      });
+      qrScannerRef.current
+        .start()
+        .then(() => {
+          qrScannerRef.current?.hasFlash().then(setHasFlash);
+        })
+        .catch((error) => {
+          console.error("Error starting QR scanner:", error);
+          toast.error("Failed to start camera. Please check permissions.");
+        });
 
       return () => {
         stopScanner();
@@ -150,9 +162,9 @@ export function QrScannerModal({ isOpen, onClose }: QrScannerModalProps) {
         <ModalHeader>Scan QR Code</ModalHeader>
         <ModalBody>
           <div id="video-container" style={{ position: "relative" }}>
-            <video 
-              ref={videoRef} 
-              id="qr-video" 
+            <video
+              ref={videoRef}
+              id="qr-video"
               style={{ width: "100%", borderRadius: "8px" }}
             >
               <track kind="captions" />

@@ -5,7 +5,6 @@ interface User {
   id: string;
   email: string;
   username: string;
-  display_name: string;
 }
 
 interface AuthContextType {
@@ -26,25 +25,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    checkAuth();
+    // Check if we have an OAuth callback token in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const callbackToken = urlParams.get("token");
+
+    // Only run checkAuth if there's no OAuth callback
+    if (!callbackToken) {
+      checkAuth();
+    }
   }, []);
 
   // Handle OAuth callback
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const callbackToken = urlParams.get('token');
-    const error = urlParams.get('error');
+    const callbackToken = urlParams.get("token");
+    const error = urlParams.get("error");
 
     if (callbackToken) {
       // Store token and fetch user info
-      localStorage.setItem('authToken', callbackToken);
+      localStorage.setItem("authToken", callbackToken);
       setToken(callbackToken);
-      fetchUserInfo(callbackToken);
-      
+
+      fetchUserInfo(callbackToken).finally(() => {
+        setIsLoading(false);
+      });
+
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (error) {
-      console.error('OAuth error:', error);
+      console.error("OAuth error:", error);
+      setIsLoading(false);
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -52,18 +62,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const storedToken = localStorage.getItem('authToken');
-      
+      const storedToken = localStorage.getItem("authToken");
+
       if (!storedToken) {
         setIsLoading(false);
+
         return;
       }
 
       setToken(storedToken);
       await fetchUserInfo(storedToken);
     } catch (error) {
-      console.error('Auth check failed:', error);
-      localStorage.removeItem('authToken');
+      console.error("Auth check failed:", error);
+      localStorage.removeItem("authToken");
       setUser(null);
       setToken(null);
     } finally {
@@ -73,21 +84,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserInfo = async (authToken: string) => {
     try {
-      const response = await fetch('/api/v1/auth/me', {
+      const response = await fetch("/api/v1/auth/me", {
         headers: {
-          'Authorization': `Bearer ${authToken}`,
+          Authorization: `Bearer ${authToken}`,
         },
       });
 
       if (response.ok) {
         const userData = await response.json();
+
         setUser(userData);
       } else {
-        throw new Error('Failed to fetch user info');
+        throw new Error("Failed to fetch user info");
       }
     } catch (error) {
-      console.error('Failed to fetch user info:', error);
-      localStorage.removeItem('authToken');
+      console.error("Failed to fetch user info:", error);
+      localStorage.removeItem("authToken");
       setUser(null);
       setToken(null);
       throw error;
@@ -97,7 +109,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (provider: string) => {
     try {
       // Redirect to OAuth provider
-      const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:8080';
+      const serverUrl =
+        import.meta.env.VITE_SERVER_URL || "http://localhost:8080";
+
       window.location.href = `${serverUrl}/api/v1/auth/${provider}`;
     } catch (error) {
       console.error("Login failed:", error);
@@ -109,10 +123,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Call logout endpoint if we have a token
       if (token) {
-        await fetch('/api/v1/auth/logout', {
-          method: 'POST',
+        await fetch("/api/v1/auth/logout", {
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
       }
@@ -122,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Clear local state
-    localStorage.removeItem('authToken');
+    localStorage.removeItem("authToken");
     setUser(null);
     setToken(null);
     navigate("/login");

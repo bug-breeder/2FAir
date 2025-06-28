@@ -60,9 +60,7 @@ export function AllTheProviders({ children }: AllTheProvidersProps) {
   return (
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <HeroUIProvider>
-          {children}
-        </HeroUIProvider>
+        <HeroUIProvider>{children}</HeroUIProvider>
       </QueryClientProvider>
     </BrowserRouter>
   );
@@ -71,7 +69,7 @@ export function AllTheProviders({ children }: AllTheProvidersProps) {
 // Custom render function
 export const customRender = (
   ui: ReactElement,
-  options?: Omit<RenderOptions, "wrapper">
+  options?: Omit<RenderOptions, "wrapper">,
 ) => render(ui, { wrapper: AllTheProviders, ...options });
 
 // Re-export everything from React Testing Library
@@ -98,6 +96,7 @@ vi.mock("../lib/api/otp", () => ({
 export const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
+
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -135,4 +134,5 @@ vi.mock("otpauth", () => ({
 }));
 
 // Helper function to wait for async operations
-export const waitForNextTick = () => new Promise(resolve => setTimeout(resolve, 0)); 
+export const waitForNextTick = () =>
+  new Promise((resolve) => setTimeout(resolve, 0));

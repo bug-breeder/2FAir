@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 interface User {
   id: string;
@@ -25,8 +25,8 @@ export function useAuth() {
   // Check for stored token on mount
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('authToken');
-      
+      const token = localStorage.getItem("authToken");
+
       if (!token) {
         setAuthState({
           isAuthenticated: false,
@@ -34,19 +34,21 @@ export function useAuth() {
           token: null,
           isLoading: false,
         });
+
         return;
       }
 
       try {
         // Validate token with server
-        const response = await fetch('/api/v1/auth/me', {
+        const response = await fetch("/api/v1/auth/me", {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
 
         if (response.ok) {
           const user = await response.json();
+
           setAuthState({
             isAuthenticated: true,
             user,
@@ -55,7 +57,7 @@ export function useAuth() {
           });
         } else {
           // Token invalid, clear it
-          localStorage.removeItem('authToken');
+          localStorage.removeItem("authToken");
           setAuthState({
             isAuthenticated: false,
             user: null,
@@ -64,8 +66,8 @@ export function useAuth() {
           });
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
-        localStorage.removeItem('authToken');
+        console.error("Auth check failed:", error);
+        localStorage.removeItem("authToken");
         setAuthState({
           isAuthenticated: false,
           user: null,
@@ -79,18 +81,19 @@ export function useAuth() {
   }, []);
 
   const login = async (token: string) => {
-    localStorage.setItem('authToken', token);
-    
+    localStorage.setItem("authToken", token);
+
     try {
       // Fetch user info
-      const response = await fetch('/api/v1/auth/me', {
+      const response = await fetch("/api/v1/auth/me", {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (response.ok) {
         const user = await response.json();
+
         setAuthState({
           isAuthenticated: true,
           user,
@@ -98,11 +101,11 @@ export function useAuth() {
           isLoading: false,
         });
       } else {
-        throw new Error('Failed to fetch user info');
+        throw new Error("Failed to fetch user info");
       }
     } catch (error) {
-      console.error('Login failed:', error);
-      localStorage.removeItem('authToken');
+      console.error("Login failed:", error);
+      localStorage.removeItem("authToken");
       setAuthState({
         isAuthenticated: false,
         user: null,
@@ -114,7 +117,7 @@ export function useAuth() {
   };
 
   const logout = () => {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem("authToken");
     setAuthState({
       isAuthenticated: false,
       user: null,
@@ -126,12 +129,13 @@ export function useAuth() {
   // Configure fetch to include auth header
   const authenticatedFetch = (url: string, options: RequestInit = {}) => {
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...options.headers,
     };
 
     if (authState.token) {
-      (headers as Record<string, string>)['Authorization'] = `Bearer ${authState.token}`;
+      (headers as Record<string, string>)["Authorization"] =
+        `Bearer ${authState.token}`;
     }
 
     return fetch(url, {
@@ -146,4 +150,4 @@ export function useAuth() {
     logout,
     authenticatedFetch,
   };
-} 
+}

@@ -14,7 +14,10 @@ export function FAB() {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showQRUploader, setShowQRUploader] = useState(false);
 
-  const toggleExpand = useCallback(() => setIsExpanded(!isExpanded), [isExpanded]);
+  const toggleExpand = useCallback(
+    () => setIsExpanded(!isExpanded),
+    [isExpanded],
+  );
   const closeExpand = useCallback(() => setIsExpanded(false), []);
 
   const handleAddManual = useCallback(() => {
@@ -139,10 +142,7 @@ export function FAB() {
         </Button>
       </div>
 
-      <QrScannerModal
-        isOpen={showQRScanner}
-        onClose={handleCloseScanner}
-      />
+      <QrScannerModal isOpen={showQRScanner} onClose={handleCloseScanner} />
       <QRImageUploaderModal
         isOpen={showQRUploader}
         onClose={handleCloseUploader}
