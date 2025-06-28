@@ -16,6 +16,7 @@ import { toast } from "../lib/toast";
 import { validateTOTPSecret, normalizeTOTPSecret } from "../lib/totp";
 import { encryptData } from "../lib/crypto";
 import { getSessionEncryptionKey, isWebAuthnSupported } from "../lib/webauthn";
+
 import { WebAuthnRegistrationModal } from "./webauthn-registration-modal";
 
 interface AddOtpModalProps {
@@ -64,17 +65,21 @@ const validateLabel = (label: string): string | null => {
 
 const validatePeriod = (period: string): string | null => {
   const periodNum = parseInt(period);
+
   if (periodNum < 15 || periodNum > 300) {
     return "Period must be between 15 and 300 seconds";
   }
+
   return null;
 };
 
 const validateDigits = (digits: string): string | null => {
   const digitsNum = parseInt(digits);
+
   if (digitsNum < 6 || digitsNum > 8) {
     return "Digits must be between 6 and 8";
   }
+
   return null;
 };
 
@@ -93,8 +98,9 @@ export function AddOtpModal({ isOpen, onClose }: AddOtpModalProps) {
   const [formData, setFormData] = useState<FormData>(getInitialFormData());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isEncrypting, setIsEncrypting] = useState(false);
-  const [showWebAuthnRegistration, setShowWebAuthnRegistration] = useState(false);
-  
+  const [showWebAuthnRegistration, setShowWebAuthnRegistration] =
+    useState(false);
+
   const addOtpMutation = useAddOtp();
   const { refetch } = useListOtps();
 
@@ -102,21 +108,27 @@ export function AddOtpModal({ isOpen, onClose }: AddOtpModalProps) {
     const newErrors: Record<string, string> = {};
 
     const secretError = validateSecret(formData.secret);
+
     if (secretError) newErrors.secret = secretError;
 
     const issuerError = validateIssuer(formData.issuer);
+
     if (issuerError) newErrors.issuer = issuerError;
 
     const labelError = validateLabel(formData.label);
+
     if (labelError) newErrors.label = labelError;
 
     const periodError = validatePeriod(formData.period);
+
     if (periodError) newErrors.period = periodError;
 
     const digitsError = validateDigits(formData.digits);
+
     if (digitsError) newErrors.digits = digitsError;
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   }, [formData]);
 
@@ -130,14 +142,17 @@ export function AddOtpModal({ isOpen, onClose }: AddOtpModalProps) {
     resetForm();
   }, [onClose, resetForm]);
 
-  const handleInputChange = useCallback((field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleInputChange = useCallback(
+    (field: string, value: string) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
 
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  }, [errors]);
+      // Clear error when user starts typing
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: "" }));
+      }
+    },
+    [errors],
+  );
 
   const handleWebAuthnRegistrationSuccess = useCallback(() => {
     setShowWebAuthnRegistration(false);
@@ -147,12 +162,16 @@ export function AddOtpModal({ isOpen, onClose }: AddOtpModalProps) {
   const handleAddOtp = useCallback(async () => {
     if (!validateForm()) {
       toast.error("Please fix the validation errors");
+
       return;
     }
 
     // Check WebAuthn support
     if (!isWebAuthnSupported()) {
-      toast.error("WebAuthn is not supported by this browser. Please use a modern browser with security key support.");
+      toast.error(
+        "WebAuthn is not supported by this browser. Please use a modern browser with security key support.",
+      );
+
       return;
     }
 
@@ -164,8 +183,11 @@ export function AddOtpModal({ isOpen, onClose }: AddOtpModalProps) {
 
       // Normalize and encrypt the TOTP secret
       const normalizedSecret = normalizeTOTPSecret(formData.secret);
-      const encryptedSecret = await encryptData(normalizedSecret, encryptionKey);
-      
+      const encryptedSecret = await encryptData(
+        normalizedSecret,
+        encryptionKey,
+      );
+
       // Format encrypted secret as ciphertext.iv.authTag for backend storage
       const secretForBackend = `${encryptedSecret.ciphertext}.${encryptedSecret.iv}.${encryptedSecret.authTag}`;
 
@@ -190,21 +212,29 @@ export function AddOtpModal({ isOpen, onClose }: AddOtpModalProps) {
         },
         onError: (error: any) => {
           console.error("Error adding OTP:", error);
-          const errorMessage = error.response?.data?.error || "Failed to add OTP";
+          const errorMessage =
+            error.response?.data?.error || "Failed to add OTP";
+
           toast.error(errorMessage);
         },
       });
     } catch (error) {
-      console.error('Encryption or authentication failed:', error);
-      
+      console.error("Encryption or authentication failed:", error);
+
       // Check if this is a "no credentials" error
-      if (error instanceof Error && error.message.includes('WebAuthn authentication failed')) {
+      if (
+        error instanceof Error &&
+        error.message.includes("WebAuthn authentication failed")
+      ) {
         // This could be because the user doesn't have WebAuthn credentials registered
         setShowWebAuthnRegistration(true);
+
         return;
       }
-      
-      toast.error(`Failed to encrypt OTP secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+      toast.error(
+        `Failed to encrypt OTP secret: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     } finally {
       setIsEncrypting(false);
     }
@@ -255,6 +285,7 @@ export function AddOtpModal({ isOpen, onClose }: AddOtpModalProps) {
                 selectedKeys={[formData.algorithm]}
                 onSelectionChange={(keys) => {
                   const value = Array.from(keys)[0] as string;
+
                   handleInputChange("algorithm", value);
                 }}
               >
@@ -296,7 +327,11 @@ export function AddOtpModal({ isOpen, onClose }: AddOtpModalProps) {
               isDisabled={addOtpMutation.isPending || isEncrypting}
               onPress={handleAddOtp}
             >
-              {isEncrypting ? "🔐 Encrypting..." : addOtpMutation.isPending ? "Adding..." : "🔒 Add OTP (Encrypted)"}
+              {isEncrypting
+                ? "🔐 Encrypting..."
+                : addOtpMutation.isPending
+                  ? "Adding..."
+                  : "🔒 Add OTP (Encrypted)"}
             </Button>
           </ModalFooter>
         </ModalContent>

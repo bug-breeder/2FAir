@@ -13,7 +13,7 @@ export interface SearchableOTPItem {
  */
 export function searchOTPs(
   items: SearchableOTPItem[],
-  query: string
+  query: string,
 ): SearchableOTPItem[] {
   if (!query.trim()) {
     return items;
@@ -23,7 +23,7 @@ export function searchOTPs(
     .toLowerCase()
     .trim()
     .split(/\s+/)
-    .filter(term => term.length > 0);
+    .filter((term) => term.length > 0);
 
   return items.filter((item) => {
     const issuer = item.otp.Issuer?.toLowerCase() || "";
@@ -31,10 +31,11 @@ export function searchOTPs(
     const searchableText = `${issuer} ${label}`;
 
     // Check if all search terms are found in the searchable text
-    return searchTerms.every(term =>
-      searchableText.includes(term) ||
-      issuer.includes(term) ||
-      label.includes(term)
+    return searchTerms.every(
+      (term) =>
+        searchableText.includes(term) ||
+        issuer.includes(term) ||
+        label.includes(term),
     );
   });
 }
@@ -54,15 +55,16 @@ export function highlightSearchTerms(text: string, query: string): string {
     .toLowerCase()
     .trim()
     .split(/\s+/)
-    .filter(term => term.length > 0);
+    .filter((term) => term.length > 0);
 
   let highlightedText = text;
 
-  searchTerms.forEach(term => {
-    const regex = new RegExp(`(${term})`, 'gi');
+  searchTerms.forEach((term) => {
+    const regex = new RegExp(`(${term})`, "gi");
+
     highlightedText = highlightedText.replace(
       regex,
-      '<mark class="bg-yellow-200 dark:bg-yellow-700 px-1 rounded">$1</mark>'
+      '<mark class="bg-yellow-200 dark:bg-yellow-700 px-1 rounded">$1</mark>',
     );
   });
 
@@ -79,7 +81,7 @@ export function highlightSearchTerms(text: string, query: string): string {
 export function getSearchStats(
   totalItems: number,
   filteredItems: number,
-  query: string
+  query: string,
 ) {
   const isSearchActive = query.trim().length > 0;
   const hasResults = filteredItems > 0;
@@ -93,4 +95,4 @@ export function getSearchStats(
     filteredItems,
     query: query.trim(),
   };
-} 
+}

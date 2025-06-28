@@ -1,11 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import {
-  addOtp,
-  inactivateOtp,
-  editOtp,
-  listOtps,
-} from "../lib/api/otp";
+import { addOtp, inactivateOtp, editOtp, listOtps } from "../lib/api/otp";
 import { generateAllClientTOTPCodes } from "../lib/totp-client";
 import { useAuth } from "../providers/auth-provider";
 import { OTP } from "../types/otp";
@@ -87,9 +82,11 @@ export const useGenerateOtpCodes = () => {
       if (!otps || !Array.isArray(otps) || otps.length === 0) {
         return [];
       }
+
       return await generateAllClientTOTPCodes(otps);
     },
-    enabled: isAuthenticated && !!otps && Array.isArray(otps) && otps.length > 0,
+    enabled:
+      isAuthenticated && !!otps && Array.isArray(otps) && otps.length > 0,
     refetchInterval: 5000, // Refresh every 5 seconds for accurate countdown
     staleTime: 0, // Always consider data stale so it refetches when needed
     gcTime: 60000, // Keep in cache for 1 minute

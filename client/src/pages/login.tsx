@@ -22,14 +22,16 @@ function LoginPage() {
   useEffect(() => {
     const fetchProviders = async () => {
       try {
-        const response = await fetch('/api/v1/auth/providers');
+        const response = await fetch("/api/v1/auth/providers");
+
         if (!response.ok) {
-          throw new Error('Failed to fetch OAuth providers');
+          throw new Error("Failed to fetch OAuth providers");
         }
         const data = await response.json();
+
         setProviders(data.providers || []);
       } catch (err) {
-        console.error('Failed to fetch providers:', err);
+        console.error("Failed to fetch providers:", err);
         toast.error("Failed to load authentication providers");
       }
     };
@@ -40,14 +42,14 @@ function LoginPage() {
   // Handle OAuth callback when returning from provider
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const error = urlParams.get('error');
+    const token = urlParams.get("token");
+    const error = urlParams.get("error");
 
     if (token) {
       // Store token and redirect to main app
-      localStorage.setItem('authToken', token);
+      localStorage.setItem("authToken", token);
       toast.success("Login successful!");
-      navigate('/');
+      navigate("/");
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (error) {
@@ -71,12 +73,18 @@ function LoginPage() {
 
   const getProviderIcon = (provider: string) => {
     switch (provider.toLowerCase()) {
-      case 'google':
+      case "google":
         return <Icon icon="logos:google-icon" width={24} />;
-      case 'github':
+      case "github":
         return <Icon icon="logos:github-icon" width={24} />;
-      case 'microsoft':
-        return <Icon icon="logos:microsoft-icon" width={24} className="text-default-500" />;
+      case "microsoft":
+        return (
+          <Icon
+            className="text-default-500"
+            icon="logos:microsoft-icon"
+            width={24}
+          />
+        );
       default:
         return <Icon icon="mdi:login" width={24} />;
     }
@@ -86,7 +94,7 @@ function LoginPage() {
     <div className="flex min-h-screen w-full flex-col items-center justify-center px-6 sm:px-0">
       <div className="mt-2 flex w-full max-w-sm flex-col gap-4 rounded-large bg-content1 px-4 sm:px-8 py-6 shadow-small">
         <div className="flex flex-col items-center pb-1">
-          <FAir size={60} className="text-foreground" />
+          <FAir className="text-foreground" size={60} />
           <h1 className="text-xl font-medium mt-4">Welcome Back</h1>
           <p className="text-small text-default-500">
             Log in to your account to continue
@@ -106,14 +114,20 @@ function LoginPage() {
               {provider.description}
             </Button>
           ))}
-          
+
           {/* Fallback buttons if providers haven't loaded yet */}
           {providers.length === 0 && (
             <>
               <Button
                 disabled={true}
+                startContent={
+                  <Icon
+                    className="animate-spin"
+                    icon="mdi:loading"
+                    width={24}
+                  />
+                }
                 variant="bordered"
-                startContent={<Icon icon="mdi:loading" width={24} className="animate-spin" />}
               >
                 Loading providers...
               </Button>
@@ -137,7 +151,8 @@ function LoginPage() {
         {/* Zero-Knowledge Security Notice */}
         <div className="mt-2 p-3 bg-primary-50 border border-primary-200 rounded-medium">
           <p className="text-tiny text-primary-700 text-center">
-            <strong>Zero-Knowledge Security:</strong> Your TOTP secrets are encrypted client-side with WebAuthn-derived keys.
+            <strong>Zero-Knowledge Security:</strong> Your TOTP secrets are
+            encrypted client-side with WebAuthn-derived keys.
           </p>
         </div>
       </div>

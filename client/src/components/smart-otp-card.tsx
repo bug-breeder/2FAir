@@ -85,13 +85,16 @@ export function SmartOTPCard({
     });
   }, [displayCode]);
 
-  const handleContextMenu = useCallback((event: React.MouseEvent) => {
-    event.nativeEvent.stopImmediatePropagation();
-    event.preventDefault();
-    setTimeout(() => {
-      setActiveMenu(event.clientX, event.clientY);
-    }, 50);
-  }, [setActiveMenu]);
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent) => {
+      event.nativeEvent.stopImmediatePropagation();
+      event.preventDefault();
+      setTimeout(() => {
+        setActiveMenu(event.clientX, event.clientY);
+      }, 50);
+    },
+    [setActiveMenu],
+  );
 
   // Calculate progress (0-100)
   const progressValue = ((otp.Period - timeRemaining) / otp.Period) * 100;

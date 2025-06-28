@@ -27,6 +27,7 @@ const validateIssuer = (issuer: string): string | null => {
   if (issuer.length > 100) return "Issuer too long (maximum 100 characters)";
   if (issuer.includes(":") || issuer.includes(";"))
     return "Issuer cannot contain ':' or ';'";
+
   return null;
 };
 
@@ -35,6 +36,7 @@ const validateLabel = (label: string): string | null => {
   if (label.length > 100) return "Label too long (maximum 100 characters)";
   if (label.includes(":") || label.includes(";"))
     return "Label cannot contain ':' or ';'";
+
   return null;
 };
 
@@ -54,28 +56,34 @@ export function EditOtpModal({ isOpen, onClose, otp }: EditOtpModalProps) {
     const newErrors: Record<string, string> = {};
 
     const issuerError = validateIssuer(formData.issuer);
+
     if (issuerError) newErrors.issuer = issuerError;
 
     const labelError = validateLabel(formData.label);
+
     if (labelError) newErrors.label = labelError;
 
     const period = parseInt(formData.period);
+
     if (period < 15 || period > 300) {
       newErrors.period = "Period must be between 15 and 300 seconds";
     }
 
     const digits = parseInt(formData.digits);
+
     if (digits < 6 || digits > 8) {
       newErrors.digits = "Digits must be between 6 and 8";
     }
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   }, [formData]);
 
   const handleEditOtp = useCallback(() => {
     if (!validateForm()) {
       toast.error("Please fix the validation errors");
+
       return;
     }
 
@@ -97,10 +105,12 @@ export function EditOtpModal({ isOpen, onClose, otp }: EditOtpModalProps) {
         },
         onError: (error: any) => {
           console.error("Error updating OTP:", error);
-          const errorMessage = error.response?.data?.error || "Failed to update OTP";
+          const errorMessage =
+            error.response?.data?.error || "Failed to update OTP";
+
           toast.error(errorMessage);
         },
-      }
+      },
     );
   }, [formData, otp, editOtpMutation, onClose, validateForm]);
 
@@ -116,14 +126,17 @@ export function EditOtpModal({ isOpen, onClose, otp }: EditOtpModalProps) {
     setErrors({});
   }, [onClose, otp]);
 
-  const handleInputChange = useCallback((field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleInputChange = useCallback(
+    (field: string, value: string) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
 
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  }, [errors]);
+      // Clear error when user starts typing
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: "" }));
+      }
+    },
+    [errors],
+  );
 
   return (
     <Modal isOpen={isOpen} placement="center" onOpenChange={handleClose}>
@@ -131,7 +144,8 @@ export function EditOtpModal({ isOpen, onClose, otp }: EditOtpModalProps) {
         <ModalHeader className="flex flex-col gap-1">
           <span>Edit OTP</span>
           <p className="text-sm text-default-500 font-normal">
-            Note: Algorithm, digits, and secret cannot be changed for security reasons
+            Note: Algorithm, digits, and secret cannot be changed for security
+            reasons
           </p>
         </ModalHeader>
         <ModalBody>
@@ -165,11 +179,11 @@ export function EditOtpModal({ isOpen, onClose, otp }: EditOtpModalProps) {
             value={formData.period}
             onChange={(e) => handleInputChange("period", e.target.value)}
           />
-          
+
           {/* Read-only fields for information */}
           <Select
-            description="Algorithm cannot be changed for security"
             isDisabled
+            description="Algorithm cannot be changed for security"
             label="Algorithm"
             selectedKeys={[formData.algorithm]}
           >
@@ -178,8 +192,8 @@ export function EditOtpModal({ isOpen, onClose, otp }: EditOtpModalProps) {
             <SelectItem key="SHA512">SHA512</SelectItem>
           </Select>
           <Input
-            description="Digits cannot be changed for security"
             isDisabled
+            description="Digits cannot be changed for security"
             label="Digits"
             value={formData.digits}
           />

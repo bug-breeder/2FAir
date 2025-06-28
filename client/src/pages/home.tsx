@@ -18,11 +18,23 @@ interface CombinedOTPData {
 export default function HomePage() {
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
-  
-  const [activeMenu, setActiveMenu] = useState<{ idx: number; x: number; y: number } | null>(null);
-  
-  const { data: otps, isLoading: otpsLoading, error: otpsError } = useListOtps();
-  const { data: otpCodes, isLoading: codesLoading, error: codesError } = useGenerateOtpCodes();
+
+  const [activeMenu, setActiveMenu] = useState<{
+    idx: number;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const {
+    data: otps,
+    isLoading: otpsLoading,
+    error: otpsError,
+  } = useListOtps();
+  const {
+    data: otpCodes,
+    isLoading: codesLoading,
+    error: codesError,
+  } = useGenerateOtpCodes();
   const { searchQuery } = useSearch();
 
   const handleOpenMenu = useCallback((index: number, x: number, y: number) => {
@@ -35,7 +47,12 @@ export default function HomePage() {
 
   // Combine OTPs with their codes
   const combinedData = useMemo((): CombinedOTPData[] => {
-    if (!otps || !Array.isArray(otps) || !otpCodes || !Array.isArray(otpCodes)) {
+    if (
+      !otps ||
+      !Array.isArray(otps) ||
+      !otpCodes ||
+      !Array.isArray(otpCodes)
+    ) {
       return [];
     }
 
@@ -43,6 +60,7 @@ export default function HomePage() {
     const combined: CombinedOTPData[] = otps
       .map((otp: OTP) => {
         const codes = otpCodes.find((code: OTPSecret) => code.Id === otp.Id);
+
         return codes ? { otp, codes } : null;
       })
       .filter((item): item is CombinedOTPData => item !== null);
@@ -53,16 +71,18 @@ export default function HomePage() {
   // Filter data based on search query
   const filteredData = useMemo(() => {
     const searchTerm = query || searchQuery;
-    const searchableItems = combinedData.map(item => ({
+    const searchableItems = combinedData.map((item) => ({
       otp: item.otp,
-      secret: item.codes
+      secret: item.codes,
     }));
+
     return searchOTPs(searchableItems, searchTerm);
   }, [combinedData, query, searchQuery]);
 
   // Get search statistics
   const searchStats = useMemo(() => {
     const searchTerm = query || searchQuery;
+
     return getSearchStats(combinedData.length, filteredData.length, searchTerm);
   }, [combinedData.length, filteredData.length, query, searchQuery]);
 
@@ -84,7 +104,8 @@ export default function HomePage() {
       <DefaultLayout>
         <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10 px-4 sm:px-0">
           <div className="text-center text-danger">
-            Error loading OTPs: {otpsError?.message || codesError?.message || 'Unknown error'}
+            Error loading OTPs:{" "}
+            {otpsError?.message || codesError?.message || "Unknown error"}
           </div>
         </section>
       </DefaultLayout>
@@ -98,7 +119,8 @@ export default function HomePage() {
         {searchStats.isSearchActive && (
           <div className="w-full max-w-md sm:max-w-none mx-auto mb-6">
             <p className="text-sm text-default-500">
-              {searchStats.filteredItems} of {searchStats.totalItems} OTP{searchStats.totalItems !== 1 ? 's' : ''} 
+              {searchStats.filteredItems} of {searchStats.totalItems} OTP
+              {searchStats.totalItems !== 1 ? "s" : ""}
               {searchStats.query && ` matching "${searchStats.query}"`}
             </p>
           </div>
@@ -112,10 +134,9 @@ export default function HomePage() {
                 {combinedData.length === 0 ? "No OTPs Yet" : "No Matching OTPs"}
               </h2>
               <p className="text-default-500 mb-6">
-                {combinedData.length === 0 
+                {combinedData.length === 0
                   ? "Add your first TOTP to get started with secure 2FA management."
-                  : "Try adjusting your search query to find what you're looking for."
-                }
+                  : "Try adjusting your search query to find what you're looking for."}
               </p>
             </div>
           </div>

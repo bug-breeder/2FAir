@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { Button, Card, CardBody, CardHeader, Spinner, Divider } from "@heroui/react";
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Spinner,
+  Divider,
+} from "@heroui/react";
 import { FaGoogle, FaGithub } from "react-icons/fa";
 import { SiWebauthn } from "react-icons/si";
 
@@ -24,15 +31,17 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   useEffect(() => {
     const fetchProviders = async () => {
       try {
-        const response = await fetch('/api/v1/auth/providers');
+        const response = await fetch("/api/v1/auth/providers");
+
         if (!response.ok) {
-          throw new Error('Failed to fetch OAuth providers');
+          throw new Error("Failed to fetch OAuth providers");
         }
         const data = await response.json();
+
         setProviders(data.providers || []);
       } catch (err) {
-        console.error('Failed to fetch providers:', err);
-        setError('Failed to load authentication providers');
+        console.error("Failed to fetch providers:", err);
+        setError("Failed to load authentication providers");
       } finally {
         setIsLoading(false);
       }
@@ -44,12 +53,12 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   // Handle OAuth callback when returning from provider
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const error = urlParams.get('error');
+    const token = urlParams.get("token");
+    const error = urlParams.get("error");
 
     if (token) {
       // Store token and redirect to main app
-      localStorage.setItem('authToken', token);
+      localStorage.setItem("authToken", token);
       onLoginSuccess(token);
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -64,16 +73,16 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const handleOAuthLogin = (provider: OAuthProvider) => {
     setIsLoggingIn(true);
     setError(null);
-    
+
     // Redirect to OAuth provider
     window.location.href = provider.login_url;
   };
 
   const getProviderIcon = (provider: string) => {
     switch (provider.toLowerCase()) {
-      case 'google':
+      case "google":
         return <FaGoogle className="w-5 h-5" />;
-      case 'github':
+      case "github":
         return <FaGithub className="w-5 h-5" />;
       default:
         return <SiWebauthn className="w-5 h-5" />;
@@ -82,12 +91,12 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
 
   const getProviderColor = (provider: string) => {
     switch (provider.toLowerCase()) {
-      case 'google':
-        return 'bg-red-500 hover:bg-red-600 text-white';
-      case 'github':
-        return 'bg-gray-800 hover:bg-gray-900 text-white';
+      case "google":
+        return "bg-red-500 hover:bg-red-600 text-white";
+      case "github":
+        return "bg-gray-800 hover:bg-gray-900 text-white";
       default:
-        return 'bg-blue-500 hover:bg-blue-600 text-white';
+        return "bg-blue-500 hover:bg-blue-600 text-white";
     }
   };
 
@@ -105,12 +114,10 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
         <CardHeader className="text-center pb-4">
           <div className="w-full">
             <h1 className="text-3xl font-bold text-primary mb-2">2FAir</h1>
-            <p className="text-default-500">
-              Secure E2E Encrypted TOTP Vault
-            </p>
+            <p className="text-default-500">Secure E2E Encrypted TOTP Vault</p>
           </div>
         </CardHeader>
-        
+
         <CardBody className="gap-4">
           <div className="text-center mb-4">
             <h2 className="text-xl font-semibold mb-2">Welcome Back</h2>
@@ -131,11 +138,11 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
               <Button
                 key={provider.provider}
                 className={`w-full h-12 ${getProviderColor(provider.provider)}`}
-                onPress={() => handleOAuthLogin(provider)}
                 isDisabled={isLoggingIn}
                 startContent={getProviderIcon(provider.provider)}
+                onPress={() => handleOAuthLogin(provider)}
               >
-                {isLoggingIn ? 'Redirecting...' : provider.description}
+                {isLoggingIn ? "Redirecting..." : provider.description}
               </Button>
             ))}
           </div>
@@ -148,10 +155,10 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
               Already have an account on another device?
             </p>
             <Button
-              variant="ghost"
-              size="sm"
-              isDisabled={true}
               className="text-default-400"
+              isDisabled={true}
+              size="sm"
+              variant="ghost"
             >
               Link Device (Coming Soon)
             </Button>
@@ -164,8 +171,9 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
               <div className="text-xs text-primary-700">
                 <p className="font-medium mb-1">Zero-Knowledge Security</p>
                 <p>
-                  Your TOTP secrets are encrypted client-side with WebAuthn-derived keys. 
-                  We never have access to your unencrypted data.
+                  Your TOTP secrets are encrypted client-side with
+                  WebAuthn-derived keys. We never have access to your
+                  unencrypted data.
                 </p>
               </div>
             </div>
@@ -174,4 +182,4 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
       </Card>
     </div>
   );
-} 
+}

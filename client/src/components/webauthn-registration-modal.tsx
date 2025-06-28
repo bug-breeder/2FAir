@@ -10,9 +10,17 @@ import {
   CardBody,
 } from "@heroui/react";
 import { SiWebauthn } from "react-icons/si";
-import { MdSecurity, MdKey, MdFingerprint, MdCheckCircle } from "react-icons/md";
+import {
+  MdSecurity,
+  MdKey,
+  MdFingerprint,
+  MdCheckCircle,
+} from "react-icons/md";
 
-import { registerWebAuthnCredential, isWebAuthnSupported } from "../lib/webauthn";
+import {
+  registerWebAuthnCredential,
+  isWebAuthnSupported,
+} from "../lib/webauthn";
 import { toast } from "../lib/toast";
 
 interface WebAuthnRegistrationModalProps {
@@ -27,34 +35,38 @@ export function WebAuthnRegistrationModal({
   onSuccess,
 }: WebAuthnRegistrationModalProps) {
   const [isRegistering, setIsRegistering] = useState(false);
-  const [step, setStep] = useState<'intro' | 'registering' | 'success'>('intro');
+  const [step, setStep] = useState<"intro" | "registering" | "success">(
+    "intro",
+  );
 
   const handleRegister = useCallback(async () => {
     if (!isWebAuthnSupported()) {
       toast.error("WebAuthn is not supported in this browser");
+
       return;
     }
 
     try {
       setIsRegistering(true);
-      setStep('registering');
+      setStep("registering");
 
       // Register WebAuthn credential
       await registerWebAuthnCredential();
-      
-      setStep('success');
+
+      setStep("success");
       toast.success("WebAuthn credential registered successfully!");
-      
+
       // Call success callback after a short delay
       setTimeout(() => {
         onSuccess();
         onClose();
       }, 2000);
-      
     } catch (error) {
-      console.error('WebAuthn registration failed:', error);
-      toast.error(`Registration failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      setStep('intro');
+      console.error("WebAuthn registration failed:", error);
+      toast.error(
+        `Registration failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+      setStep("intro");
     } finally {
       setIsRegistering(false);
     }
@@ -62,18 +74,18 @@ export function WebAuthnRegistrationModal({
 
   const handleClose = useCallback(() => {
     if (!isRegistering) {
-      setStep('intro');
+      setStep("intro");
       onClose();
     }
   }, [isRegistering, onClose]);
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      placement="center" 
-      onOpenChange={handleClose}
-      isDismissable={!isRegistering}
+    <Modal
       hideCloseButton={isRegistering}
+      isDismissable={!isRegistering}
+      isOpen={isOpen}
+      placement="center"
+      onOpenChange={handleClose}
     >
       <ModalContent>
         <ModalHeader className="flex flex-col gap-1">
@@ -87,16 +99,19 @@ export function WebAuthnRegistrationModal({
         </ModalHeader>
 
         <ModalBody>
-          {step === 'intro' && (
+          {step === "intro" && (
             <div className="space-y-4">
               <div className="text-center space-y-3">
                 <div className="w-16 h-16 mx-auto bg-primary-100 rounded-full flex items-center justify-center">
                   <MdCheckCircle className="w-8 h-8 text-primary-600" />
                 </div>
-                <h3 className="text-lg font-semibold">Zero-Knowledge Encryption</h3>
+                <h3 className="text-lg font-semibold">
+                  Zero-Knowledge Encryption
+                </h3>
                 <p className="text-default-600">
-                  WebAuthn credentials are used to derive encryption keys for your TOTP secrets. 
-                  Your data is encrypted client-side and we never have access to your unencrypted secrets.
+                  WebAuthn credentials are used to derive encryption keys for
+                  your TOTP secrets. Your data is encrypted client-side and we
+                  never have access to your unencrypted secrets.
                 </p>
               </div>
 
@@ -141,42 +156,48 @@ export function WebAuthnRegistrationModal({
               {!isWebAuthnSupported() && (
                 <div className="p-3 bg-danger-50 border border-danger-200 rounded-md">
                   <p className="text-sm text-danger-700">
-                    <strong>WebAuthn not supported:</strong> Your browser doesn't support WebAuthn.
-                    Please use a modern browser with WebAuthn support.
+                    <strong>WebAuthn not supported:</strong> Your browser
+                    doesn&apos;t support WebAuthn. Please use a modern browser
+                    with WebAuthn support.
                   </p>
                 </div>
               )}
             </div>
           )}
 
-          {step === 'registering' && (
+          {step === "registering" && (
             <div className="text-center space-y-4">
               <div className="w-16 h-16 mx-auto bg-warning-100 rounded-full flex items-center justify-center animate-pulse">
                 <SiWebauthn className="w-8 h-8 text-warning-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2">Follow your browser's prompts</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  Follow your browser&apos;s prompts
+                </h3>
                 <p className="text-default-600 mb-4">
-                  Complete the WebAuthn registration using your authenticator (TouchID, FaceID, or security key).
+                  Complete the WebAuthn registration using your authenticator
+                  (TouchID, FaceID, or security key).
                 </p>
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-warning-100 text-warning-700 rounded-full text-sm">
-                  <div className="w-2 h-2 bg-warning-500 rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-warning-500 rounded-full animate-pulse" />
                   Waiting for authenticator...
                 </div>
               </div>
             </div>
           )}
 
-          {step === 'success' && (
+          {step === "success" && (
             <div className="text-center space-y-4">
               <div className="w-16 h-16 mx-auto bg-success-100 rounded-full flex items-center justify-center">
                 <MdCheckCircle className="w-8 h-8 text-success-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-success-700 mb-2">Registration Complete!</h3>
+                <h3 className="text-lg font-semibold text-success-700 mb-2">
+                  Registration Complete!
+                </h3>
                 <p className="text-default-600">
-                  Your WebAuthn credential has been registered successfully. 
-                  You can now add encrypted TOTP secrets to your vault.
+                  Your WebAuthn credential has been registered successfully. You
+                  can now add encrypted TOTP secrets to your vault.
                 </p>
               </div>
             </div>
@@ -184,40 +205,36 @@ export function WebAuthnRegistrationModal({
         </ModalBody>
 
         <ModalFooter>
-          {step === 'intro' && (
+          {step === "intro" && (
             <>
-              <Button 
-                color="danger" 
-                variant="light" 
-                onPress={handleClose}
+              <Button
+                color="danger"
                 isDisabled={isRegistering}
+                variant="light"
+                onPress={handleClose}
               >
                 Cancel
               </Button>
-              <Button 
-                color="primary" 
-                onPress={handleRegister}
+              <Button
+                color="primary"
                 isDisabled={!isWebAuthnSupported()}
                 startContent={<SiWebauthn className="w-4 h-4" />}
+                onPress={handleRegister}
               >
                 Register WebAuthn
               </Button>
             </>
           )}
 
-          {step === 'registering' && (
-            <Button 
-              color="warning" 
-              isLoading
-              isDisabled
-            >
+          {step === "registering" && (
+            <Button isDisabled isLoading color="warning">
               Registering...
             </Button>
           )}
 
-          {step === 'success' && (
-            <Button 
-              color="success" 
+          {step === "success" && (
+            <Button
+              color="success"
               variant="light"
               onPress={() => {
                 onSuccess();
@@ -231,4 +248,4 @@ export function WebAuthnRegistrationModal({
       </ModalContent>
     </Modal>
   );
-} 
+}
