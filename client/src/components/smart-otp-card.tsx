@@ -12,8 +12,8 @@ import { RxDividerVertical } from "react-icons/rx";
 import { CgArrowRight } from "react-icons/cg";
 
 import { OTP, OTPSecret } from "../types/otp";
-import { useSimpleIconSrc } from "./simple-icon";
 
+import { useSimpleIconSrc } from "./simple-icon";
 import { ContextMenu } from "./context-menu";
 import { QRModal } from "./qr-modal";
 import { EditOtpModal } from "./edit-otp-modal";
@@ -42,7 +42,7 @@ export function SmartOTPCard({
 
   // Get Simple Icons CDN URL for the provider
   const iconSrc = useSimpleIconSrc(otp.Issuer, {
-    fallbackIcon: 'generic'
+    fallbackIcon: "generic",
   });
 
   // Update current time every second
@@ -129,7 +129,9 @@ export function SmartOTPCard({
                 src={iconSrc}
               />
               <div className="flex flex-col gap-1 items-start justify-center flex-grow overflow-hidden">
-                <h4 className="text-xl font-semibold leading-none">{otp.Issuer}</h4>
+                <h4 className="text-xl font-semibold leading-none">
+                  {otp.Issuer}
+                </h4>
                 <h5 className="text-medium text-default-500 tracking-tight truncate w-full">
                   {otp.Label}
                 </h5>
@@ -186,9 +188,9 @@ export function SmartOTPCard({
 
       {/* QR Modal */}
       <QRModal
-        showQR={showQRModal}
         closeQR={() => setShowQRModal(false)}
         otp={otp}
+        showQR={showQRModal}
       />
 
       {/* Edit Modal */}

@@ -22,8 +22,8 @@ export default function DefaultLayout({
           title="nodez.one - Small Acts, Giant Impact"
         >
           <span className="text-default-600 flex items-center gap-1">
-            Made with 
-            <HeartFilledIcon size={16} className="text-danger" /> 
+            Made with
+            <HeartFilledIcon className="text-danger" size={16} />
             by
           </span>
           <p className="text-primary">nodez.one</p>

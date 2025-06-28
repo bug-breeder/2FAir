@@ -148,9 +148,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
             <Divider className="my-2" />
 
             <div className="text-center text-small text-default-500">
-              <p>
-                Secure • Zero-Knowledge • WebAuthn Protected
-              </p>
+              <p>Secure • Zero-Knowledge • WebAuthn Protected</p>
             </div>
           </div>
         </CardBody>
