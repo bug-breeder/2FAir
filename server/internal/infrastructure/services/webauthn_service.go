@@ -11,8 +11,7 @@ import (
 	"time"
 
 	"github.com/bug-breeder/2fair/server/internal/domain/entities"
-	"github.com/bug-breeder/2fair/server/internal/domain/repositories"
-	"github.com/bug-breeder/2fair/server/internal/domain/services"
+	"github.com/bug-breeder/2fair/server/internal/domain/interfaces"
 	"github.com/go-webauthn/webauthn/protocol"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/google/uuid"
@@ -20,8 +19,8 @@ import (
 
 type webAuthnService struct {
 	webAuthn *webauthn.WebAuthn
-	credRepo repositories.WebAuthnCredentialRepository
-	userRepo repositories.UserRepository
+	credRepo interfaces.WebAuthnCredentialRepository
+	userRepo interfaces.UserRepository
 }
 
 // NewWebAuthnService creates a new WebAuthn service
@@ -29,9 +28,9 @@ func NewWebAuthnService(
 	rpID string,
 	rpName string,
 	rpOrigins []string,
-	credRepo repositories.WebAuthnCredentialRepository,
-	userRepo repositories.UserRepository,
-) (services.WebAuthnService, error) {
+	credRepo interfaces.WebAuthnCredentialRepository,
+	userRepo interfaces.UserRepository,
+) (interfaces.WebAuthnService, error) {
 	// Validate required parameters
 	if rpID == "" {
 		return nil, fmt.Errorf("RPID is required")
@@ -121,7 +120,7 @@ func (u *webAuthnUser) WebAuthnIcon() string {
 }
 
 // BeginRegistration starts WebAuthn credential registration
-func (w *webAuthnService) BeginRegistration(ctx context.Context, user *entities.User, authenticatorSelection *protocol.AuthenticatorSelection) (*services.WebAuthnCredentialCreation, error) {
+func (w *webAuthnService) BeginRegistration(ctx context.Context, user *entities.User, authenticatorSelection *protocol.AuthenticatorSelection) (*interfaces.WebAuthnCredentialCreation, error) {
 	// Get existing credentials for the user
 	existingCreds, err := w.credRepo.GetByUserID(ctx, user.ID)
 	if err != nil {
@@ -150,7 +149,7 @@ func (w *webAuthnService) BeginRegistration(ctx context.Context, user *entities.
 		return nil, fmt.Errorf("failed to begin registration: %w", err)
 	}
 
-	return &services.WebAuthnCredentialCreation{
+	return &interfaces.WebAuthnCredentialCreation{
 		PublicKeyCredentialCreationOptions: credentialCreation,
 		SessionData:                        sessionData,
 	}, nil
@@ -253,7 +252,7 @@ type WebAuthnAssertionRequest struct {
 }
 
 // BeginAssertion starts WebAuthn credential assertion
-func (w *webAuthnService) BeginAssertion(ctx context.Context, user *entities.User, allowedCredentials []protocol.CredentialDescriptor) (*services.WebAuthnCredentialAssertion, error) {
+func (w *webAuthnService) BeginAssertion(ctx context.Context, user *entities.User, allowedCredentials []protocol.CredentialDescriptor) (*interfaces.WebAuthnCredentialAssertion, error) {
 	// Get existing credentials for the user
 	existingCreds, err := w.credRepo.GetByUserID(ctx, user.ID)
 	if err != nil {
@@ -290,7 +289,7 @@ func (w *webAuthnService) BeginAssertion(ctx context.Context, user *entities.Use
 		return nil, fmt.Errorf("failed to begin assertion: %w", err)
 	}
 
-	return &services.WebAuthnCredentialAssertion{
+	return &interfaces.WebAuthnCredentialAssertion{
 		PublicKeyCredentialRequestOptions: credentialAssertion,
 		SessionData:                       sessionData,
 	}, nil
