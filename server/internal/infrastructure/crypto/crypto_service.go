@@ -1,18 +1,17 @@
 package crypto
 
 import (
-        "github.com/bug-breeder/2fair/server/internal/domain/interfaces"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"github.com/bug-breeder/2fair/server/internal/domain/interfaces"
 	"io"
 
 	"golang.org/x/crypto/pbkdf2"
 )
-
 
 type cryptoService struct{}
 

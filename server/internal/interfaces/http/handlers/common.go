@@ -55,15 +55,6 @@ func respondWithSuccess(c *gin.Context, statusCode int, message string, data ...
 	c.JSON(statusCode, response)
 }
 
-func respondWithValidationError(c *gin.Context, fields []ValidationError) {
-	response := ValidationErrorResponse{
-		Error:  "Validation failed",
-		Fields: fields,
-	}
-
-	c.JSON(http.StatusBadRequest, response)
-}
-
 // Common error responses
 func respondUnauthorized(c *gin.Context, message ...string) {
 	msg := "Unauthorized"

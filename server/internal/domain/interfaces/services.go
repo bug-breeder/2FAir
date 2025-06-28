@@ -1,3 +1,3 @@
-package interfaces  
+package interfaces
 
 // Service interfaces go here

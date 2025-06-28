@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	db "github.com/bug-breeder/2fair/server/internal/infrastructure/database/sqlc"
 	"github.com/bug-breeder/2fair/server/internal/domain/entities"
 	"github.com/bug-breeder/2fair/server/internal/domain/interfaces"
+	db "github.com/bug-breeder/2fair/server/internal/infrastructure/database/sqlc"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )

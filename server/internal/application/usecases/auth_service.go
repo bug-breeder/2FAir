@@ -9,9 +9,6 @@ import (
 	"github.com/bug-breeder/2fair/server/internal/domain/interfaces"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/markbates/goth"
-	"github.com/markbates/goth/providers/github"
-	"github.com/markbates/goth/providers/google"
 )
 
 type authService struct {
@@ -27,25 +24,7 @@ func NewAuthService(
 	jwtSecret string,
 	jwtExpiry time.Duration,
 	serverURL string,
-	googleClientID string,
-	googleClientSecret string,
-	githubClientID string,
-	githubClientSecret string,
 ) interfaces.AuthService {
-	// Configure OAuth providers
-	goth.UseProviders(
-		google.New(
-			googleClientID,
-			googleClientSecret,
-			fmt.Sprintf("%s/api/v1/auth/google/callback", serverURL),
-		),
-		github.New(
-			githubClientID,
-			githubClientSecret,
-			fmt.Sprintf("%s/api/v1/auth/github/callback", serverURL),
-		),
-	)
-
 	return &authService{
 		userRepo:  userRepo,
 		jwtSecret: []byte(jwtSecret),
