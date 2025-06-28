@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: 2fair-postgres
+    environment:
+      POSTGRES_DB: 2fair
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d 2fair"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - 2fair-network
+
+  # Go Backend API
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: 2fair-backend
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=2fair
+      - DB_USER=postgres
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_SSL_MODE=disable
+      - JWT_SIGNING_KEY=${JWT_SIGNING_KEY:-please-change-this-secret-key-in-production}
+      - JWT_EXPIRATION_TIME=${JWT_EXPIRATION_TIME:-1h}
+      - JWT_REFRESH_TIME=${JWT_REFRESH_TIME:-24h}
+      - JWT_ISSUER=${JWT_ISSUER:-2fair.app}
+      - JWT_AUDIENCE=${JWT_AUDIENCE:-2fair.app}
+      - WEBAUTHN_RP_DISPLAY_NAME=2FAir
+      - WEBAUTHN_RP_ID=${WEBAUTHN_RP_ID:-localhost}
+      - WEBAUTHN_RP_ORIGINS=${WEBAUTHN_RP_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      - WEBAUTHN_TIMEOUT=60s
+      - RATE_LIMIT_RPS=${RATE_LIMIT_RPS:-100}
+      - RATE_LIMIT_BURST=${RATE_LIMIT_BURST:-200}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+      - CSP_POLICY=default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'
+      - OAUTH_GOOGLE_CLIENT_ID=${OAUTH_GOOGLE_CLIENT_ID}
+      - OAUTH_GOOGLE_CLIENT_SECRET=${OAUTH_GOOGLE_CLIENT_SECRET}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - 2fair-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8080}
+    container_name: 2fair-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - 2fair-network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy (Optional - for production)
+  nginx:
+    image: nginx:alpine
+    container_name: 2fair-nginx
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro  # Mount SSL certificates if available
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - 2fair-network
+    restart: unless-stopped
+    profiles:
+      - production  # Only start with --profile production
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  2fair-network:
+    driver: bridge 

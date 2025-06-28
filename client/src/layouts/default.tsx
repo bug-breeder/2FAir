@@ -1,6 +1,7 @@
 import { Link } from "@heroui/link";
 
 import { Navbar } from "@/components/navbar";
+import { HeartFilledIcon } from "@/components/icons";
 
 export default function DefaultLayout({
   children,
@@ -17,11 +18,15 @@ export default function DefaultLayout({
         <Link
           isExternal
           className="flex items-center gap-1 text-current"
-          href="https://heroui.com"
-          title="heroui.com homepage"
+          href="https://nodez.one"
+          title="nodez.one - Small Acts, Giant Impact"
         >
-          <span className="text-default-600">Powered by</span>
-          <p className="text-primary">HeroUI</p>
+          <span className="text-default-600 flex items-center gap-1">
+            Made with 
+            <HeartFilledIcon size={16} className="text-danger" /> 
+            by
+          </span>
+          <p className="text-primary">nodez.one</p>
         </Link>
       </footer>
     </div>

@@ -18,20 +18,20 @@ function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch available OAuth providers
   useEffect(() => {
     const fetchProviders = async () => {
       try {
         const response = await fetch("/api/v1/auth/providers");
 
         if (!response.ok) {
-          throw new Error("Failed to fetch OAuth providers");
+          throw new Error("Failed to fetch providers");
         }
+
         const data = await response.json();
 
         setProviders(data.providers || []);
-      } catch (err) {
-        console.error("Failed to fetch providers:", err);
+      } catch (error) {
+        console.error("Error fetching providers:", error);
         toast.error("Failed to load authentication providers");
       }
     };
@@ -39,37 +39,52 @@ function LoginPage() {
     fetchProviders();
   }, []);
 
-  // Handle OAuth callback when returning from provider
+  const handleLogin = async (provider: OAuthProvider) => {
+    try {
+      setIsLoading(true);
+
+      // Store the current URL in sessionStorage for redirect after login
+      sessionStorage.setItem("redirectAfterLogin", window.location.pathname);
+
+      // Get the base URL from the current window location
+      const currentHost = window.location.host;
+      const protocol = window.location.protocol;
+
+      // Construct the login URL using the current host
+      const loginUrl = `${protocol}//${currentHost}/api/v1/auth/${provider.provider}`;
+
+      // Log for debugging
+      console.log("Attempting login with URL:", loginUrl);
+
+      // Redirect to the OAuth provider
+      window.location.href = loginUrl;
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Login failed. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  // Check if we're returning from OAuth and have a token
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("token");
     const error = urlParams.get("error");
 
     if (token) {
-      // Store token and redirect to main app
-      localStorage.setItem("authToken", token);
+      // Store the token
+      localStorage.setItem("token", token);
+
+      // Get redirect URL from sessionStorage or default to home
+      const redirectUrl = sessionStorage.getItem("redirectAfterLogin") || "/";
+
+      sessionStorage.removeItem("redirectAfterLogin");
       toast.success("Login successful!");
-      navigate("/");
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
+      navigate(redirectUrl);
     } else if (error) {
-      toast.error(`Authentication failed: ${error}`);
-      setIsLoading(false);
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
+      toast.error(`Login failed: ${error}`);
     }
   }, [navigate]);
-
-  const handleLogin = async (provider: OAuthProvider) => {
-    try {
-      setIsLoading(true);
-      // Redirect to OAuth provider
-      window.location.href = provider.login_url;
-    } catch (error) {
-      toast.error("Failed to initiate login. Please try again.");
-      setIsLoading(false);
-    }
-  };
 
   const getProviderIcon = (provider: string) => {
     switch (provider.toLowerCase()) {

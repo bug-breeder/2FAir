@@ -12,6 +12,7 @@ import { RxDividerVertical } from "react-icons/rx";
 import { CgArrowRight } from "react-icons/cg";
 
 import { OTP, OTPSecret } from "../types/otp";
+import { useSimpleIconSrc } from "./simple-icon";
 
 import { ContextMenu } from "./context-menu";
 import { QRModal } from "./qr-modal";
@@ -35,9 +36,14 @@ export function SmartOTPCard({
   closeMenu,
 }: SmartOTPCardProps) {
   const [copied, setCopied] = useState(false);
-  const [showQR, setShowQR] = useState(false);
-  const [showEdit, setShowEdit] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [currentTime, setCurrentTime] = useState(Date.now());
+
+  // Get Simple Icons CDN URL for the provider
+  const iconSrc = useSimpleIconSrc(otp.Issuer, {
+    fallbackIcon: 'generic'
+  });
 
   // Update current time every second
   useEffect(() => {
@@ -78,20 +84,21 @@ export function SmartOTPCard({
     }
   }, [currentTime, otpSecret]);
 
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(displayCode).then(() => {
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(displayCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
   }, [displayCode]);
 
   const handleContextMenu = useCallback(
-    (event: React.MouseEvent) => {
-      event.nativeEvent.stopImmediatePropagation();
-      event.preventDefault();
-      setTimeout(() => {
-        setActiveMenu(event.clientX, event.clientY);
-      }, 50);
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setActiveMenu(e.clientX, e.clientY);
     },
     [setActiveMenu],
   );
@@ -119,7 +126,7 @@ export function SmartOTPCard({
                 className="flex-shrink-0"
                 radius="full"
                 size="md"
-                src={`/providers/SVG/${otp.Issuer}.svg`}
+                src={iconSrc}
               />
               <div className="flex flex-col gap-1 items-start justify-center flex-grow overflow-hidden">
                 <h4 className="text-xl font-semibold leading-none">{otp.Issuer}</h4>
@@ -129,7 +136,7 @@ export function SmartOTPCard({
               </div>
             </div>
             <div className="flex flex-col items-end gap-1">
-              <div className="flex items-center text-default-400 font-bold text-xl mx-1">
+              <div className="flex items-center text-default-500 font-bold text-xl mx-1">
                 {displayCode}
               </div>
             </div>
@@ -165,25 +172,31 @@ export function SmartOTPCard({
           </CardFooter>
         </Card>
       </Tooltip>
+
+      {/* Context Menu */}
       {isActive && (
         <ContextMenu
           activeMenu={activeMenu}
           closeMenu={closeMenu}
           otpID={otp.Id}
-          setShowEdit={setShowEdit}
-          setShowQR={setShowQR}
+          setShowEdit={setShowEditModal}
+          setShowQR={setShowQRModal}
         />
       )}
-      {showQR && (
-        <QRModal closeQR={() => setShowQR(false)} otp={otp} showQR={showQR} />
-      )}
-      {showEdit && (
-        <EditOtpModal
-          isOpen={showEdit}
-          otp={otp}
-          onClose={() => setShowEdit(false)}
-        />
-      )}
+
+      {/* QR Modal */}
+      <QRModal
+        showQR={showQRModal}
+        closeQR={() => setShowQRModal(false)}
+        otp={otp}
+      />
+
+      {/* Edit Modal */}
+      <EditOtpModal
+        isOpen={showEditModal}
+        otp={otp}
+        onClose={() => setShowEditModal(false)}
+      />
     </div>
   );
 }
