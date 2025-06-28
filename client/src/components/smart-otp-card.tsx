@@ -112,7 +112,7 @@ export function SmartOTPCard({
           onContextMenu={handleContextMenu}
           onPress={handleCopy}
         >
-          <CardBody className="flex flex-row gap-5 justify-between items-center pt-3 pl-3 pr-3 pb-1">
+          <CardBody className="flex flex-row gap-5 justify-between items-center pt-4 px-4 pb-2">
             <div className="flex gap-3 items-center flex-grow overflow-hidden">
               <Avatar
                 alt={otp.Issuer}
@@ -122,19 +122,16 @@ export function SmartOTPCard({
                 src={`/providers/SVG/${otp.Issuer}.svg`}
               />
               <div className="flex flex-col gap-1 items-start justify-center flex-grow overflow-hidden">
-                <h4 className="text-md leading-none">{otp.Issuer}</h4>
-                <h5 className="text-small text-default-500 tracking-tight truncate w-full">
+                <h4 className="text-xl font-semibold leading-none">{otp.Issuer}</h4>
+                <h5 className="text-medium text-default-500 tracking-tight truncate w-full">
                   {otp.Label}
                 </h5>
               </div>
             </div>
             <div className="flex flex-col items-end gap-1">
-              <div className="flex items-center font-bold text-xl mx-1">
+              <div className="flex items-center text-default-400 font-bold text-xl mx-1">
                 {displayCode}
               </div>
-              {isUsingNext && (
-                <span className="text-xs text-warning">Next Code</span>
-              )}
             </div>
           </CardBody>
           <CardFooter className="flex items-center justify-between py-2">
@@ -164,7 +161,6 @@ export function SmartOTPCard({
                   style={{ width: `${progressValue}%` }}
                 />
               </div>
-              <span className="text-xs text-default-400">{timeRemaining}s</span>
             </div>
           </CardFooter>
         </Card>
