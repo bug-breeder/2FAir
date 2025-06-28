@@ -69,10 +69,6 @@ func NewServer(cfg *config.Config, db *database.DB) *Server {
 		cfg.JWT.SigningKey,
 		cfg.JWT.ExpirationTime,
 		fmt.Sprintf("http://%s", cfg.GetServerAddress()), // Server URL for OAuth callbacks
-		cfg.OAuth.Google.ClientID,
-		cfg.OAuth.Google.ClientSecret,
-		cfg.OAuth.GitHub.ClientID,
-		cfg.OAuth.GitHub.ClientSecret,
 	)
 
 	// Initialize OTP service

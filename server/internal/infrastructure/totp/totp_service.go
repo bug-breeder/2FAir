@@ -1,7 +1,6 @@
 package totp
 
 import (
-        "github.com/bug-breeder/2fair/server/internal/domain/interfaces"
 	"crypto/hmac"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -9,12 +8,11 @@ import (
 	"encoding/base32"
 	"encoding/binary"
 	"fmt"
+	"github.com/bug-breeder/2fair/server/internal/domain/interfaces"
 	"hash"
 	"strings"
 	"time"
 )
-
-
 
 type totpService struct{}
 
