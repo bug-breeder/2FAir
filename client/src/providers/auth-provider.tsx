@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   useEffect(() => {
-    checkAuth();
+      checkAuth();
   }, []);
 
   // Refresh auth when navigating to app routes (in case user just logged in)
@@ -77,10 +77,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       // Call logout endpoint to clear cookie
-      await fetch("/api/v1/auth/logout", {
-        method: "POST",
+        await fetch("/api/v1/auth/logout", {
+          method: "POST",
         credentials: 'include', // Include cookies
-      });
+        });
     } catch (error) {
       console.error("Logout API call failed:", error);
       // Continue with local logout even if API call fails
