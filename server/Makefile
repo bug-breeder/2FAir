@@ -32,7 +32,7 @@ dev: ## Run the application in development mode with auto-reload
 		air; \
 	else \
 		echo "Air not found. Installing air for hot reload..."; \
-		go install github.com/cosmtrek/air@latest; \
+		go install github.com/air-verse/air@latest; \
 		air; \
 	fi
 
@@ -220,7 +220,7 @@ swagger: ## Generate Swagger documentation
 .PHONY: install-tools
 install-tools: ## Install development tools
 	@echo "Installing development tools..."
-	@go install github.com/cosmtrek/air@latest
+	@go install github.com/air-verse/air@latest
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@go install github.com/swaggo/swag/cmd/swag@latest
 	@go install golang.org/x/tools/cmd/goimports@latest
