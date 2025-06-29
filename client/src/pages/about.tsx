@@ -457,6 +457,7 @@ export default function AboutPage() {
                   layout
                   onHoverStart={() => setHoveredValue(index)}
                   onHoverEnd={() => setHoveredValue(null)}
+                  className="h-full"
                 >
                   <motion.div
                     whileHover={{ 
@@ -474,6 +475,7 @@ export default function AboutPage() {
                       transformStyle: "preserve-3d",
                       perspective: 1000
                     }}
+                    className="h-full"
                   >
                     <Card className="border border-divider hover:shadow-2xl transition-all duration-500 h-full overflow-hidden">
                       <motion.div
@@ -483,7 +485,7 @@ export default function AboutPage() {
                         }}
                         transition={{ duration: 0.3 }}
                       />
-                      <CardBody className="p-8 text-center relative z-10">
+                      <CardBody className="p-8 text-center relative z-10 flex flex-col h-full">
                         <motion.div 
                           className="w-16 h-16 bg-gradient-to-br from-primary-100 to-secondary-100 rounded-full flex items-center justify-center mx-auto mb-6"
                           whileHover={{ 

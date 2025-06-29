@@ -410,6 +410,7 @@ export default function LandingPage() {
                   variants={itemVariants}
                   onHoverStart={() => setHoveredFeature(index)}
                   onHoverEnd={() => setHoveredFeature(null)}
+                  className="h-full"
                 >
                   <motion.div
                     whileHover={{ 
@@ -427,6 +428,7 @@ export default function LandingPage() {
                       transformStyle: "preserve-3d",
                       perspective: 1000
                     }}
+                    className="h-full"
                   >
                     <Card className="border border-divider hover:shadow-2xl transition-all duration-500 h-full overflow-hidden">
                       <motion.div
@@ -436,7 +438,7 @@ export default function LandingPage() {
                         }}
                         transition={{ duration: 0.3 }}
                       />
-                      <CardBody className="p-8 text-center relative z-10">
+                      <CardBody className="p-8 text-center relative z-10 flex flex-col h-full">
                         <motion.div 
                           className="w-16 h-16 bg-gradient-to-br from-primary-100 to-secondary-100 rounded-full flex items-center justify-center mx-auto mb-6"
                           whileHover={{ 
@@ -471,7 +473,7 @@ export default function LandingPage() {
                           {feature.title}
                         </motion.h3>
                         <motion.p 
-                          className="text-default-600 leading-relaxed"
+                          className="text-default-600 leading-relaxed flex-1"
                           animate={hoveredFeature === index ? {
                             y: [0, -2, 0]
                           } : {}}
