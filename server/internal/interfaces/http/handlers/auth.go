@@ -154,7 +154,7 @@ func (h *AuthHandler) OAuthCallback(c *gin.Context) {
 	)
 
 	// Redirect back to frontend with token
-	redirectURL := fmt.Sprintf("%s/?token=%s", h.config.Frontend.URL, token)
+	redirectURL := fmt.Sprintf("%s/app?token=%s", h.config.Frontend.URL, token)
 
 	c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 }

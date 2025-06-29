@@ -86,8 +86,8 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
       // Store the token
       localStorage.setItem("token", token);
 
-      // Get redirect URL from sessionStorage or default to home
-      const redirectUrl = sessionStorage.getItem("redirectAfterLogin") || "/";
+      // Get redirect URL from sessionStorage or default to app
+      const redirectUrl = sessionStorage.getItem("redirectAfterLogin") || "/app";
 
       sessionStorage.removeItem("redirectAfterLogin");
       onLoginSuccess();

@@ -137,8 +137,8 @@ export const Navbar = () => {
           <Link
             className="flex justify-start items-center gap-2"
             color="foreground"
-            href="/"
-            onClick={() => navigate("/")}
+            href="/app"
+            onClick={() => navigate("/app")}
           >
             <FAir size={32} />
             <div className="flex flex-col">

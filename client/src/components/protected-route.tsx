@@ -1,5 +1,5 @@
-import React from "react";
-import { Navigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { Spinner } from "@heroui/react";
 
 import { useAuth } from "../providers/auth-provider";
@@ -10,6 +10,14 @@ interface ProtectedRouteProps {
 
 function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Store the current location when user tries to access protected route
+    if (!isAuthenticated && !isLoading) {
+      sessionStorage.setItem("redirectAfterLogin", location.pathname);
+    }
+  }, [isAuthenticated, isLoading, location.pathname]);
 
   if (isLoading) {
     return (
