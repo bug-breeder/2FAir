@@ -24,6 +24,23 @@ export default mergeConfig(
         },
       },
     },
+    build: {
+      rollupOptions: {
+        input: {
+          main: './index.html',
+        },
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom', 'react-router-dom'],
+            ui: ['@heroui/react', '@iconify/react'],
+          },
+        },
+      },
+    },
+    // For static generation, we'll prerender these routes
+    ssr: {
+      // Add any server-side dependencies here if needed
+    },
   }),
   defineTestConfig({
     test: {
