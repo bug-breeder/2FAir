@@ -20,11 +20,8 @@ func CORS(cfg *config.Config) gin.HandlerFunc {
 		MaxAge:           12 * time.Hour,
 	}
 
-	// In development, allow all origins
-	if cfg.IsDevelopment() {
-		corsConfig.AllowAllOrigins = true
-		corsConfig.AllowOrigins = nil
-	}
+	// Note: Cannot use AllowAllOrigins with AllowCredentials for security reasons
+	// Always use specific origins from configuration
 
 	return cors.New(corsConfig)
 }

@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
+import { setAuthManager } from "../lib/api/client";
+
 interface User {
   id: string;
   email: string;
@@ -22,6 +24,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Register auth manager with API client for 401 handling
+  useEffect(() => {
+    setAuthManager({
+      onUnauthorized: () => {
+        // Clear user state and redirect to login
+        setUser(null);
+        if (!location.pathname.includes("/login")) {
+          navigate("/login", { replace: true });
+        }
+      },
+    });
+  }, [navigate, location.pathname]);
 
   useEffect(() => {
       checkAuth();
@@ -77,10 +92,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       // Call logout endpoint to clear cookie
-        await fetch("/api/v1/auth/logout", {
-          method: "POST",
+      await fetch("/api/v1/auth/logout", {
+        method: "POST",
         credentials: 'include', // Include cookies
-        });
+      });
     } catch (error) {
       console.error("Logout API call failed:", error);
       // Continue with local logout even if API call fails
