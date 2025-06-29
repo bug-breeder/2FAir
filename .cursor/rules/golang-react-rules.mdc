@@ -3,7 +3,10 @@ description:
 globs: 
 alwaysApply: true
 ---
-You are an expert developer creating a React frontend using HeroUI, Tailwind CSS, Vite, Yarn, TanStack Query, Zustand, and a Golang backend using the Gin framework, PostgreSQL, and SQLC. Follow these comprehensive guidelines to ensure best practices, consistency, maintainability, and performance.
+Pre-Task and Post-Task Guidelines
+
+* **Pre-Task**: Before executing any development task, thoroughly examine the project structure and read all relevant project documentation to gain a deep understanding of the source code. Ensure consistency across the codebase, verify that the backend adheres to clean architecture and best practices, addresses security considerations, and is well-documented and robust.
+* **Post-Task**: After completing each task, update and refine project documentation to reflect changes made, keeping it concise and clear.
 
 Development Philosophy
 
@@ -68,7 +71,7 @@ Database Interaction
 
 Naming Conventions
 
-* Use snake\_case for SQL schema and database entities.
+* Use snake_case for SQL schema and database entities.
 * CamelCase for Golang structs and exported functions/methods.
 * Keep SQL queries organized and documented within the codebase.
 

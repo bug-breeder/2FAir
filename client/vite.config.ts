@@ -27,12 +27,12 @@ export default mergeConfig(
     build: {
       rollupOptions: {
         input: {
-          main: './index.html',
+          main: "./index.html",
         },
         output: {
           manualChunks: {
-            vendor: ['react', 'react-dom', 'react-router-dom'],
-            ui: ['@heroui/react', '@iconify/react'],
+            vendor: ["react", "react-dom", "react-router-dom"],
+            ui: ["@heroui/react", "@iconify/react"],
           },
         },
       },

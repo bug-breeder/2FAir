@@ -86,6 +86,8 @@ export function getAegisIconImgProps(props: AegisIconProps): {
 } {
   const { provider, size, className, alt, fallbackIcon } = props;
 
+  const _fallbackIcon = "mdi:shield-account";
+
   return {
     src: getAegisIconsCDNUrl(provider, { fallbackIcon }),
     alt: alt || provider,

@@ -67,7 +67,7 @@ class ApiClient {
           const message = this.getErrorMessage(error);
 
           // Only show error toast if it's not a duplicate within the last 2 seconds
-          const errorKey = `${error.response?.status || 'unknown'}-${message}`;
+          const errorKey = `${error.response?.status || "unknown"}-${message}`;
 
           if (!this.recentErrors.has(errorKey)) {
             this.recentErrors.add(errorKey);

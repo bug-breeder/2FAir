@@ -11,13 +11,13 @@ interface LandingLayoutProps {
   description?: string;
 }
 
-export default function LandingLayout({ 
-  children, 
-  title = "2FAir - Secure TOTP Management",
-  description = "Zero-knowledge TOTP management with WebAuthn security"
+export default function LandingLayout({
+  children,
+  title = "2FAir - Secure 2FA Made Simple",
+  description = "The most secure and user-friendly 2FA vault. End-to-end encrypted, works everywhere, no passwords needed.",
 }: LandingLayoutProps) {
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user: _user } = useAuth();
 
   const handleSignIn = () => {
     if (isAuthenticated) {
@@ -40,14 +40,14 @@ export default function LandingLayout({
       {/* SEO Meta Tags */}
       <head>
         <title>{title}</title>
-        <meta name="description" content={description} />
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={description} />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://2fair.app" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={title} />
-        <meta name="twitter:description" content={description} />
+        <meta content={description} name="description" />
+        <meta content={title} property="og:title" />
+        <meta content={description} property="og:description" />
+        <meta content="website" property="og:type" />
+        <meta content="https://2fair.app" property="og:url" />
+        <meta content="summary_large_image" name="twitter:card" />
+        <meta content={title} name="twitter:title" />
+        <meta content={description} name="twitter:description" />
       </head>
 
       {/* Navigation */}
@@ -55,28 +55,28 @@ export default function LandingLayout({
         <div className="container mx-auto max-w-7xl px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
+            <Link className="flex items-center gap-2" href="/">
               <FAir className="text-primary" size={32} />
               <span className="text-xl font-bold">2FAir</span>
             </Link>
 
             {/* Navigation Links */}
             <div className="hidden md:flex items-center gap-6">
-              <Link 
-                href="/"
+              <Link
                 className="text-foreground hover:text-primary transition-colors"
+                href="/"
               >
                 Home
               </Link>
-              <Link 
-                href="/about"
+              <Link
                 className="text-foreground hover:text-primary transition-colors"
+                href="/about"
               >
                 About
               </Link>
-              <Link 
-                href="/pricing"
+              <Link
                 className="text-foreground hover:text-primary transition-colors"
+                href="/pricing"
               >
                 Pricing
               </Link>
@@ -86,17 +86,17 @@ export default function LandingLayout({
             <div className="flex items-center gap-3">
               {/* Theme Switcher */}
               <ThemeSwitch />
-              
+
               {/* Auth Buttons */}
               {isAuthenticated ? (
                 <>
                   {/* <span className="text-sm text-default-600">
-                    Welcome, {user?.username}
+                    Welcome, {_user?.username}
                   </span> */}
                   <Button
                     color="primary"
-                    variant="solid"
                     isLoading={isLoading}
+                    variant="solid"
                     onPress={() => navigate("/app")}
                   >
                     Go to App
@@ -105,16 +105,16 @@ export default function LandingLayout({
               ) : (
                 <>
                   <Button
-                    variant="light"
                     isLoading={isLoading}
+                    variant="light"
                     onPress={handleSignIn}
                   >
                     Sign In
                   </Button>
                   <Button
                     color="primary"
-                    variant="solid"
                     isLoading={isLoading}
+                    variant="solid"
                     onPress={handleGetStarted}
                   >
                     Get Started
@@ -127,9 +127,7 @@ export default function LandingLayout({
       </nav>
 
       {/* Main Content */}
-      <main className="flex-grow">
-        {children}
-      </main>
+      <main className="flex-grow">{children}</main>
 
       {/* Footer */}
       <footer className="border-t border-divider bg-content1">
@@ -142,8 +140,8 @@ export default function LandingLayout({
                 <span className="text-xl font-bold">2FAir</span>
               </div>
               <p className="text-default-500 text-sm">
-                Zero-knowledge TOTP management with WebAuthn security.
-                Your secrets, encrypted client-side.
+                Zero-knowledge TOTP management with WebAuthn security. Your
+                secrets, encrypted client-side.
               </p>
             </div>
 
@@ -151,15 +149,21 @@ export default function LandingLayout({
             <div className="space-y-4">
               <h4 className="font-semibold">Product</h4>
               <div className="space-y-2">
-                <Link href="/about" className="block text-sm text-default-600 hover:text-primary">
+                <Link
+                  className="block text-sm text-default-600 hover:text-primary"
+                  href="/about"
+                >
                   About
                 </Link>
-                <Link href="/pricing" className="block text-sm text-default-600 hover:text-primary">
+                <Link
+                  className="block text-sm text-default-600 hover:text-primary"
+                  href="/pricing"
+                >
                   Pricing
                 </Link>
-                <Link 
-                  href={isAuthenticated ? "/app" : "/login"} 
+                <Link
                   className="block text-sm text-default-600 hover:text-primary"
+                  href={isAuthenticated ? "/app" : "/login"}
                 >
                   {isAuthenticated ? "Go to App" : "Sign In"}
                 </Link>
@@ -170,9 +174,15 @@ export default function LandingLayout({
             <div className="space-y-4">
               <h4 className="font-semibold">Security</h4>
               <div className="space-y-2">
-                <p className="text-sm text-default-600">WebAuthn Authentication</p>
-                <p className="text-sm text-default-600">Client-Side Encryption</p>
-                <p className="text-sm text-default-600">Zero-Knowledge Architecture</p>
+                <p className="text-sm text-default-600">
+                  WebAuthn Authentication
+                </p>
+                <p className="text-sm text-default-600">
+                  Client-Side Encryption
+                </p>
+                <p className="text-sm text-default-600">
+                  Zero-Knowledge Architecture
+                </p>
               </div>
             </div>
 
@@ -180,10 +190,16 @@ export default function LandingLayout({
             <div className="space-y-4">
               <h4 className="font-semibold">Legal</h4>
               <div className="space-y-2">
-                <Link href="/privacy" className="block text-sm text-default-600 hover:text-primary">
+                <Link
+                  className="block text-sm text-default-600 hover:text-primary"
+                  href="/privacy"
+                >
                   Privacy Policy
                 </Link>
-                <Link href="/terms" className="block text-sm text-default-600 hover:text-primary">
+                <Link
+                  className="block text-sm text-default-600 hover:text-primary"
+                  href="/terms"
+                >
                   Terms of Service
                 </Link>
               </div>
@@ -197,4 +213,4 @@ export default function LandingLayout({
       </footer>
     </div>
   );
-} 
+}
