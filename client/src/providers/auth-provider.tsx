@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface User {
   id: string;
@@ -11,144 +11,92 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (provider: string) => Promise<void>;
   logout: () => Promise<void>;
-  token: string | null;
+  refreshAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    // Check if we have an OAuth callback token in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const callbackToken = urlParams.get("token");
-
-    // Only run checkAuth if there's no OAuth callback
-    if (!callbackToken) {
-      checkAuth();
-    }
+    checkAuth();
   }, []);
 
-  // Handle OAuth callback
+  // Refresh auth when navigating to app routes (in case user just logged in)
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const callbackToken = urlParams.get("token");
-    const error = urlParams.get("error");
-
-    if (callbackToken) {
-      // Store token and fetch user info
-      localStorage.setItem("authToken", callbackToken);
-      setToken(callbackToken);
-
-      fetchUserInfo(callbackToken).finally(() => {
-        setIsLoading(false);
-      });
-
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (error) {
-      console.error("OAuth error:", error);
-      setIsLoading(false);
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
+    if (location.pathname.startsWith('/app')) {
+      refreshAuth();
     }
-  }, []);
+  }, [location.pathname]);
 
   const checkAuth = async () => {
     try {
-      const storedToken = localStorage.getItem("authToken");
+      // Make API call to check auth status (cookies sent automatically)
+      const response = await fetch("/api/v1/auth/me", {
+        credentials: 'include', // Include cookies
+      });
 
-      if (!storedToken) {
-        setIsLoading(false);
-
-        return;
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+      } else {
+        // Not authenticated or token expired
+        setUser(null);
       }
-
-      setToken(storedToken);
-      await fetchUserInfo(storedToken);
     } catch (error) {
       console.error("Auth check failed:", error);
-      localStorage.removeItem("authToken");
       setUser(null);
-      setToken(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchUserInfo = async (authToken: string) => {
+  const refreshAuth = async () => {
     try {
       const response = await fetch("/api/v1/auth/me", {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
         const userData = await response.json();
-
         setUser(userData);
       } else {
-        throw new Error("Failed to fetch user info");
+        setUser(null);
       }
     } catch (error) {
-      console.error("Failed to fetch user info:", error);
-      localStorage.removeItem("authToken");
+      console.error("Auth refresh failed:", error);
       setUser(null);
-      setToken(null);
-      throw error;
-    }
-  };
-
-  const login = async (provider: string) => {
-    try {
-      // Redirect to OAuth provider
-      const serverUrl =
-        import.meta.env.VITE_SERVER_URL || "http://localhost:8080";
-
-      window.location.href = `${serverUrl}/api/v1/auth/${provider}`;
-    } catch (error) {
-      console.error("Login failed:", error);
-      throw error;
     }
   };
 
   const logout = async () => {
     try {
-      // Call logout endpoint if we have a token
-      if (token) {
-        await fetch("/api/v1/auth/logout", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      }
+      // Call logout endpoint to clear cookie
+      await fetch("/api/v1/auth/logout", {
+        method: "POST",
+        credentials: 'include', // Include cookies
+      });
     } catch (error) {
       console.error("Logout API call failed:", error);
       // Continue with local logout even if API call fails
     }
 
     // Clear local state
-    localStorage.removeItem("authToken");
     setUser(null);
-    setToken(null);
     navigate("/login");
   };
 
   const value = {
     user,
-    token,
     isLoading,
     isAuthenticated: !!user,
-    login,
     logout,
+    refreshAuth,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -149,12 +149,12 @@ func (h *AuthHandler) OAuthCallback(c *gin.Context) {
 		int(24*time.Hour.Seconds()), // 24 hours
 		"/",
 		"",
-		false, // not HTTPS-only for development
-		true,  // HTTP-only
+		h.config.IsProduction(), // Secure flag: true in production (HTTPS), false in development
+		true,                    // HTTP-only
 	)
 
-	// Redirect back to frontend with token
-	redirectURL := fmt.Sprintf("%s/app?token=%s", h.config.Frontend.URL, token)
+	// Redirect back to frontend app (no token in URL - cookie is sufficient)
+	redirectURL := fmt.Sprintf("%s/app", h.config.Frontend.URL)
 
 	c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 }
@@ -173,8 +173,8 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		-1,
 		"/",
 		"",
-		false,
-		true,
+		h.config.IsProduction(), // Secure flag: true in production (HTTPS), false in development
+		true,                    // HTTP-only
 	)
 
 	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
@@ -222,8 +222,8 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		int(24*time.Hour.Seconds()),
 		"/",
 		"",
-		false,
-		true,
+		h.config.IsProduction(), // Secure flag: true in production (HTTPS), false in development
+		true,                    // HTTP-only
 	)
 
 	c.JSON(http.StatusOK, gin.H{

@@ -4,9 +4,19 @@ import { useNavigate } from "react-router-dom";
 
 import LandingLayout from "@/layouts/landing";
 import { FAir } from "@/components/icons";
+import { useAuth } from "@/providers/auth-provider";
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      navigate("/app");
+    } else {
+      navigate("/login");
+    }
+  };
 
   const features = [
     {
@@ -69,9 +79,10 @@ export default function LandingPage() {
               color="primary"
               size="lg"
               className="w-full sm:w-auto"
-              onPress={() => navigate("/login")}
+              isLoading={isLoading}
+              onPress={handleGetStarted}
             >
-              Get Started Free
+              {isAuthenticated ? "Go to App" : "Get Started Free"}
             </Button>
             <Button
               variant="bordered"
@@ -187,9 +198,10 @@ export default function LandingPage() {
             color="primary"
             size="lg"
             className="w-full sm:w-auto"
-            onPress={() => navigate("/login")}
+            isLoading={isLoading}
+            onPress={handleGetStarted}
           >
-            Start Free Today
+            {isAuthenticated ? "Go to App" : "Start Free Today"}
           </Button>
           
           <p className="text-sm text-default-500 mt-4">

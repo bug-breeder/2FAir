@@ -2,6 +2,8 @@ import { Link, Button } from "@heroui/react";
 import { useNavigate } from "react-router-dom";
 
 import { FAir } from "@/components/icons";
+import { useAuth } from "@/providers/auth-provider";
+import { ThemeSwitch } from "@/components/theme-switch";
 
 interface LandingLayoutProps {
   children: React.ReactNode;
@@ -15,6 +17,23 @@ export default function LandingLayout({
   description = "Zero-knowledge TOTP management with WebAuthn security"
 }: LandingLayoutProps) {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  const handleSignIn = () => {
+    if (isAuthenticated) {
+      navigate("/app");
+    } else {
+      navigate("/login");
+    }
+  };
+
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      navigate("/app");
+    } else {
+      navigate("/login");
+    }
+  };
 
   return (
     <div className="relative flex flex-col min-h-screen">
@@ -63,21 +82,45 @@ export default function LandingLayout({
               </Link>
             </div>
 
-            {/* CTA Buttons */}
+            {/* Right side: Theme Switcher + Auth Buttons */}
             <div className="flex items-center gap-3">
-              <Button
-                variant="light"
-                onPress={() => navigate("/login")}
-              >
-                Sign In
-              </Button>
-              <Button
-                color="primary"
-                variant="solid"
-                onPress={() => navigate("/login")}
-              >
-                Get Started
-              </Button>
+              {/* Theme Switcher */}
+              <ThemeSwitch />
+              
+              {/* Auth Buttons */}
+              {isAuthenticated ? (
+                <>
+                  {/* <span className="text-sm text-default-600">
+                    Welcome, {user?.username}
+                  </span> */}
+                  <Button
+                    color="primary"
+                    variant="solid"
+                    isLoading={isLoading}
+                    onPress={() => navigate("/app")}
+                  >
+                    Go to App
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="light"
+                    isLoading={isLoading}
+                    onPress={handleSignIn}
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    color="primary"
+                    variant="solid"
+                    isLoading={isLoading}
+                    onPress={handleGetStarted}
+                  >
+                    Get Started
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -114,8 +157,11 @@ export default function LandingLayout({
                 <Link href="/pricing" className="block text-sm text-default-600 hover:text-primary">
                   Pricing
                 </Link>
-                <Link href="/login" className="block text-sm text-default-600 hover:text-primary">
-                  Sign In
+                <Link 
+                  href={isAuthenticated ? "/app" : "/login"} 
+                  className="block text-sm text-default-600 hover:text-primary"
+                >
+                  {isAuthenticated ? "Go to App" : "Sign In"}
                 </Link>
               </div>
             </div>

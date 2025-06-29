@@ -66,9 +66,6 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
     try {
       setIsLoading(true);
 
-      // Store the current URL in sessionStorage for redirect after login
-      sessionStorage.setItem("redirectAfterLogin", window.location.pathname);
-
       // Redirect to the OAuth provider
       window.location.href = provider.login_url;
     } catch (error) {
@@ -76,24 +73,6 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
       setIsLoading(false);
     }
   };
-
-  // Check if we're returning from OAuth and have a token
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token");
-
-    if (token) {
-      // Store the token
-      localStorage.setItem("token", token);
-
-      // Get redirect URL from sessionStorage or default to app
-      const redirectUrl = sessionStorage.getItem("redirectAfterLogin") || "/app";
-
-      sessionStorage.removeItem("redirectAfterLogin");
-      onLoginSuccess();
-      window.location.href = redirectUrl;
-    }
-  }, [onLoginSuccess]);
 
   const getProviderIcon = (provider: string) => {
     switch (provider.toLowerCase()) {

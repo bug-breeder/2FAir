@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Button, Divider, Link } from "@heroui/react";
+import { Button, Divider, Link, Spinner } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
 
 import { toast } from "../lib/toast";
 import { FAir } from "../components/icons";
+import { useAuth } from "../providers/auth-provider";
 
 interface OAuthProvider {
   name: string;
@@ -17,6 +18,14 @@ function LoginPage() {
   const [providers, setProviders] = useState<OAuthProvider[]>([]);
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Redirect to app if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/app");
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   useEffect(() => {
     const fetchProviders = async () => {
@@ -43,9 +52,6 @@ function LoginPage() {
     try {
       setLoadingProvider(provider.provider);
 
-      // Store the current URL in sessionStorage for redirect after login
-      sessionStorage.setItem("redirectAfterLogin", window.location.pathname);
-
       // Get the base URL from the current window location
       const currentHost = window.location.host;
       const protocol = window.location.protocol;
@@ -65,27 +71,6 @@ function LoginPage() {
     }
   };
 
-  // Check if we're returning from OAuth and have a token
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get("token");
-    const error = urlParams.get("error");
-
-    if (token) {
-      // Store the token
-      localStorage.setItem("token", token);
-
-      // Get redirect URL from sessionStorage or default to app
-      const redirectUrl = sessionStorage.getItem("redirectAfterLogin") || "/app";
-
-      sessionStorage.removeItem("redirectAfterLogin");
-      toast.success("Login successful!");
-      navigate(redirectUrl);
-    } else if (error) {
-      toast.error(`Login failed: ${error}`);
-    }
-  }, [navigate]);
-
   const getProviderIcon = (provider: string) => {
     switch (provider.toLowerCase()) {
       case "google":
@@ -104,6 +89,26 @@ function LoginPage() {
         return <Icon icon="mdi:login" width={24} />;
     }
   };
+
+  // Show loading spinner while checking auth
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center">
+        <Spinner size="lg" />
+        <p className="mt-4 text-default-500">Checking authentication...</p>
+      </div>
+    );
+  }
+
+  // Don't render login form if user is authenticated (redirect is happening)
+  if (isAuthenticated) {
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center">
+        <Spinner size="lg" />
+        <p className="mt-4 text-default-500">Redirecting to app...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center px-6 sm:px-0">
