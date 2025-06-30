@@ -1,0 +1,164 @@
+{
+  "navigation": {
+    "settings": "Settings",
+    "security": "Security",
+    "export": "Export",
+    "about": "About",
+    "pricing": "Pricing",
+    "docs": "Docs",
+    "blog": "Blog",
+    "logout": "Logout",
+    "login": "Login"
+  },
+  "common": {
+    "add": "Add",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "export": "Export",
+    "import": "Import",
+    "loading": "Loading",
+    "error": "Error",
+    "success": "Success",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "active": "Active",
+    "revoke": "Revoke",
+    "current": "Current"
+  },
+  "home": {
+    "title": "Your OTP Codes",
+    "empty": {
+      "title": "No OTPs Yet",
+      "description": "Add your first TOTP to get started with secure 2FA management."
+    },
+    "search": {
+      "results": "{{count}} of {{total}} OTP{{pluralTotal}} {{query}}",
+      "matching": "matching \"{{query}}\"",
+      "noMatches": "No Matching OTPs",
+      "noMatchesDescription": "Try adjusting your search query to find what you're looking for."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "appPreferences": {
+      "title": "App Preferences",
+      "autoRefresh": {
+        "title": "Auto-refresh OTP codes"
+      },
+      "notifications": {
+        "title": "Show notifications"
+      },
+      "autoBackup": {
+        "title": "Auto-backup enabled"
+      }
+    },
+    "language": {
+      "title": "Language"
+    },
+    "dataManagement": {
+      "title": "Data Management",
+      "exportData": {
+        "title": "Export your data"
+      },
+      "securitySettings": {
+        "title": "Security settings"
+      }
+    },
+    "savePreferences": "Save",
+    "preferencesSaved": "Settings saved",
+    "failedToSave": "Failed to save"
+  },
+  "security": {
+    "title": "Security",
+    "webauthn": {
+      "title": "WebAuthn Credentials",
+      "addCredential": "Add Credential",
+      "noCredentials": "No credentials registered",
+      "noCredentialsDescription": "Add a security key or passkey for enhanced security",
+      "addFirst": "Add Your First Credential",
+      "table": {
+        "credential": "CREDENTIAL",
+        "deviceType": "DEVICE TYPE",
+        "created": "CREATED",
+        "lastUsed": "LAST USED",
+        "actions": "ACTIONS"
+      },
+      "removeConfirm": "Are you sure you want to remove this WebAuthn credential?",
+      "removeSuccess": "WebAuthn credential removed successfully",
+      "removeFailed": "Failed to remove WebAuthn credential",
+      "registerSuccess": "WebAuthn credential registered successfully!"
+    },
+    "sessions": {
+      "title": "Active Sessions",
+      "table": {
+        "device": "DEVICE",
+        "location": "LOCATION",
+        "ipAddress": "IP ADDRESS",
+        "lastActive": "LAST ACTIVE",
+        "actions": "ACTIONS"
+      },
+      "revokeConfirm": "Are you sure you want to revoke this session?",
+      "revokeSuccess": "Session revoked successfully",
+      "revokeFailed": "Failed to revoke session"
+    }
+  },
+  "export": {
+    "title": "Export Data",
+    "options": {
+      "title": "Export Options",
+      "otpCodes": {
+        "title": "OTP Codes",
+        "description": "{{count}} items"
+      },
+      "appSettings": {
+        "title": "App Settings"
+      },
+      "metadata": {
+        "title": "Export Metadata"
+      },
+      "estimatedSize": {
+        "title": "Estimated file size"
+      }
+    },
+    "actions": {
+      "title": "Export Actions",
+      "downloading": "Exporting...",
+      "downloadExport": "Download",
+      "backupToCloud": "Backup to Cloud"
+    },
+    "security": {
+      "title": "Security Notice",
+      "warning": "Your exported data contains sensitive information including OTP secrets.",
+      "tips": [
+        "Store the exported file in a secure location",
+        "Use strong encryption when storing or sharing the file",
+        "Delete the file when no longer needed",
+        "Never share your OTP secrets with anyone"
+      ]
+    },
+    "history": {
+      "title": "Recent Exports",
+      "empty": "No exports yet",
+      "emptyDescription": "Your export history will appear here"
+    },
+    "errors": {
+      "selectData": "Please select at least one data type to export",
+      "exportFailed": "Export failed"
+    },
+    "success": {
+      "exported": "Data exported successfully",
+      "backedUp": "Backup created successfully"
+    }
+  },
+  "language": {
+    "title": "Language",
+    "english": "English",
+    "vietnamese": "Vietnamese",
+    "autoDetect": "Auto Detect",
+    "switchTo": "Switch to {{language}}"
+  }
+} 

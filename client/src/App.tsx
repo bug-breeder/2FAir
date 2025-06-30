@@ -6,6 +6,9 @@ import AboutPage from "./pages/about.tsx";
 import PricingPage from "./pages/pricing.tsx";
 import LoginPage from "./pages/login.tsx";
 import HomePage from "./pages/home.tsx";
+import SettingsPage from "./pages/settings.tsx";
+import SecurityPage from "./pages/security.tsx";
+import ExportPage from "./pages/export.tsx";
 import ProtectedRoute from "./components/protected-route.tsx";
 
 // Component to scroll to top on route change
@@ -38,6 +41,30 @@ function App() {
             </ProtectedRoute>
           }
           path="/app"
+        />
+        <Route
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          }
+          path="/settings"
+        />
+        <Route
+          element={
+            <ProtectedRoute>
+              <SecurityPage />
+            </ProtectedRoute>
+          }
+          path="/security"
+        />
+        <Route
+          element={
+            <ProtectedRoute>
+              <ExportPage />
+            </ProtectedRoute>
+          }
+          path="/export"
         />
       </Routes>
     </>
