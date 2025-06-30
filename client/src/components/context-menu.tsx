@@ -89,7 +89,7 @@ export function ContextMenu({
               variant="flat"
               onPress={handleShowQR}
             >
-              Show QR code
+              Export code
             </Button>
             <Button
               startContent={<FaEdit />}
@@ -134,7 +134,7 @@ export function ContextMenu({
           className="text-xl"
           startContent={<MdQrCode className="text-2xl" />}
         >
-          <span className="text-lg lg:text-sm">Show QR code</span>
+          <span className="text-lg lg:text-sm">Export code</span>
         </DropdownItem>
         <DropdownItem key="edit" className="text-xl" startContent={<FaEdit />}>
           <span className="text-lg lg:text-sm">Edit</span>
