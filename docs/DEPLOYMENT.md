@@ -1,94 +1,74 @@
 # 2FAir Deployment Guide
 
-**Status**: ✅ **Phase 3 Complete - Clean Architecture + PRF Implementation**  
-**Last Updated**: January 2025  
-**Production Readiness**: Core features complete, ready for production hardening
+**Status**: ✅ **Phase 3 Complete** (Core Complete, Not Production Ready)  
+**Note**: For development and testing only. Production deployment requires Phase 4 completion.
 
-## Overview
+## Development Deployment
 
-This guide covers deploying 2FAir's zero-knowledge TOTP vault with clean architecture implementation. The system includes a Go backend with clean architecture, React frontend, PostgreSQL database, and WebAuthn PRF support for enhanced security.
-
-## Quick Start
-
-### Development Environment
-
+### Local Development
 ```bash
-# Clone repository
 git clone <repository-url>
-cd 2FAir
-
-# Start complete development environment
-cd server
+cd 2FAir/server
 docker-compose -f docker-compose.dev.yaml up -d
 
-# Services available at:
+# Available at:
 # Frontend: http://localhost:5173
 # Backend: http://localhost:8080
 # Database: localhost:5432
 ```
 
-### Production Deployment
-
+### Testing Environment
 ```bash
-# Build backend
-cd server
-make build-prod
+# Backend
+cd server && make build
 
-# Build frontend
-cd ../client
-yarn install
-yarn build
+# Frontend  
+cd client && yarn build
 
-# Configure environment variables
-cp .env.example .env.production
-# Edit .env.production with your settings
-
-# Start with Docker Compose
-docker-compose -f docker-compose.prod.yaml up -d
+# Deploy for testing
+docker-compose -f docker-compose.test.yaml up -d
 ```
 
-## Environment Configuration
+## Environment Variables
 
-### Required Environment Variables
-
+**Required for Development:**
 ```bash
 # Database
 DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=2fair_prod
+DB_NAME=2fair_dev
 DB_USER=2fair_user
-DB_PASSWORD=your_secure_db_password
+DB_PASSWORD=dev_password
 
-# JWT
-JWT_SIGNING_KEY=your_256_bit_secret_key_here
+# Security
+JWT_SIGNING_KEY=dev_256_bit_secret
 
 # WebAuthn
-WEBAUTHN_RP_ID=yourdomain.com
-WEBAUTHN_RP_ORIGINS=https://yourdomain.com
+WEBAUTHN_RP_ID=localhost
+WEBAUTHN_RP_ORIGINS=http://localhost:5173
 
 # OAuth
-OAUTH_GOOGLE_CLIENT_ID=your_google_client_id
-OAUTH_GOOGLE_CLIENT_SECRET=your_google_client_secret
+OAUTH_GOOGLE_CLIENT_ID=your_dev_client_id
+OAUTH_GOOGLE_CLIENT_SECRET=your_dev_client_secret
 ```
 
-## Security Considerations
-
-- SSL/TLS required for production
-- Secure environment variable storage
-- Regular security updates
-- Database backups
-- Rate limiting enabled
-
-## Monitoring
+## Development Health Checks
 
 ```bash
-# Health checks
-curl https://yourdomain.com/health
-
-# API status
-curl https://yourdomain.com/api/v1/public/status
+curl http://localhost:8080/health
+curl http://localhost:8080/api/v1/public/status
 ```
+
+## Production Readiness
+
+🚧 **Phase 4 Required for Production:**
+- Multi-device synchronization
+- Security audit and hardening
+- Performance optimization
+- Production monitoring
+- Backup and recovery systems
+- Rate limiting and abuse prevention
 
 ---
 
-**Deployment Status**: ✅ **Phase 3 Complete - Clean Architecture + PRF Implementation**
+**Current**: ✅ Phase 3 Complete (Core Features)  
+**Next**: 🚧 Phase 4 - Production Hardening Required

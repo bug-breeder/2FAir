@@ -9,6 +9,17 @@ interface ApiErrorResponse {
   statusCode?: number;
 }
 
+// Auth state management for 401 handling
+interface AuthManager {
+  onUnauthorized: () => void;
+}
+
+let authManager: AuthManager | null = null;
+
+export const setAuthManager = (manager: AuthManager) => {
+  authManager = manager;
+};
+
 class ApiClient {
   private client: AxiosInstance;
   private recentErrors: Set<string> = new Set();
@@ -19,23 +30,17 @@ class ApiClient {
       headers: {
         "Content-Type": "application/json",
       },
-      // Remove withCredentials since we're using JWT tokens
+      // Use httpOnly cookies for authentication
+      withCredentials: true,
     });
 
     this.setupInterceptors();
   }
 
   private setupInterceptors() {
-    // Request interceptor - add JWT token to requests
+    // Request interceptor - no need to add Authorization header for httpOnly cookies
     this.client.interceptors.request.use(
       (config) => {
-        // Get token from localStorage and add to Authorization header
-        const token = localStorage.getItem("authToken");
-
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-
         return config;
       },
       (error) => {
@@ -47,19 +52,22 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       (error: AxiosError<ApiErrorResponse>) => {
-        // Handle 401 errors by clearing token
+        // Handle 401 errors by calling auth manager
         if (error.response?.status === 401) {
-          localStorage.removeItem("authToken");
-          // Redirect to login if not already there
-          if (!window.location.pathname.includes("/login")) {
-            window.location.href = "/login";
+          if (authManager) {
+            authManager.onUnauthorized();
+          } else {
+            // Fallback: redirect to login if no auth manager
+            if (!window.location.pathname.includes("/login")) {
+              window.location.href = "/login";
+            }
           }
         } else {
           // Show error toast for other errors
           const message = this.getErrorMessage(error);
 
           // Only show error toast if it's not a duplicate within the last 2 seconds
-          const errorKey = `${error.response?.status}-${message}`;
+          const errorKey = `${error.response?.status || "unknown"}-${message}`;
 
           if (!this.recentErrors.has(errorKey)) {
             this.recentErrors.add(errorKey);
@@ -82,12 +90,18 @@ class ApiClient {
       return error.response.data.message;
     }
 
-    if (error.response?.status === 401) {
-      return "Please log in to continue";
+    const status = error.response?.status;
+
+    if (status === 401) {
+      return "Your session has expired. Please log in again.";
     }
 
-    if (error.response?.status === 403) {
+    if (status === 403) {
       return "You do not have permission to perform this action";
+    }
+
+    if (status && status >= 500) {
+      return "Server error. Please try again later.";
     }
 
     return "An unexpected error occurred";

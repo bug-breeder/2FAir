@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { RiVipCrown2Fill } from "react-icons/ri";
 import { MdSecurity, MdSettings, MdLogout, MdHelp } from "react-icons/md";
 import { SiWebauthn } from "react-icons/si";
+import { useTranslation } from "react-i18next";
 
 import { siteConfig } from "../config/site";
 import { useAuth } from "../providers/auth-provider";
@@ -36,6 +37,7 @@ import { ThemeSwitch } from "./theme-switch";
 import { WebAuthnRegistrationModal } from "./webauthn-registration-modal";
 
 export const Navbar = () => {
+  const { t } = useTranslation();
   const searchRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showWebAuthnRegistration, setShowWebAuthnRegistration] =
@@ -48,10 +50,10 @@ export const Navbar = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      toast.success("Logged out successfully");
+      toast.success(t('common.success'));
     } catch (error) {
       console.error("Logout failed:", error);
-      toast.error("Logout failed");
+      toast.error(t('common.error'));
     }
   };
 
@@ -61,7 +63,7 @@ export const Navbar = () => {
 
   const handleWebAuthnRegistrationSuccess = () => {
     setShowWebAuthnRegistration(false);
-    toast.success("WebAuthn credential registered successfully!");
+    toast.success(t('security.webauthn.registerSuccess'));
   };
 
   const handleSearch = (searchTerm: string) => {
@@ -195,7 +197,7 @@ export const Navbar = () => {
                 as="button"
                 className="transition-transform hover:scale-105"
                 color="primary"
-                name={user?.display_name || user?.email || "User"}
+                name={user?.email || "User"}
                 size="sm"
               />
             </DropdownTrigger>
@@ -209,14 +211,14 @@ export const Navbar = () => {
                 startContent={<MdSettings className="text-lg" />}
                 onPress={() => navigate("/settings")}
               >
-                Settings
+                {t('navigation.settings')}
               </DropdownItem>
               <DropdownItem
                 key="security"
                 startContent={<MdSecurity className="text-lg" />}
                 onPress={() => navigate("/security")}
               >
-                Security
+                {t('navigation.security')}
               </DropdownItem>
               <DropdownItem
                 key="webauthn"
@@ -239,7 +241,7 @@ export const Navbar = () => {
                 startContent={<MdLogout className="text-lg" />}
                 onPress={handleLogout}
               >
-                Log Out
+                {t('navigation.logout')}
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>
@@ -260,12 +262,12 @@ export const Navbar = () => {
           <div className="flex items-center gap-3">
             <Avatar
               showFallback
-              name={user?.display_name || user?.email || "User"}
+              name={user?.email || "User"}
               size="sm"
             />
             <div>
               <p className="font-semibold text-sm">
-                {user?.display_name || "User"}
+                {user?.email || "User"}
               </p>
               <p className="text-xs text-default-500">{user?.email}</p>
             </div>
@@ -273,30 +275,33 @@ export const Navbar = () => {
         </div>
 
         <div className="mx-4 flex flex-col gap-2">
-          {siteConfig.navMenuItems.map((item, index) => (
-            <NavbarMenuItem key={`${item.label}-${index}`}>
+          <NavbarMenuItem>
+            <Link
+              className="w-full"
+              color="foreground"
+              size="lg"
+              onPress={() => {
+                navigate("/settings");
+                setIsMenuOpen(false);
+              }}
+            >
+              {t('navigation.settings')}
+            </Link>
+          </NavbarMenuItem>
+
+          <NavbarMenuItem>
               <Link
                 className="w-full"
-                color={
-                  index === siteConfig.navMenuItems.length - 1
-                    ? "danger"
-                    : "foreground"
-                }
-                href={item.href}
+              color="foreground"
                 size="lg"
                 onPress={() => {
-                  if (item.href === "/logout") {
-                    handleLogout();
-                  } else {
-                    navigate(item.href);
-                  }
+                navigate("/security");
                   setIsMenuOpen(false);
                 }}
               >
-                {item.label}
+              {t('navigation.security')}
               </Link>
             </NavbarMenuItem>
-          ))}
 
           {/* Logout in mobile menu */}
           <NavbarMenuItem>
@@ -309,7 +314,7 @@ export const Navbar = () => {
                 setIsMenuOpen(false);
               }}
             >
-              Log Out
+              {t('navigation.logout')}
             </Link>
           </NavbarMenuItem>
         </div>

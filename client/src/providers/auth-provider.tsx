@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
+import { setAuthManager } from "../lib/api/client";
+
 interface User {
   id: string;
   email: string;
@@ -23,13 +25,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Register auth manager with API client for 401 handling
+  useEffect(() => {
+    setAuthManager({
+      onUnauthorized: () => {
+        // Clear user state and redirect to login
+        setUser(null);
+        if (!location.pathname.includes("/login")) {
+          navigate("/login", { replace: true });
+        }
+      },
+    });
+  }, [navigate, location.pathname]);
+
   useEffect(() => {
     checkAuth();
   }, []);
 
   // Refresh auth when navigating to app routes (in case user just logged in)
   useEffect(() => {
-    if (location.pathname.startsWith('/app')) {
+    if (location.pathname.startsWith("/app")) {
       refreshAuth();
     }
   }, [location.pathname]);
@@ -38,11 +53,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Make API call to check auth status (cookies sent automatically)
       const response = await fetch("/api/v1/auth/me", {
-        credentials: 'include', // Include cookies
+        credentials: "include", // Include cookies
       });
 
       if (response.ok) {
         const userData = await response.json();
+
         setUser(userData);
       } else {
         // Not authenticated or token expired
@@ -59,11 +75,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshAuth = async () => {
     try {
       const response = await fetch("/api/v1/auth/me", {
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (response.ok) {
         const userData = await response.json();
+
         setUser(userData);
       } else {
         setUser(null);
@@ -79,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Call logout endpoint to clear cookie
       await fetch("/api/v1/auth/logout", {
         method: "POST",
-        credentials: 'include', // Include cookies
+        credentials: "include", // Include cookies
       });
     } catch (error) {
       console.error("Logout API call failed:", error);

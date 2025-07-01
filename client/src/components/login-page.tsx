@@ -18,10 +18,10 @@ interface OAuthProvider {
 }
 
 interface LoginPageProps {
-  onLoginSuccess: () => void;
+  _onLoginSuccess: () => void;
 }
 
-export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
+export default function LoginPage({ _onLoginSuccess }: LoginPageProps) {
   const [providers, setProviders] = useState<OAuthProvider[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

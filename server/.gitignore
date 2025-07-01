@@ -23,6 +23,16 @@ go.work.sum
 
 # build directory
 build/
+bin/
 
-# Fly deployment file
-fly.toml
+# Executable files (Go binaries)
+server
+main
+*.bin
+
+# Temporary files
+tmp/
+
+# Air hot reload temporary files
+.air.toml
+

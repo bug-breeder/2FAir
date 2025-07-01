@@ -1,0 +1,186 @@
+{
+  "navigation": {
+    "settings": "Cài đặt",
+    "security": "Bảo mật",
+    "export": "Xuất dữ liệu",
+    "about": "Giới thiệu",
+    "pricing": "Bảng giá",
+    "docs": "Tài liệu",
+    "blog": "Blog",
+    "logout": "Đăng xuất",
+    "login": "Đăng nhập"
+  },
+  "common": {
+    "add": "Thêm",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "delete": "Xóa",
+    "edit": "Sửa",
+    "export": "Xuất",
+    "import": "Nhập",
+    "loading": "Đang tải",
+    "error": "Lỗi",
+    "success": "Thành công",
+    "close": "Đóng",
+    "confirm": "Xác nhận",
+    "back": "Quay lại",
+    "next": "Tiếp theo",
+    "active": "Hoạt động",
+    "revoke": "Thu hồi",
+    "current": "Hiện tại"
+  },
+  "home": {
+    "title": "Mã OTP của bạn",
+    "empty": {
+      "title": "Chưa có OTP nào",
+      "description": "Thêm TOTP đầu tiên để bắt đầu quản lý 2FA an toàn."
+    },
+    "search": {
+      "results": "{{count}} trong số {{total}} OTP{{pluralTotal}} {{query}}",
+      "matching": "khớp với \"{{query}}\"",
+      "noMatches": "Không có OTP nào khớp",
+      "noMatchesDescription": "Thử điều chỉnh từ khóa tìm kiếm để tìm thấy những gì bạn đang tìm."
+    }
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "description": "Quản lý tùy chọn tài khoản của bạn",
+    "appPreferences": {
+      "title": "Tùy chọn ứng dụng",
+      "description": "Tùy chỉnh trải nghiệm của bạn",
+      "autoRefresh": {
+        "title": "Tự động làm mới mã OTP"
+      },
+      "notifications": {
+        "title": "Hiển thị thông báo"
+      },
+      "autoBackup": {
+        "title": "Tự động sao lưu đã bật"
+      }
+    },
+    "language": {
+      "title": "Ngôn ngữ",
+      "description": "Chọn ngôn ngữ ưa thích",
+      "autoDetect": {
+        "title": "Tự động phát hiện ngôn ngữ",
+        "description": "Tự động phát hiện ngôn ngữ từ cài đặt trình duyệt"
+      },
+      "manual": {
+        "title": "Chọn ngôn ngữ thủ công",
+        "description": "Chọn một ngôn ngữ cụ thể"
+      },
+      "current": "Ngôn ngữ hiện tại",
+      "changeLanguage": "Thay đổi ngôn ngữ"
+    },
+    "dataManagement": {
+      "title": "Quản lý dữ liệu",
+      "description": "Xuất và quản lý dữ liệu của bạn",
+      "exportData": {
+        "title": "Xuất dữ liệu"
+      },
+      "securitySettings": {
+        "title": "Cài đặt bảo mật"
+      }
+    },
+    "savePreferences": "Lưu",
+    "preferencesSaved": "Đã lưu cài đặt",
+    "failedToSave": "Lưu thất bại"
+  },
+  "security": {
+    "title": "Bảo mật",
+    "description": "Bảo vệ tài khoản của bạn với các tính năng bảo mật nâng cao",
+    "webauthn": {
+      "title": "Thông tin xác thực WebAuthn",
+      "description": "Khóa bảo mật và passkey để bảo vệ nâng cao",
+      "addCredential": "Thêm thông tin xác thực",
+      "noCredentials": "Chưa đăng ký thông tin xác thực nào",
+      "noCredentialsDescription": "Thêm khóa bảo mật hoặc passkey để tăng cường bảo mật",
+      "addFirst": "Thêm thông tin xác thực đầu tiên",
+      "table": {
+        "credential": "THÔNG TIN XÁC THỰC",
+        "deviceType": "LOẠI THIẾT BỊ",
+        "created": "ĐƯỢC TẠO",
+        "lastUsed": "SỬ DỤNG LẦN CUỐI",
+        "actions": "HÀNH ĐỘNG"
+      },
+      "removeConfirm": "Bạn có chắc chắn muốn xóa thông tin xác thực WebAuthn này?",
+      "removeSuccess": "Xóa thông tin xác thực WebAuthn thành công",
+      "removeFailed": "Không thể xóa thông tin xác thực WebAuthn",
+      "registerSuccess": "Đăng ký thông tin xác thực WebAuthn thành công!"
+    },
+    "sessions": {
+      "title": "Phiên hoạt động",
+      "description": "Giám sát và quản lý các phiên đăng nhập của bạn",
+      "table": {
+        "device": "THIẾT BỊ",
+        "location": "VỊ TRÍ",
+        "ipAddress": "ĐỊA CHỈ IP",
+        "lastActive": "HOẠT ĐỘNG LẦN CUỐI",
+        "actions": "HÀNH ĐỘNG"
+      },
+      "revokeConfirm": "Bạn có chắc chắn muốn thu hồi phiên này?",
+      "revokeSuccess": "Thu hồi phiên thành công",
+      "revokeFailed": "Không thể thu hồi phiên"
+    }
+  },
+  "export": {
+    "title": "Xuất dữ liệu",
+    "description": "Tải xuống mã OTP và cài đặt của bạn",
+    "options": {
+      "title": "Tùy chọn xuất",
+      "description": "Chọn dữ liệu cần bao gồm",
+      "otpCodes": {
+        "title": "Mã OTP",
+        "description": "{{count}} mục"
+      },
+      "appSettings": {
+        "title": "Cài đặt ứng dụng"
+      },
+      "metadata": {
+        "title": "Metadata xuất"
+      },
+      "estimatedSize": {
+        "title": "Kích thước tệp ước tính"
+      }
+    },
+    "actions": {
+      "title": "Hành động xuất",
+      "description": "Tải xuống hoặc sao lưu dữ liệu của bạn",
+      "downloading": "Đang xuất...",
+      "downloadExport": "Tải xuống",
+      "backupToCloud": "Sao lưu lên Cloud"
+    },
+    "security": {
+      "title": "Thông báo bảo mật",
+      "description": "Thông tin bảo mật quan trọng",
+      "warning": "Dữ liệu xuất chứa thông tin nhạy cảm bao gồm cả secret OTP.",
+      "tips": [
+        "Lưu trữ tệp đã xuất ở nơi an toàn",
+        "Sử dụng mã hóa mạnh khi lưu trữ hoặc chia sẻ tệp",
+        "Xóa tệp khi không còn cần thiết",
+        "Không bao giờ chia sẻ secret OTP của bạn với bất kỳ ai"
+      ]
+    },
+    "history": {
+      "title": "Xuất gần đây",
+      "description": "Lịch sử xuất của bạn",
+      "empty": "Chưa có lần xuất nào",
+      "emptyDescription": "Lịch sử xuất của bạn sẽ xuất hiện ở đây"
+    },
+    "errors": {
+      "selectData": "Vui lòng chọn ít nhất một loại dữ liệu để xuất",
+      "exportFailed": "Xuất thất bại"
+    },
+    "success": {
+      "exported": "Xuất dữ liệu thành công",
+      "backedUp": "Tạo bản sao lưu thành công"
+    }
+  },
+  "language": {
+    "title": "Ngôn ngữ",
+    "english": "Tiếng Anh",
+    "vietnamese": "Tiếng Việt",
+    "autoDetect": "Tự động phát hiện",
+    "switchTo": "Chuyển sang {{language}}"
+  }
+} 
