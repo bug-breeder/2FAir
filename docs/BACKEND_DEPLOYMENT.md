@@ -13,6 +13,31 @@ The 2FAir backend is deployed as a containerized service on Google Cloud Run wit
 
 ## 📋 Prerequisites
 
+### Common Issues & Solutions
+
+Before starting, be aware of these common issues:
+
+1. **Service Account Names**: Must start with a letter (not number)
+   - ❌ `2fair-staging-sa` (invalid)
+   - ✅ `twofair-staging-sa` (valid)
+
+2. **Project ID**: Must be properly set and have correct permissions
+   ```bash
+   # Check current project
+   gcloud config get-value project
+   
+   # List available projects
+   gcloud projects list
+   
+   # Set correct project
+   gcloud config set project YOUR-ACTUAL-PROJECT-ID
+   ```
+
+3. **Required IAM Roles**: Your account needs these roles:
+   - Project Editor or Project Owner
+   - Service Account Admin
+   - Security Admin
+
 ### Tools Required
 ```bash
 # Google Cloud CLI
@@ -51,23 +76,23 @@ gcloud services enable \
 
 ### 2. Create Service Accounts
 ```bash
-# Staging service account
-gcloud iam service-accounts create 2fair-staging-sa \
+# Staging service account (note: names must start with letter, not number)
+gcloud iam service-accounts create twofair-staging-sa \
     --description="2FAir Staging Service Account" \
     --display-name="2FAir Staging"
 
 # Production service account  
-gcloud iam service-accounts create 2fair-production-sa \
+gcloud iam service-accounts create twofair-production-sa \
     --description="2FAir Production Service Account" \
     --display-name="2FAir Production"
 
 # Grant Secret Manager access
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT \
-    --member="serviceAccount:2fair-staging-sa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com" \
+    --member="serviceAccount:twofair-staging-sa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com" \
     --role="roles/secretmanager.secretAccessor"
 
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT \
-    --member="serviceAccount:2fair-production-sa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com" \
+    --member="serviceAccount:twofair-production-sa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com" \
     --role="roles/secretmanager.secretAccessor"
 ```
 
@@ -279,7 +304,7 @@ gcloud secrets list
 gcloud secrets versions access latest --secret=neon-db-password
 
 # Check service account permissions
-gcloud iam service-accounts get-iam-policy 2fair-staging-sa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com
+gcloud iam service-accounts get-iam-policy twofair-staging-sa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com
 ```
 
 ### Domain Issues

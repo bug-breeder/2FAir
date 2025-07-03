@@ -50,21 +50,21 @@ gcloud services enable \
 
 ### 2.1 Create Service Accounts
 ```bash
-# Create staging service account
-gcloud iam service-accounts create 2fair-staging-sa \
+# Create staging service account (names must start with letter)
+gcloud iam service-accounts create twofair-staging-sa \
     --description="2FAir Staging Service Account"
 
 # Create production service account
-gcloud iam service-accounts create 2fair-production-sa \
+gcloud iam service-accounts create twofair-production-sa \
     --description="2FAir Production Service Account"
 
 # Grant permissions
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT \
-    --member="serviceAccount:2fair-staging-sa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com" \
+    --member="serviceAccount:twofair-staging-sa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com" \
     --role="roles/secretmanager.secretAccessor"
 
 gcloud projects add-iam-policy-binding $GOOGLE_CLOUD_PROJECT \
-    --member="serviceAccount:2fair-production-sa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com" \
+    --member="serviceAccount:twofair-production-sa@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com" \
     --role="roles/secretmanager.secretAccessor"
 ```
 

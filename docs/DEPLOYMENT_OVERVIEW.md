@@ -11,6 +11,7 @@ This deployment documentation provides everything needed to deploy the 2FAir app
 | Guide | Purpose | Time Required |
 |-------|---------|---------------|
 | **[Quick Start Deployment](QUICK_START_DEPLOYMENT.md)** | Fast-track 30-minute deployment | ~30 minutes |
+| **[Troubleshooting Guide](TROUBLESHOOTING.md)** | Common issues and solutions | Reference |
 | **[Backend Deployment](BACKEND_DEPLOYMENT.md)** | Detailed Google Cloud Run setup | ~45 minutes |  
 | **[Frontend Deployment](FRONTEND_DEPLOYMENT.md)** | Firebase Hosting & static pages | ~30 minutes |
 | **[DNS Configuration](DNS_CONFIGURATION.md)** | Porkbun DNS setup for 2fair.app | ~15 minutes |
