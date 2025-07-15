@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import {
   Navbar as HeroUINavbar,
   NavbarBrand,
@@ -34,7 +34,15 @@ import { toast } from "../lib/toast";
 
 import { FAir, SearchIcon } from "./icons";
 import { ThemeSwitch } from "./theme-switch";
+import { LanguageSwitcher } from "./language-switcher";
 import { WebAuthnRegistrationModal } from "./webauthn-registration-modal";
+
+// Constants
+const KEYBOARD_SHORTCUTS = {
+  SEARCH: "k",
+  ESCAPE: "Escape",
+  ENTER: "Enter",
+} as const;
 
 export const Navbar = () => {
   const { t } = useTranslation();
@@ -42,36 +50,49 @@ export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showWebAuthnRegistration, setShowWebAuthnRegistration] =
     useState(false);
+
   const { user, logout, isAuthenticated } = useAuth();
   const { searchQuery, setSearchQuery, clearSearch } = useSearch();
   const { data: otps = [] } = useListOtps();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
+  // Event handlers
+  const handleLogout = useCallback(async () => {
     try {
       await logout();
-      toast.success(t('common.success'));
+      toast.success(t("common.success"));
     } catch (error) {
       console.error("Logout failed:", error);
-      toast.error(t('common.error'));
+      toast.error(t("common.error"));
     }
-  };
+  }, [logout, t]);
 
-  const handleWebAuthnRegistration = () => {
+  const handleWebAuthnRegistration = useCallback(() => {
     setShowWebAuthnRegistration(true);
-  };
+  }, []);
 
-  const handleWebAuthnRegistrationSuccess = () => {
+  const handleWebAuthnRegistrationSuccess = useCallback(() => {
     setShowWebAuthnRegistration(false);
-    toast.success(t('security.webauthn.registerSuccess'));
-  };
+    toast.success(t("security.webauthn.registerSuccess"));
+  }, [t]);
 
-  const handleSearch = (searchTerm: string) => {
-    const trimmedTerm = searchTerm.trim();
+  const handleSearch = useCallback(
+    (searchTerm: string) => {
+      const trimmedTerm = searchTerm.trim();
+      setSearchQuery(trimmedTerm);
+    },
+    [setSearchQuery],
+  );
 
-    setSearchQuery(trimmedTerm);
-  };
+  const handleMenuItemPress = useCallback(
+    (path: string) => {
+      navigate(path);
+      setIsMenuOpen(false);
+    },
+    [navigate],
+  );
 
+  // Search component
   const searchInput = (
     <Input
       ref={searchRef}
@@ -82,7 +103,7 @@ export const Navbar = () => {
       }}
       endContent={
         <Kbd className="hidden lg:inline-block" keys={["command"]}>
-          K
+          {KEYBOARD_SHORTCUTS.SEARCH.toUpperCase()}
         </Kbd>
       }
       labelPlacement="outside"
@@ -94,10 +115,10 @@ export const Navbar = () => {
       value={searchQuery}
       onChange={(e) => handleSearch(e.target.value)}
       onKeyDown={(e) => {
-        if (e.key === "Enter") {
+        if (e.key === KEYBOARD_SHORTCUTS.ENTER) {
           handleSearch(e.currentTarget.value);
         }
-        if (e.key === "Escape") {
+        if (e.key === KEYBOARD_SHORTCUTS.ESCAPE) {
           clearSearch();
           if (searchRef.current) {
             searchRef.current.value = "";
@@ -110,14 +131,16 @@ export const Navbar = () => {
   // Keyboard shortcut for search
   useEffect(() => {
     const handleKeydown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key === "k") {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key === KEYBOARD_SHORTCUTS.SEARCH
+      ) {
         event.preventDefault();
         searchRef.current?.focus();
       }
     };
 
     window.addEventListener("keydown", handleKeydown);
-
     return () => window.removeEventListener("keydown", handleKeydown);
   }, []);
 
@@ -164,38 +187,26 @@ export const Navbar = () => {
         )}
       </NavbarContent>
 
-      <NavbarContent
-        className="hidden sm:flex basis-1/5 sm:basis-full"
-        justify="end"
-      >
-        <NavbarItem className="hidden sm:flex gap-2">
+      <NavbarContent className="hidden sm:flex gap-4" justify="center">
+        <NavbarItem className="hidden lg:flex w-full max-w-xs">
+          {searchInput}
+        </NavbarItem>
+      </NavbarContent>
+
+      <NavbarContent justify="end">
+        <NavbarItem className="hidden sm:flex">
+          <LanguageSwitcher />
+        </NavbarItem>
+        <NavbarItem className="hidden sm:flex">
           <ThemeSwitch />
         </NavbarItem>
-
-        <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
-
-        <NavbarItem className="hidden md:flex">
-          <Button
-            isExternal
-            as={Link}
-            className="text-sm font-normal text-default-600 bg-default-100"
-            href={siteConfig.links.sponsor}
-            size="sm"
-            startContent={<RiVipCrown2Fill className="text-warning" />}
-            variant="flat"
-          >
-            Support
-          </Button>
-        </NavbarItem>
-
-        {/* User Avatar Dropdown */}
         <NavbarItem>
           <Dropdown placement="bottom-end">
             <DropdownTrigger>
               <Avatar
-                showFallback
                 as="button"
-                className="transition-transform hover:scale-105"
+                showFallback
+                className="transition-transform"
                 color="primary"
                 name={user?.email || "User"}
                 size="sm"
@@ -211,14 +222,14 @@ export const Navbar = () => {
                 startContent={<MdSettings className="text-lg" />}
                 onPress={() => navigate("/settings")}
               >
-                {t('navigation.settings')}
+                {t("navigation.settings")}
               </DropdownItem>
               <DropdownItem
                 key="security"
                 startContent={<MdSecurity className="text-lg" />}
                 onPress={() => navigate("/security")}
               >
-                {t('navigation.security')}
+                {t("navigation.security")}
               </DropdownItem>
               <DropdownItem
                 key="webauthn"
@@ -241,7 +252,7 @@ export const Navbar = () => {
                 startContent={<MdLogout className="text-lg" />}
                 onPress={handleLogout}
               >
-                {t('navigation.logout')}
+                {t("navigation.logout")}
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>
@@ -260,15 +271,9 @@ export const Navbar = () => {
         {/* User Info in Mobile Menu */}
         <div className="mx-4 mb-4 p-3 bg-default-100 rounded-lg">
           <div className="flex items-center gap-3">
-            <Avatar
-              showFallback
-              name={user?.email || "User"}
-              size="sm"
-            />
+            <Avatar showFallback name={user?.email || "User"} size="sm" />
             <div>
-              <p className="font-semibold text-sm">
-                {user?.email || "User"}
-              </p>
+              <p className="font-semibold text-sm">{user?.email || "User"}</p>
               <p className="text-xs text-default-500">{user?.email}</p>
             </div>
           </div>
@@ -276,34 +281,28 @@ export const Navbar = () => {
 
         <div className="mx-4 flex flex-col gap-2">
           <NavbarMenuItem>
+            <LanguageSwitcher />
+          </NavbarMenuItem>
+          <NavbarMenuItem>
             <Link
               className="w-full"
               color="foreground"
               size="lg"
-              onPress={() => {
-                navigate("/settings");
-                setIsMenuOpen(false);
-              }}
+              onPress={() => handleMenuItemPress("/settings")}
             >
-              {t('navigation.settings')}
+              {t("navigation.settings")}
             </Link>
           </NavbarMenuItem>
-
           <NavbarMenuItem>
-              <Link
-                className="w-full"
+            <Link
+              className="w-full"
               color="foreground"
-                size="lg"
-                onPress={() => {
-                navigate("/security");
-                  setIsMenuOpen(false);
-                }}
-              >
-              {t('navigation.security')}
-              </Link>
-            </NavbarMenuItem>
-
-          {/* Logout in mobile menu */}
+              size="lg"
+              onPress={() => handleMenuItemPress("/security")}
+            >
+              {t("navigation.security")}
+            </Link>
+          </NavbarMenuItem>
           <NavbarMenuItem>
             <Link
               className="w-full"
@@ -314,7 +313,7 @@ export const Navbar = () => {
                 setIsMenuOpen(false);
               }}
             >
-              {t('navigation.logout')}
+              {t("navigation.logout")}
             </Link>
           </NavbarMenuItem>
         </div>

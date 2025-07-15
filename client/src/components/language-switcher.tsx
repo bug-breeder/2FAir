@@ -14,27 +14,29 @@ export function LanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
 
   const languages = [
-    { code: 'auto', name: 'Auto Detect' },
-    { code: 'en', name: t('language.english') },
-    { code: 'vi', name: t('language.vietnamese') },
+    { code: "auto", name: "Auto Detect" },
+    { code: "en", name: t("language.english") },
+    { code: "vi", name: t("language.vietnamese") },
   ];
 
   const getCurrentLanguage = () => {
-    const saved = localStorage.getItem('i18nextLng');
-    if (!saved || saved === 'auto') {
+    const saved = localStorage.getItem("i18nextLng");
+    if (!saved || saved === "auto") {
       return languages[0]; // Auto detect
     }
-    return languages.find(lang => lang.code === saved) || languages[1]; // Default to EN
+    return languages.find((lang) => lang.code === saved) || languages[1]; // Default to EN
   };
 
   const currentLanguage = getCurrentLanguage();
 
   const handleLanguageChange = (languageCode: string) => {
-    if (languageCode === 'auto') {
-      localStorage.removeItem('i18nextLng');
+    if (languageCode === "auto") {
+      localStorage.removeItem("i18nextLng");
       // Detect browser language
-      const browserLang = navigator.language.split('-')[0];
-      const supportedLang = ['en', 'vi'].includes(browserLang) ? browserLang : 'en';
+      const browserLang = navigator.language.split("-")[0];
+      const supportedLang = ["en", "vi"].includes(browserLang)
+        ? browserLang
+        : "en";
       i18n.changeLanguage(supportedLang);
     } else {
       i18n.changeLanguage(languageCode);
@@ -53,8 +55,8 @@ export function LanguageSwitcher() {
           {currentLanguage.code}
         </Button>
       </DropdownTrigger>
-      <DropdownMenu 
-        aria-label={t('language.title')}
+      <DropdownMenu
+        aria-label={t("language.title")}
         selectionMode="single"
         selectedKeys={new Set([currentLanguage.code])}
       >
@@ -69,4 +71,4 @@ export function LanguageSwitcher() {
       </DropdownMenu>
     </Dropdown>
   );
-} 
+}

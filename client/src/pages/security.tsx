@@ -47,10 +47,13 @@ interface ActiveSession {
 
 export default function SecurityPage() {
   const { user } = useAuth();
-  const [showWebAuthnRegistration, setShowWebAuthnRegistration] = useState(false);
-  
+  const [showWebAuthnRegistration, setShowWebAuthnRegistration] =
+    useState(false);
+
   // WebAuthn credentials state
-  const [webAuthnCredentials, setWebAuthnCredentials] = useState<WebAuthnCredential[]>([]);
+  const [webAuthnCredentials, setWebAuthnCredentials] = useState<
+    WebAuthnCredential[]
+  >([]);
   const [isLoadingCredentials, setIsLoadingCredentials] = useState(true);
 
   // Active sessions state
@@ -61,7 +64,9 @@ export default function SecurityPage() {
   useEffect(() => {
     const loadCredentials = async () => {
       try {
-        const credentials = await apiClient.get<WebAuthnCredential[]>("/api/v1/webauthn/credentials");
+        const credentials = await apiClient.get<WebAuthnCredential[]>(
+          "/api/v1/webauthn/credentials",
+        );
         setWebAuthnCredentials(credentials);
       } catch (error) {
         console.error("Failed to load WebAuthn credentials:", error);
@@ -77,7 +82,9 @@ export default function SecurityPage() {
   useEffect(() => {
     const loadSessions = async () => {
       try {
-        const sessions = await apiClient.get<ActiveSession[]>("/api/v1/auth/sessions");
+        const sessions = await apiClient.get<ActiveSession[]>(
+          "/api/v1/auth/sessions",
+        );
         setActiveSessions(sessions);
       } catch (error) {
         console.error("Failed to load active sessions:", error);
@@ -110,14 +117,16 @@ export default function SecurityPage() {
 
   const handleDeleteCredential = async (credentialId: string) => {
     const confirmation = window.confirm(
-      "Are you sure you want to remove this WebAuthn credential?"
+      "Are you sure you want to remove this WebAuthn credential?",
     );
-    
+
     if (!confirmation) return;
 
     try {
       await apiClient.delete(`/api/v1/webauthn/credentials/${credentialId}`);
-      setWebAuthnCredentials(prev => prev.filter(cred => cred.id !== credentialId));
+      setWebAuthnCredentials((prev) =>
+        prev.filter((cred) => cred.id !== credentialId),
+      );
       toast.success("WebAuthn credential removed successfully");
     } catch (error) {
       console.error("Failed to delete WebAuthn credential:", error);
@@ -127,14 +136,16 @@ export default function SecurityPage() {
 
   const handleRevokeSession = async (sessionId: string) => {
     const confirmation = window.confirm(
-      "Are you sure you want to revoke this session?"
+      "Are you sure you want to revoke this session?",
     );
-    
+
     if (!confirmation) return;
 
     try {
       await apiClient.delete(`/api/v1/auth/sessions/${sessionId}`);
-      setActiveSessions(prev => prev.filter(session => session.id !== sessionId));
+      setActiveSessions((prev) =>
+        prev.filter((session) => session.id !== sessionId),
+      );
       toast.success("Session revoked successfully");
     } catch (error) {
       console.error("Failed to revoke session:", error);
@@ -148,7 +159,9 @@ export default function SecurityPage() {
     // Reload credentials
     const loadCredentials = async () => {
       try {
-        const credentials = await apiClient.get<WebAuthnCredential[]>("/api/v1/webauthn/credentials");
+        const credentials = await apiClient.get<WebAuthnCredential[]>(
+          "/api/v1/webauthn/credentials",
+        );
         setWebAuthnCredentials(credentials);
       } catch (error) {
         console.error("Failed to reload credentials:", error);
@@ -178,7 +191,9 @@ export default function SecurityPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-default-700">Security</h1>
-              <p className="text-small text-default-500">Protect your account with advanced security features</p>
+              <p className="text-small text-default-500">
+                Protect your account with advanced security features
+              </p>
             </div>
           </div>
 
@@ -191,8 +206,12 @@ export default function SecurityPage() {
                     <SiWebauthn className="text-medium text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold">WebAuthn Credentials</h2>
-                    <p className="text-small text-default-500">Security keys and passkeys for enhanced protection</p>
+                    <h2 className="text-xl font-semibold">
+                      WebAuthn Credentials
+                    </h2>
+                    <p className="text-small text-default-500">
+                      Security keys and passkeys for enhanced protection
+                    </p>
                   </div>
                 </div>
                 <Button
@@ -212,7 +231,7 @@ export default function SecurityPage() {
                   </div>
                 ) : webAuthnCredentials.length > 0 ? (
                   <div className="overflow-x-auto">
-                    <Table 
+                    <Table
                       aria-label="WebAuthn credentials table"
                       classNames={{
                         wrapper: "shadow-none border border-divider rounded-lg",
@@ -222,9 +241,15 @@ export default function SecurityPage() {
                     >
                       <TableHeader>
                         <TableColumn>CREDENTIAL</TableColumn>
-                        <TableColumn className="hidden sm:table-cell">DEVICE TYPE</TableColumn>
-                        <TableColumn className="hidden md:table-cell">CREATED</TableColumn>
-                        <TableColumn className="hidden md:table-cell">LAST USED</TableColumn>
+                        <TableColumn className="hidden sm:table-cell">
+                          DEVICE TYPE
+                        </TableColumn>
+                        <TableColumn className="hidden md:table-cell">
+                          CREATED
+                        </TableColumn>
+                        <TableColumn className="hidden md:table-cell">
+                          LAST USED
+                        </TableColumn>
                         <TableColumn>ACTIONS</TableColumn>
                       </TableHeader>
                       <TableBody>
@@ -236,8 +261,12 @@ export default function SecurityPage() {
                                   <MdFingerprint className="text-small text-secondary" />
                                 </div>
                                 <div>
-                                  <p className="text-medium font-semibold">{credential.name}</p>
-                                  <p className="text-tiny text-default-500 sm:hidden">{credential.device_type}</p>
+                                  <p className="text-medium font-semibold">
+                                    {credential.name}
+                                  </p>
+                                  <p className="text-tiny text-default-500 sm:hidden">
+                                    {credential.device_type}
+                                  </p>
                                 </div>
                               </div>
                             </TableCell>
@@ -258,7 +287,9 @@ export default function SecurityPage() {
                                 size="sm"
                                 variant="light"
                                 isIconOnly
-                                onPress={() => handleDeleteCredential(credential.id)}
+                                onPress={() =>
+                                  handleDeleteCredential(credential.id)
+                                }
                               >
                                 <MdDelete className="text-small" />
                               </Button>
@@ -273,8 +304,12 @@ export default function SecurityPage() {
                     <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mx-auto mb-4">
                       <SiWebauthn className="text-xl text-primary/50" />
                     </div>
-                    <p className="text-medium font-semibold text-default-600 mb-2">No credentials registered</p>
-                    <p className="text-small text-default-500 mb-4">Add a security key or passkey for enhanced security</p>
+                    <p className="text-medium font-semibold text-default-600 mb-2">
+                      No credentials registered
+                    </p>
+                    <p className="text-small text-default-500 mb-4">
+                      Add a security key or passkey for enhanced security
+                    </p>
                     <Button
                       color="success"
                       variant="bordered"
@@ -298,7 +333,9 @@ export default function SecurityPage() {
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold">Active Sessions</h2>
-                    <p className="text-small text-default-500">Monitor and manage your login sessions</p>
+                    <p className="text-small text-default-500">
+                      Monitor and manage your login sessions
+                    </p>
                   </div>
                 </div>
               </CardHeader>
@@ -309,7 +346,7 @@ export default function SecurityPage() {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <Table 
+                    <Table
                       aria-label="Active sessions table"
                       classNames={{
                         wrapper: "shadow-none border border-divider rounded-lg",
@@ -319,9 +356,15 @@ export default function SecurityPage() {
                     >
                       <TableHeader>
                         <TableColumn>DEVICE</TableColumn>
-                        <TableColumn className="hidden md:table-cell">LOCATION</TableColumn>
-                        <TableColumn className="hidden lg:table-cell">IP ADDRESS</TableColumn>
-                        <TableColumn className="hidden sm:table-cell">LAST ACTIVE</TableColumn>
+                        <TableColumn className="hidden md:table-cell">
+                          LOCATION
+                        </TableColumn>
+                        <TableColumn className="hidden lg:table-cell">
+                          IP ADDRESS
+                        </TableColumn>
+                        <TableColumn className="hidden sm:table-cell">
+                          LAST ACTIVE
+                        </TableColumn>
                         <TableColumn>ACTIONS</TableColumn>
                       </TableHeader>
                       <TableBody>
@@ -333,14 +376,22 @@ export default function SecurityPage() {
                                   <MdDevices className="text-small text-warning" />
                                 </div>
                                 <div>
-                                  <p className="text-medium font-semibold">{session.device}</p>
+                                  <p className="text-medium font-semibold">
+                                    {session.device}
+                                  </p>
                                   <div className="flex items-center gap-2 mt-1">
                                     {session.is_current && (
-                                      <Chip size="sm" color="success" variant="flat">
+                                      <Chip
+                                        size="sm"
+                                        color="success"
+                                        variant="flat"
+                                      >
                                         Current
                                       </Chip>
                                     )}
-                                    <p className="text-tiny text-default-500 md:hidden">{session.location}</p>
+                                    <p className="text-tiny text-default-500 md:hidden">
+                                      {session.location}
+                                    </p>
                                   </div>
                                 </div>
                               </div>
@@ -362,7 +413,9 @@ export default function SecurityPage() {
                                   color="danger"
                                   size="sm"
                                   variant="light"
-                                  onPress={() => handleRevokeSession(session.id)}
+                                  onPress={() =>
+                                    handleRevokeSession(session.id)
+                                  }
                                 >
                                   Revoke
                                 </Button>
@@ -392,4 +445,4 @@ export default function SecurityPage() {
       </section>
     </DefaultLayout>
   );
-} 
+}

@@ -31,3 +31,6 @@ bun.lockb
 
 # Coverage dir
 coverage/
+
+# Firebase debug logs
+.firebase/

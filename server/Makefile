@@ -205,6 +205,58 @@ build-prod: ## Build for production
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
 	@echo "Production build complete: $(BUILD_DIR)/$(BINARY_NAME)"
 
+##@ Deployment
+.PHONY: deploy-production
+deploy-production: ## Deploy to production (loads .env.production)
+	@echo "🚀 Deploying to Production Environment"
+	@echo "Loading .env.production configuration..."
+	@if [ ! -f .env.production ]; then \
+		echo "❌ .env.production file not found!"; \
+		exit 1; \
+	fi
+	@set -a && . ./.env.production && set +a && ./scripts/deploy-production.sh
+
+.PHONY: deploy-staging
+deploy-staging: ## Deploy to staging (loads .env.staging)
+	@echo "🚀 Deploying to Staging Environment"
+	@echo "Loading .env.staging configuration..."
+	@if [ ! -f .env.staging ]; then \
+		echo "❌ .env.staging file not found!"; \
+		exit 1; \
+	fi
+	@set -a && . ./.env.staging && set +a && ./scripts/deploy-staging.sh
+
+.PHONY: deploy-check
+deploy-check: ## Check deployment configuration
+	@echo "🔍 Checking deployment configuration..."
+	@echo "Production config:"
+	@if [ -f .env.production ]; then \
+		echo "✅ .env.production exists"; \
+		grep -E "^(ENVIRONMENT|SERVER_URL|OAUTH_GOOGLE_CLIENT_ID)" .env.production | head -3; \
+	else \
+		echo "❌ .env.production missing"; \
+	fi
+	@echo ""
+	@echo "Staging config:"
+	@if [ -f .env.staging ]; then \
+		echo "✅ .env.staging exists"; \
+		grep -E "^(ENVIRONMENT|SERVER_URL|OAUTH_GOOGLE_CLIENT_ID)" .env.staging | head -3; \
+	else \
+		echo "❌ .env.staging missing"; \
+	fi
+	@echo ""
+	@echo "Deployment scripts:"
+	@if [ -x scripts/deploy-production.sh ]; then \
+		echo "✅ scripts/deploy-production.sh executable"; \
+	else \
+		echo "❌ scripts/deploy-production.sh missing or not executable"; \
+	fi
+	@if [ -x scripts/deploy-staging.sh ]; then \
+		echo "✅ scripts/deploy-staging.sh executable"; \
+	else \
+		echo "❌ scripts/deploy-staging.sh missing or not executable"; \
+	fi
+
 ##@ Utilities
 .PHONY: swagger
 swagger: ## Generate Swagger documentation

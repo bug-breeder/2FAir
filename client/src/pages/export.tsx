@@ -23,23 +23,23 @@ export default function ExportPage() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const { data: otps = [] } = useListOtps();
-  
+
   // Type assertion for otps array
   const typedOtps = otps as OTP[];
-  
+
   const [exportOptions, setExportOptions] = useState({
     includeOtps: true,
     includeSettings: true,
     includeMetadata: false,
     format: "json",
   });
-  
+
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
 
   const handleExport = async () => {
     if (!exportOptions.includeOtps && !exportOptions.includeSettings) {
-      toast.error(t('export.errors.selectData'));
+      toast.error(t("export.errors.selectData"));
       return;
     }
 
@@ -49,7 +49,7 @@ export default function ExportPage() {
     try {
       // Simulate progress updates
       const progressInterval = setInterval(() => {
-        setExportProgress(prev => {
+        setExportProgress((prev) => {
           if (prev >= 90) {
             clearInterval(progressInterval);
             return prev;
@@ -100,20 +100,20 @@ export default function ExportPage() {
       const blob = new Blob([JSON.stringify(exportData, null, 2)], {
         type: "application/json",
       });
-      
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `2fair-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `2fair-backup-${new Date().toISOString().split("T")[0]}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success(t('export.success.exported'));
+      toast.success(t("export.success.exported"));
     } catch (error) {
       console.error("Failed to export data:", error);
-      toast.error(t('export.errors.exportFailed'));
+      toast.error(t("export.errors.exportFailed"));
     } finally {
       setIsExporting(false);
       setExportProgress(0);
@@ -126,11 +126,11 @@ export default function ExportPage() {
         include_otps: exportOptions.includeOtps,
         include_settings: exportOptions.includeSettings,
       });
-      
-      toast.success(t('export.success.backedUp'));
+
+      toast.success(t("export.success.backedUp"));
     } catch (error) {
       console.error("Failed to create backup:", error);
-      toast.error(t('export.errors.exportFailed'));
+      toast.error(t("export.errors.exportFailed"));
     }
   };
 
@@ -158,8 +158,12 @@ export default function ExportPage() {
               <MdDownload className="text-lg text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-default-700">{t('export.title')}</h1>
-              <p className="text-small text-default-500">Download your OTP codes and settings securely</p>
+              <h1 className="text-2xl font-bold text-default-700">
+                {t("export.title")}
+              </h1>
+              <p className="text-small text-default-500">
+                Download your OTP codes and settings securely
+              </p>
             </div>
           </div>
 
@@ -172,8 +176,12 @@ export default function ExportPage() {
                     <MdStorage className="text-medium text-secondary" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold">{t('export.options.title')}</h2>
-                    <p className="text-small text-default-500">Choose what data to include in your export</p>
+                    <h2 className="text-xl font-semibold">
+                      {t("export.options.title")}
+                    </h2>
+                    <p className="text-small text-default-500">
+                      Choose what data to include in your export
+                    </p>
                   </div>
                 </div>
               </CardHeader>
@@ -183,7 +191,12 @@ export default function ExportPage() {
                     <Checkbox
                       size="sm"
                       isSelected={exportOptions.includeOtps}
-                      onValueChange={(value) => setExportOptions({ ...exportOptions, includeOtps: value })}
+                      onValueChange={(value) =>
+                        setExportOptions({
+                          ...exportOptions,
+                          includeOtps: value,
+                        })
+                      }
                       classNames={{
                         wrapper: "group-data-[selected=true]:bg-success",
                       }}
@@ -193,17 +206,28 @@ export default function ExportPage() {
                         <MdSecurity className="text-small text-success" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-medium font-semibold">{t('export.options.otpCodes.title')}</p>
-                        <p className="text-tiny text-default-500">{t('export.options.otpCodes.description', { count: typedOtps.length })}</p>
+                        <p className="text-medium font-semibold">
+                          {t("export.options.otpCodes.title")}
+                        </p>
+                        <p className="text-tiny text-default-500">
+                          {t("export.options.otpCodes.description", {
+                            count: typedOtps.length,
+                          })}
+                        </p>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-default-50">
                     <Checkbox
                       size="sm"
                       isSelected={exportOptions.includeSettings}
-                      onValueChange={(value) => setExportOptions({ ...exportOptions, includeSettings: value })}
+                      onValueChange={(value) =>
+                        setExportOptions({
+                          ...exportOptions,
+                          includeSettings: value,
+                        })
+                      }
                       classNames={{
                         wrapper: "group-data-[selected=true]:bg-success",
                       }}
@@ -213,17 +237,26 @@ export default function ExportPage() {
                         <MdStorage className="text-small text-warning" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-medium font-semibold">{t('export.options.appSettings.title')}</p>
-                        <p className="text-tiny text-default-500">Your app preferences and configuration</p>
+                        <p className="text-medium font-semibold">
+                          {t("export.options.appSettings.title")}
+                        </p>
+                        <p className="text-tiny text-default-500">
+                          Your app preferences and configuration
+                        </p>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-default-50">
                     <Checkbox
                       size="sm"
                       isSelected={exportOptions.includeMetadata}
-                      onValueChange={(value) => setExportOptions({ ...exportOptions, includeMetadata: value })}
+                      onValueChange={(value) =>
+                        setExportOptions({
+                          ...exportOptions,
+                          includeMetadata: value,
+                        })
+                      }
                       classNames={{
                         wrapper: "group-data-[selected=true]:bg-success",
                       }}
@@ -233,8 +266,12 @@ export default function ExportPage() {
                         <MdInfo className="text-small text-primary" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-medium font-semibold">{t('export.options.metadata.title')}</p>
-                        <p className="text-tiny text-default-500">Timestamp and version information</p>
+                        <p className="text-medium font-semibold">
+                          {t("export.options.metadata.title")}
+                        </p>
+                        <p className="text-tiny text-default-500">
+                          Timestamp and version information
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -244,8 +281,12 @@ export default function ExportPage() {
 
                 <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-default-50">
                   <div className="min-w-0 flex-1">
-                    <p className="text-medium font-semibold">{t('export.options.estimatedSize.title')}</p>
-                    <p className="text-tiny text-default-500">Based on current selections</p>
+                    <p className="text-medium font-semibold">
+                      {t("export.options.estimatedSize.title")}
+                    </p>
+                    <p className="text-tiny text-default-500">
+                      Based on current selections
+                    </p>
                   </div>
                   <Chip size="sm" variant="flat" color="primary">
                     {formatFileSize(estimatedSize)}
@@ -262,8 +303,12 @@ export default function ExportPage() {
                     <MdDownload className="text-medium text-success" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold">{t('export.actions.title')}</h2>
-                    <p className="text-small text-default-500">Download or backup your data</p>
+                    <h2 className="text-xl font-semibold">
+                      {t("export.actions.title")}
+                    </h2>
+                    <p className="text-small text-default-500">
+                      Download or backup your data
+                    </p>
                   </div>
                 </div>
               </CardHeader>
@@ -271,10 +316,16 @@ export default function ExportPage() {
                 {isExporting && (
                   <div className="space-y-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
                     <div className="flex justify-between text-small">
-                      <span className="font-medium text-primary">{t('export.actions.downloading')}</span>
+                      <span className="font-medium text-primary">
+                        {t("export.actions.downloading")}
+                      </span>
                       <span className="text-primary">{exportProgress}%</span>
                     </div>
-                    <Progress value={exportProgress} color="primary" size="sm" />
+                    <Progress
+                      value={exportProgress}
+                      color="primary"
+                      size="sm"
+                    />
                   </div>
                 )}
 
@@ -287,9 +338,9 @@ export default function ExportPage() {
                     isLoading={isExporting}
                     className="w-full sm:w-auto font-medium"
                   >
-                    {t('export.actions.downloadExport')}
+                    {t("export.actions.downloadExport")}
                   </Button>
-                  
+
                   <Button
                     color="secondary"
                     variant="bordered"
@@ -298,7 +349,7 @@ export default function ExportPage() {
                     onPress={handleBackupToCloud}
                     className="w-full sm:w-auto font-medium"
                   >
-                    {t('export.actions.backupToCloud')}
+                    {t("export.actions.backupToCloud")}
                   </Button>
                 </div>
               </CardBody>
@@ -312,18 +363,26 @@ export default function ExportPage() {
                     <MdSecurity className="text-medium text-danger" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-danger">{t('export.security.title')}</h2>
-                    <p className="text-small text-danger/70">Important security information</p>
+                    <h2 className="text-xl font-semibold text-danger">
+                      {t("export.security.title")}
+                    </h2>
+                    <p className="text-small text-danger/70">
+                      Important security information
+                    </p>
                   </div>
                 </div>
               </CardHeader>
               <CardBody className="pt-0">
                 <div className="space-y-3 p-3 rounded-lg bg-danger/10 border border-danger/20">
                   <p className="text-small text-danger font-medium">
-                    {t('export.security.warning')}
+                    {t("export.security.warning")}
                   </p>
                   <ul className="list-disc pl-5 space-y-1 text-tiny text-danger/70">
-                    {(t('export.security.tips', { returnObjects: true }) as string[]).map((tip: string, index: number) => (
+                    {(
+                      t("export.security.tips", {
+                        returnObjects: true,
+                      }) as string[]
+                    ).map((tip: string, index: number) => (
                       <li key={index}>{tip}</li>
                     ))}
                   </ul>
@@ -339,8 +398,12 @@ export default function ExportPage() {
                     <MdStorage className="text-medium text-warning" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold">{t('export.history.title')}</h2>
-                    <p className="text-small text-default-500">Your export history</p>
+                    <h2 className="text-xl font-semibold">
+                      {t("export.history.title")}
+                    </h2>
+                    <p className="text-small text-default-500">
+                      Your export history
+                    </p>
                   </div>
                 </div>
               </CardHeader>
@@ -349,8 +412,12 @@ export default function ExportPage() {
                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-warning/10 mx-auto mb-4">
                     <MdDownload className="text-xl text-warning/50" />
                   </div>
-                  <p className="text-medium font-semibold text-default-600 mb-2">{t('export.history.empty')}</p>
-                  <p className="text-small text-default-500">{t('export.history.emptyDescription')}</p>
+                  <p className="text-medium font-semibold text-default-600 mb-2">
+                    {t("export.history.empty")}
+                  </p>
+                  <p className="text-small text-default-500">
+                    {t("export.history.emptyDescription")}
+                  </p>
                 </div>
               </CardBody>
             </Card>
@@ -359,4 +426,4 @@ export default function ExportPage() {
       </section>
     </DefaultLayout>
   );
-} 
+}
