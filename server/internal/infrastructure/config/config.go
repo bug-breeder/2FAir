@@ -25,6 +25,7 @@ type Config struct {
 type ServerConfig struct {
 	Host            string
 	Port            int
+	URL             string
 	Environment     string
 	ShutdownTimeout time.Duration
 	ReadTimeout     time.Duration
@@ -103,6 +104,7 @@ func Load() (*Config, error) {
 		Server: ServerConfig{
 			Host:            getEnv("SERVER_HOST", "localhost"),
 			Port:            getEnvAsInt("SERVER_PORT", 8080),
+			URL:             getEnv("SERVER_URL", "http://localhost:8080"),
 			Environment:     getEnv("ENVIRONMENT", "development"),
 			ShutdownTimeout: getEnvAsDuration("SERVER_SHUTDOWN_TIMEOUT", 30*time.Second),
 			ReadTimeout:     getEnvAsDuration("SERVER_READ_TIMEOUT", 15*time.Second),
@@ -116,8 +118,8 @@ func Load() (*Config, error) {
 			User:            getEnv("DB_USER", "postgres"),
 			Password:        getEnv("DB_PASSWORD", ""),
 			SSLMode:         getEnv("DB_SSL_MODE", "disable"),
-			MaxConnections:  getEnvAsInt("DB_MAX_CONNECTIONS", 25),
-			MaxIdleConns:    getEnvAsInt("DB_MAX_IDLE_CONNS", 5),
+			MaxConnections:  getEnvAsInt("DB_MAX_CONNECTIONS", 10),
+			MaxIdleConns:    getEnvAsInt("DB_MAX_IDLE_CONNS", 0),
 			ConnMaxLifetime: getEnvAsDuration("DB_CONN_MAX_LIFETIME", 5*time.Minute),
 			ConnMaxIdleTime: getEnvAsDuration("DB_CONN_MAX_IDLE_TIME", 1*time.Minute),
 		},
@@ -240,9 +242,19 @@ func (c *Config) IsProduction() bool {
 	return c.Server.Environment == "production"
 }
 
+// IsStaging returns true if the environment is staging
+func (c *Config) IsStaging() bool {
+	return c.Server.Environment == "staging"
+}
+
 // GetServerAddress returns the server address
 func (c *Config) GetServerAddress() string {
 	return fmt.Sprintf("%s:%d", c.Server.Host, c.Server.Port)
+}
+
+// GetServerURL returns the full server URL including protocol
+func (c *Config) GetServerURL() string {
+	return c.Server.URL
 }
 
 // Helper functions for environment variable parsing

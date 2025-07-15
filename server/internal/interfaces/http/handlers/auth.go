@@ -83,23 +83,8 @@ func (h *AuthHandler) OAuthCallback(c *gin.Context) {
 	fmt.Printf("OAuth success - User: %+v\n", gothUser)
 
 	// Convert to our OAuth provider format
-	username := gothUser.NickName
-	if username == "" {
-		// Generate username from email if NickName is empty (common with Google OAuth)
-		atIndex := 0
-		for i, c := range gothUser.Email {
-			if c == '@' {
-				atIndex = i
-				break
-			}
-		}
-		if atIndex > 0 {
-			username = gothUser.Email[:atIndex]
-		} else {
-			// Fallback username
-			username = fmt.Sprintf("user_%d", time.Now().Unix())
-		}
-	}
+	// Always use full email as username to guarantee uniqueness (ignore NickName/DisplayName)
+	username := gothUser.Email
 
 	fmt.Printf("Generated username: %s for email: %s\n", username, gothUser.Email)
 
@@ -142,16 +127,43 @@ func (h *AuthHandler) OAuthCallback(c *gin.Context) {
 
 	fmt.Printf("JWT token generated successfully\n")
 
-	// Set token in cookie
+	// Set token in cookie with environment-appropriate configuration
+	cookieName := "auth_token"
+	cookiePath := "/"
+	cookieMaxAge := int(24 * time.Hour.Seconds())                   // 24 hours
+	cookieSecure := h.config.IsProduction() || h.config.IsStaging() // Secure flag: true in production/staging (HTTPS)
+	cookieHttpOnly := true
+
+	// Environment-specific cookie configuration
+	var cookieDomain string
+	var sameSiteMode http.SameSite
+
+	if h.config.IsProduction() || h.config.IsStaging() {
+		// Production/Staging: Cross-domain setup with HTTPS
+		cookieDomain = ".2fair.app"
+		sameSiteMode = http.SameSiteNoneMode // Required for cross-domain with HTTPS
+	} else {
+		// Development: Same-domain or localhost
+		cookieDomain = ""                   // No domain restriction for localhost
+		sameSiteMode = http.SameSiteLaxMode // Lax mode for same-site requests
+	}
+
+	// Set SameSite mode based on environment
+	c.SetSameSite(sameSiteMode)
+
 	c.SetCookie(
-		"auth_token",
+		cookieName,
 		token,
-		int(24*time.Hour.Seconds()), // 24 hours
-		"/",
-		"",
-		h.config.IsProduction(), // Secure flag: true in production (HTTPS), false in development
-		true,                    // HTTP-only
+		cookieMaxAge,
+		cookiePath,
+		cookieDomain,
+		cookieSecure,
+		cookieHttpOnly,
 	)
+
+	// Log cookie setting for debugging
+	fmt.Printf("Cookie set: name=%s, domain=%s, secure=%v, sameSite=%v, env=%s\n",
+		cookieName, cookieDomain, cookieSecure, sameSiteMode, h.config.Server.Environment)
 
 	// Redirect back to frontend app (no token in URL - cookie is sufficient)
 	redirectURL := fmt.Sprintf("%s/app", h.config.Frontend.URL)
@@ -166,15 +178,30 @@ func (h *AuthHandler) OAuthCallback(c *gin.Context) {
 // @Success 200 {object} map[string]string
 // @Router /auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
+	// Environment-specific cookie configuration for clearing
+	var cookieDomain string
+	var sameSiteMode http.SameSite
+
+	if h.config.IsProduction() || h.config.IsStaging() {
+		cookieDomain = ".2fair.app"
+		sameSiteMode = http.SameSiteNoneMode
+	} else {
+		cookieDomain = "" // No domain restriction for localhost
+		sameSiteMode = http.SameSiteLaxMode
+	}
+
+	// Set SameSite mode for cross-domain cookie clearing
+	c.SetSameSite(sameSiteMode)
+
 	// Clear auth cookie
 	c.SetCookie(
 		"auth_token",
 		"",
 		-1,
 		"/",
-		"",
-		h.config.IsProduction(), // Secure flag: true in production (HTTPS), false in development
-		true,                    // HTTP-only
+		cookieDomain,
+		h.config.IsProduction() || h.config.IsStaging(), // Secure flag: true in production/staging (HTTPS), false in development
+		true, // HTTP-only
 	)
 
 	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
@@ -215,21 +242,88 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	// Set new token in cookie
+	// Set new token in cookie with environment-appropriate configuration
+	var cookieDomain string
+	var sameSiteMode http.SameSite
+
+	if h.config.IsProduction() || h.config.IsStaging() {
+		cookieDomain = ".2fair.app"
+		sameSiteMode = http.SameSiteNoneMode
+	} else {
+		cookieDomain = "" // No domain restriction for localhost
+		sameSiteMode = http.SameSiteLaxMode
+	}
+
+	c.SetSameSite(sameSiteMode) // Required for cross-domain cookies
+
 	c.SetCookie(
 		"auth_token",
 		newToken,
 		int(24*time.Hour.Seconds()),
 		"/",
-		"",
-		h.config.IsProduction(), // Secure flag: true in production (HTTPS), false in development
-		true,                    // HTTP-only
+		cookieDomain,
+		h.config.IsProduction() || h.config.IsStaging(), // Secure flag: true in production/staging (HTTPS), false in development
+		true, // HTTP-only
 	)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "token refreshed successfully",
 		"token":   newToken,
 	})
+}
+
+// Debug endpoint to check authentication status and cookie presence
+// @Summary Debug authentication
+// @Description Check current authentication status and cookie presence
+// @Tags auth
+// @Success 200 {object} map[string]interface{}
+// @Router /auth/debug [get]
+func (h *AuthHandler) Debug(c *gin.Context) {
+	// Check for cookie
+	cookieToken, cookieErr := c.Cookie("auth_token")
+
+	// Check for header
+	authHeader := c.GetHeader("Authorization")
+	var headerToken string
+	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+		headerToken = authHeader[7:]
+	}
+
+	// Get all cookies for debugging
+	cookies := []map[string]string{}
+	for _, cookie := range c.Request.Cookies() {
+		cookies = append(cookies, map[string]string{
+			"name":   cookie.Name,
+			"value":  cookie.Value[:min(len(cookie.Value), 20)] + "...", // Truncate for security
+			"domain": cookie.Domain,
+			"path":   cookie.Path,
+		})
+	}
+
+	response := gin.H{
+		"timestamp": time.Now().Format(time.RFC3339),
+		"request": gin.H{
+			"host":       c.Request.Host,
+			"origin":     c.GetHeader("Origin"),
+			"referer":    c.GetHeader("Referer"),
+			"user_agent": c.GetHeader("User-Agent"),
+		},
+		"cookies": gin.H{
+			"auth_token_present": cookieErr == nil,
+			"auth_token_error":   fmt.Sprintf("%v", cookieErr),
+			"auth_token_length":  len(cookieToken),
+			"all_cookies":        cookies,
+		},
+		"headers": gin.H{
+			"authorization_present": authHeader != "",
+			"header_token_present":  headerToken != "",
+		},
+		"environment":  h.config.Server.Environment,
+		"frontend_url": h.config.Frontend.URL,
+		"cors_origins": h.config.Security.CORSOrigins,
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // GetProfile returns the current user's profile
@@ -268,17 +362,20 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 // @Success 200 {object} map[string]interface{}
 // @Router /auth/providers [get]
 func (h *AuthHandler) GetProviders(c *gin.Context) {
+	// Use the server URL from configuration
+	baseURL := h.config.GetServerURL()
+
 	providers := []map[string]string{
 		{
 			"name":        "Google",
 			"provider":    "google",
-			"login_url":   fmt.Sprintf("http://%s/api/v1/auth/google", c.Request.Host),
+			"login_url":   fmt.Sprintf("%s/api/v1/auth/google", baseURL),
 			"description": "Sign in with Google",
 		},
 		{
 			"name":        "GitHub",
 			"provider":    "github",
-			"login_url":   fmt.Sprintf("http://%s/api/v1/auth/github", c.Request.Host),
+			"login_url":   fmt.Sprintf("%s/api/v1/auth/github", baseURL),
 			"description": "Sign in with GitHub",
 		},
 	}

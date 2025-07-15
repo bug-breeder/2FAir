@@ -1,20 +1,24 @@
 import { useState, useEffect } from "react";
-import { 
-  Modal, 
-  ModalContent, 
-  ModalHeader, 
-  ModalBody, 
-  ModalFooter, 
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
   Button,
   Card,
   CardBody,
   Divider,
-  Tooltip
+  Tooltip,
 } from "@heroui/react";
 import QRCode from "qrcode.react";
 import { MdSecurity, MdFingerprint, MdKey, MdOpenInNew } from "react-icons/md";
 
-import { authenticateWebAuthn, isWebAuthnSupported, getSessionEncryptionKey } from "../lib/webauthn";
+import {
+  authenticateWebAuthn,
+  isWebAuthnSupported,
+  getSessionEncryptionKey,
+} from "../lib/webauthn";
 import { decryptData } from "../lib/crypto";
 import { toast } from "../lib/toast";
 
@@ -50,17 +54,17 @@ export function QRModal({ showQR, closeQR, otp }: QRModalProps) {
   const decryptSecret = async () => {
     try {
       setIsDecrypting(true);
-      
+
       // Get the encryption key from WebAuthn session
       const encryptionKey = await getSessionEncryptionKey();
-      
+
       // Parse the encrypted secret (format: "ciphertext.iv.authTag")
       const [ciphertext, iv, authTag] = otp.Secret.split(".");
-      
+
       if (!ciphertext || !iv || !authTag) {
         throw new Error("Invalid encrypted secret format");
       }
-      
+
       // Decrypt the secret
       const decrypted = await decryptData(
         {
@@ -70,11 +74,12 @@ export function QRModal({ showQR, closeQR, otp }: QRModalProps) {
         },
         encryptionKey,
       );
-      
+
       setDecryptedSecret(decrypted);
     } catch (error) {
       console.error("Failed to decrypt secret:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to decrypt secret";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to decrypt secret";
       setAuthError(`Decryption failed: ${errorMessage}`);
       toast.error("Failed to decrypt secret for QR code");
     } finally {
@@ -95,12 +100,13 @@ export function QRModal({ showQR, closeQR, otp }: QRModalProps) {
       await authenticateWebAuthn();
       setIsAuthenticated(true);
       toast.success("Authentication successful");
-      
+
       // Decrypt the secret after successful authentication
       await decryptSecret();
     } catch (error) {
       console.error("WebAuthn authentication failed:", error);
-      const errorMessage = error instanceof Error ? error.message : "Authentication failed";
+      const errorMessage =
+        error instanceof Error ? error.message : "Authentication failed";
       setAuthError(errorMessage);
       toast.error("Authentication failed");
     } finally {
@@ -118,19 +124,19 @@ export function QRModal({ showQR, closeQR, otp }: QRModalProps) {
   };
 
   // Only generate URI if we have the decrypted secret
-  const otpauthUri = decryptedSecret 
-    ? `otpauth://totp/${encodeURIComponent(otp.Issuer + ':' + otp.Label)}?issuer=${encodeURIComponent(otp.Issuer)}&secret=${decryptedSecret}&algorithm=SHA1&digits=6&period=${otp.Period}`
-    : '';
+  const otpauthUri = decryptedSecret
+    ? `otpauth://totp/${encodeURIComponent(otp.Issuer + ":" + otp.Label)}?issuer=${encodeURIComponent(otp.Issuer)}&secret=${decryptedSecret}&algorithm=SHA1&digits=6&period=${otp.Period}`
+    : "";
 
   const handleOpenUri = () => {
     if (!otpauthUri) {
       toast.error("Secret not yet decrypted");
       return;
     }
-    
+
     try {
       // Try to open the URI directly - this will work if the device has an app registered for otpauth:// protocol
-      window.open(otpauthUri, '_blank');
+      window.open(otpauthUri, "_blank");
       toast.success("URI opened - check if your authenticator app imported it");
     } catch (error) {
       console.error("Failed to open URI:", error);
@@ -147,9 +153,8 @@ export function QRModal({ showQR, closeQR, otp }: QRModalProps) {
           <h2 className="text-xl font-semibold">Export QR Code</h2>
           <p className="text-sm text-default-500 font-normal">
             {isReady
-              ? "Scan QR code or open URI to import to authenticator apps" 
-              : "Confirm your identity to view the QR code"
-            }
+              ? "Scan QR code or open URI to import to authenticator apps"
+              : "Confirm your identity to view the QR code"}
           </p>
         </ModalHeader>
 
@@ -165,13 +170,14 @@ export function QRModal({ showQR, closeQR, otp }: QRModalProps) {
 
               <div className="text-center space-y-2">
                 <h3 className="text-lg font-semibold">
-                  {isDecrypting ? "Decrypting Secret..." : "Security Confirmation Required"}
+                  {isDecrypting
+                    ? "Decrypting Secret..."
+                    : "Security Confirmation Required"}
                 </h3>
                 <p className="text-default-500 max-w-sm">
-                  {isDecrypting 
+                  {isDecrypting
                     ? "Please wait while we decrypt your secret..."
-                    : `Please authenticate with your passkey to view the QR code for ${otp.Issuer}.`
-                  }
+                    : `Please authenticate with your passkey to view the QR code for ${otp.Issuer}.`}
                 </p>
               </div>
 
@@ -211,18 +217,16 @@ export function QRModal({ showQR, closeQR, otp }: QRModalProps) {
             // QR code display state
             <div className="flex flex-col items-center gap-4">
               <div className="p-4 bg-white rounded-lg border">
-                <QRCode
-                  size={256}
-                  value={otpauthUri}
-                  level="M"
-                />
+                <QRCode size={256} value={otpauthUri} level="M" />
               </div>
-              
+
               <div className="text-center space-y-2">
                 <h3 className="font-semibold">{otp.Issuer}</h3>
                 <p className="text-sm text-default-500">{otp.Label}</p>
                 <p className="text-xs text-default-400 max-w-md">
-                  Scan this QR code with any TOTP authenticator app (Google Authenticator, Authy, 1Password, etc.) to import your {otp.Issuer} account.
+                  Scan this QR code with any TOTP authenticator app (Google
+                  Authenticator, Authy, 1Password, etc.) to import your{" "}
+                  {otp.Issuer} account.
                 </p>
               </div>
 
@@ -230,9 +234,11 @@ export function QRModal({ showQR, closeQR, otp }: QRModalProps) {
 
               <div className="w-full space-y-3">
                 <div className="text-center">
-                  <p className="text-sm font-medium text-default-600 mb-3">Alternative Import Method</p>
+                  <p className="text-sm font-medium text-default-600 mb-3">
+                    Alternative Import Method
+                  </p>
                 </div>
-                
+
                 <div className="flex justify-center">
                   <Tooltip content="Open URI directly (if supported by your device)">
                     <Button
@@ -248,8 +254,9 @@ export function QRModal({ showQR, closeQR, otp }: QRModalProps) {
 
                 <div className="text-center">
                   <p className="text-xs text-default-400 max-w-lg">
-                    The "Open URI" button will try to open your default authenticator app automatically. 
-                    If it doesn't work, use the QR code instead.
+                    The "Open URI" button will try to open your default
+                    authenticator app automatically. If it doesn't work, use the
+                    QR code instead.
                   </p>
                 </div>
               </div>
@@ -262,13 +269,19 @@ export function QRModal({ showQR, closeQR, otp }: QRModalProps) {
             Cancel
           </Button>
           {!isAuthenticated && (
-            <Button 
-              color="primary" 
+            <Button
+              color="primary"
               isLoading={isAuthenticating || isDecrypting}
-              startContent={!isAuthenticating && !isDecrypting && <MdFingerprint />}
+              startContent={
+                !isAuthenticating && !isDecrypting && <MdFingerprint />
+              }
               onPress={handleAuthenticate}
             >
-              {isAuthenticating ? "Authenticating..." : isDecrypting ? "Decrypting..." : "Authenticate"}
+              {isAuthenticating
+                ? "Authenticating..."
+                : isDecrypting
+                  ? "Decrypting..."
+                  : "Authenticate"}
             </Button>
           )}
         </ModalFooter>

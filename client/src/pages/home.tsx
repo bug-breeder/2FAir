@@ -34,6 +34,7 @@ export default function HomePage() {
     data: otpCodes,
     isLoading: codesLoading,
     error: codesError,
+    refreshCodes,
   } = useGenerateOtpCodes();
   const { searchQuery } = useSearch();
 
@@ -107,6 +108,15 @@ export default function HomePage() {
             Error loading OTPs:{" "}
             {otpsError?.message || codesError?.message || "Unknown error"}
           </div>
+          {/* Add refresh button for codes errors */}
+          {codesError && (
+            <button
+              onClick={refreshCodes}
+              className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-600 transition-colors"
+            >
+              Retry Code Generation
+            </button>
+          )}
         </section>
       </DefaultLayout>
     );

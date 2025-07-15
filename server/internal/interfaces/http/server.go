@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +20,7 @@ import (
 	"github.com/bug-breeder/2fair/server/internal/infrastructure/crypto"
 	"github.com/bug-breeder/2fair/server/internal/infrastructure/database"
 	database_adapters "github.com/bug-breeder/2fair/server/internal/infrastructure/database"
+	"github.com/bug-breeder/2fair/server/internal/infrastructure/metrics"
 	"github.com/bug-breeder/2fair/server/internal/infrastructure/totp"
 	"github.com/bug-breeder/2fair/server/internal/infrastructure/webauthn"
 	"github.com/bug-breeder/2fair/server/internal/interfaces/http/handlers"
@@ -30,16 +32,35 @@ type Server struct {
 	httpServer *http.Server
 	config     *config.Config
 	db         *database.DB
+	metrics    *metrics.Metrics
+	logger     *slog.Logger
+	timer      *metrics.ServerTimer
 }
 
-// NewServer creates a new HTTP server
-func NewServer(cfg *config.Config, db *database.DB) *Server {
+// NewServer creates a new HTTP server with comprehensive metrics and logging
+func NewServer(cfg *config.Config, db *database.DB, appMetrics *metrics.Metrics) *Server {
+	logger := slog.With(
+		"component", "http_server",
+		"environment", cfg.Server.Environment,
+		"server_address", cfg.GetServerAddress(),
+	)
+
+	logger.Info("Initializing HTTP server",
+		"read_timeout", cfg.Server.ReadTimeout,
+		"write_timeout", cfg.Server.WriteTimeout,
+		"max_header_bytes", cfg.Server.MaxHeaderBytes,
+	)
+
 	// Set Gin mode based on environment
 	if cfg.IsProduction() {
 		gin.SetMode(gin.ReleaseMode)
+		logger.Info("Running in production mode (Gin release mode)")
+	} else {
+		logger.Info("Running in development mode (Gin debug mode)")
 	}
 
 	// Configure OAuth providers
+	logger.Info("Configuring OAuth providers")
 	configureOAuthProviders(cfg)
 
 	// Create Gin router
@@ -48,33 +69,31 @@ func NewServer(cfg *config.Config, db *database.DB) *Server {
 	// Add global middleware
 	router.Use(gin.Recovery())
 	router.Use(middleware.CORS(cfg))
-	router.Use(middleware.Security(cfg))
 
-	// Add custom middleware for request ID, logging, etc.
-	router.Use(RequestID())
-	router.Use(Logger())
+	// Add request logging middleware in development
+	if !cfg.IsProduction() {
+		router.Use(gin.Logger())
+	}
 
-	// Initialize repositories
+	logger.Info("Setting up application services")
+
+	// Initialize repositories with correct signatures
 	userRepo := database_adapters.NewUserRepository(db)
-	credRepo := database_adapters.NewWebAuthnCredentialRepository(db)
 	cryptoService := crypto.NewCryptoService()
 	otpRepo := database_adapters.NewOTPRepository(db, cryptoService)
+	credRepo := database_adapters.NewWebAuthnCredentialRepository(db)
 
-	// Initialize infrastructure services
+	// Initialize services with correct signatures
 	totpService := totp.NewTOTPService()
-
-	// Initialize domain services
 	authService := appServices.NewAuthService(
 		userRepo,
 		cfg.JWT.SigningKey,
 		cfg.JWT.ExpirationTime,
-		fmt.Sprintf("http://%s", cfg.GetServerAddress()), // Server URL for OAuth callbacks
+		cfg.GetServerURL(),
 	)
-
-	// Initialize OTP service
 	otpService := appServices.NewOTPService(otpRepo, cryptoService, totpService)
 
-	// Initialize WebAuthn service
+	// Initialize WebAuthn service with correct signature
 	webAuthnService, err := webauthn.NewWebAuthnService(
 		cfg.WebAuthn.RPID,
 		cfg.WebAuthn.RPDisplayName,
@@ -83,23 +102,36 @@ func NewServer(cfg *config.Config, db *database.DB) *Server {
 		userRepo,
 	)
 	if err != nil {
-		slog.Error("Failed to initialize WebAuthn service", "error", err)
+		logger.Error("Failed to initialize WebAuthn service",
+			"error", err,
+			"rp_id", cfg.WebAuthn.RPID,
+			"rp_display_name", cfg.WebAuthn.RPDisplayName,
+		)
+		// Note: In production, you might want to handle this more gracefully
 		return nil
 	}
+
+	logger.Info("WebAuthn service initialized successfully",
+		"rp_id", cfg.WebAuthn.RPID,
+		"rp_display_name", cfg.WebAuthn.RPDisplayName,
+	)
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 
 	// Create handlers
+	logger.Info("Initializing HTTP handlers")
 	healthHandler := handlers.NewHealthHandler(db)
 	authHandler := handlers.NewAuthHandler(authService, cfg)
 	webAuthnHandler := handlers.NewWebAuthnHandler(webAuthnService, authService)
 	otpHandler := handlers.NewOTPHandler(otpService)
+	metricsHandler := handlers.NewMetricsHandler()
 
 	// Setup routes
-	setupRoutes(router, healthHandler, authHandler, webAuthnHandler, otpHandler, authMiddleware)
+	logger.Info("Setting up HTTP routes")
+	setupRoutes(router, healthHandler, authHandler, webAuthnHandler, otpHandler, authMiddleware, metricsHandler)
 
-	// Create HTTP server
+	// Create HTTP server with enhanced configuration
 	httpServer := &http.Server{
 		Addr:           cfg.GetServerAddress(),
 		Handler:        router,
@@ -108,10 +140,19 @@ func NewServer(cfg *config.Config, db *database.DB) *Server {
 		MaxHeaderBytes: cfg.Server.MaxHeaderBytes,
 	}
 
+	logger.Info("HTTP server created successfully",
+		"address", httpServer.Addr,
+		"read_timeout", httpServer.ReadTimeout,
+		"write_timeout", httpServer.WriteTimeout,
+		"max_header_bytes", httpServer.MaxHeaderBytes,
+	)
+
 	return &Server{
 		httpServer: httpServer,
 		config:     cfg,
 		db:         db,
+		metrics:    appMetrics,
+		logger:     logger,
 	}
 }
 
@@ -164,30 +205,87 @@ func configureOAuthProviders(cfg *config.Config) {
 	}
 }
 
-// Start starts the HTTP server
+// Start starts the HTTP server with comprehensive timing metrics
 func (s *Server) Start() error {
-	slog.Info("Starting HTTP server", "address", s.config.GetServerAddress())
+	// Convert port to string for metrics
+	portStr := strconv.Itoa(s.config.Server.Port)
+
+	// Start server timing
+	s.timer = s.metrics.StartServerTimer(s.config.Server.Environment, portStr)
+
+	s.logger.Info("Starting HTTP server",
+		"address", s.config.GetServerAddress(),
+		"environment", s.config.Server.Environment,
+		"port", s.config.Server.Port,
+	)
+
+	// Update server status metric
+	s.metrics.UpdateServerStatus(s.config.Server.Environment, portStr, true)
 
 	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		// Complete timer with failure status
+		s.timer.Complete("failed")
+
+		// Update server status metric to failed
+		s.metrics.UpdateServerStatus(s.config.Server.Environment, portStr, false)
+
+		s.logger.Error("Failed to start HTTP server",
+			"error", err,
+			"address", s.config.GetServerAddress(),
+		)
+
 		return fmt.Errorf("failed to start server: %w", err)
 	}
+
+	// Complete timer with success status
+	s.timer.Complete("success")
+
+	s.logger.Info("HTTP server started successfully",
+		"address", s.config.GetServerAddress(),
+	)
 
 	return nil
 }
 
-// Stop gracefully stops the HTTP server
+// Stop gracefully stops the HTTP server with enhanced metrics and logging
 func (s *Server) Stop(ctx context.Context) error {
-	slog.Info("Stopping HTTP server")
+	start := time.Now()
+	portStr := strconv.Itoa(s.config.Server.Port)
 
-	return s.httpServer.Shutdown(ctx)
+	s.logger.Info("Stopping HTTP server",
+		"address", s.config.GetServerAddress(),
+		"shutdown_timeout", s.config.Server.ShutdownTimeout,
+	)
+
+	// Update server status metric
+	s.metrics.UpdateServerStatus(s.config.Server.Environment, portStr, false)
+
+	err := s.httpServer.Shutdown(ctx)
+	shutdownDuration := time.Since(start)
+
+	if err != nil {
+		s.logger.Error("HTTP server shutdown failed",
+			"error", err,
+			"shutdown_duration_ms", shutdownDuration.Milliseconds(),
+		)
+	} else {
+		s.logger.Info("HTTP server stopped successfully",
+			"shutdown_duration_ms", shutdownDuration.Milliseconds(),
+		)
+	}
+
+	return err
 }
 
 // setupRoutes configures all the routes for the application
-func setupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, authHandler *handlers.AuthHandler, webAuthnHandler *handlers.WebAuthnHandler, otpHandler *handlers.OTPHandler, authMiddleware *middleware.AuthMiddleware) {
+func setupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, authHandler *handlers.AuthHandler, webAuthnHandler *handlers.WebAuthnHandler, otpHandler *handlers.OTPHandler, authMiddleware *middleware.AuthMiddleware, metricsHandler *handlers.MetricsHandler) {
 	// Health check endpoints
 	router.GET("/health", healthHandler.Health)
 	router.GET("/health/ready", healthHandler.Ready)
 	router.GET("/health/live", healthHandler.Live)
+
+	// Metrics endpoint for Prometheus scraping
+	router.GET("/metrics", metricsHandler.Metrics)
 
 	// Public API routes
 	v1 := router.Group("/v1")
@@ -218,6 +316,9 @@ func setupRoutes(router *gin.Engine, healthHandler *handlers.HealthHandler, auth
 			// Authentication routes (public - no auth middleware)
 			auth := apiv1.Group("/auth")
 			{
+				// Debug endpoint for troubleshooting auth issues (must be before /:provider route)
+				auth.GET("/debug", authHandler.Debug)
+
 				// OAuth endpoints
 				auth.GET("/providers", authHandler.GetProviders)
 				auth.GET("/:provider", authHandler.OAuthLogin)

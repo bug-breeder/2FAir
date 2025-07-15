@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-import { setAuthManager } from "../lib/api/client";
+import { setAuthManager, apiClient } from "../lib/api/client";
 
 interface User {
   id: string;
@@ -19,9 +19,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Define which routes require authentication
+const PROTECTED_ROUTES = ["/app", "/settings", "/security", "/export"];
+
+const isProtectedRoute = (pathname: string): boolean => {
+  return PROTECTED_ROUTES.some(route => pathname.startsWith(route));
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Start with false for public routes
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,41 +36,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setAuthManager({
       onUnauthorized: () => {
-        // Clear user state and redirect to login
+        // Clear user state and redirect to login ONLY if on a protected route
         setUser(null);
-        if (!location.pathname.includes("/login")) {
+        if (isProtectedRoute(location.pathname) && !location.pathname.includes("/login")) {
           navigate("/login", { replace: true });
         }
       },
     });
   }, [navigate, location.pathname]);
 
+  // Only check auth on initial load if we're on a protected route
   useEffect(() => {
-    checkAuth();
+    if (isProtectedRoute(location.pathname)) {
+      checkAuth();
+    }
   }, []);
 
-  // Refresh auth when navigating to app routes (in case user just logged in)
+  // Check auth when navigating to protected routes
   useEffect(() => {
-    if (location.pathname.startsWith("/app")) {
-      refreshAuth();
+    if (isProtectedRoute(location.pathname)) {
+      if (!user) {
+        checkAuth();
+      }
     }
-  }, [location.pathname]);
+  }, [location.pathname, user]);
 
   const checkAuth = async () => {
+    setIsLoading(true);
     try {
-      // Make API call to check auth status (cookies sent automatically)
-      const response = await fetch("/api/v1/auth/me", {
-        credentials: "include", // Include cookies
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-
-        setUser(userData);
-      } else {
-        // Not authenticated or token expired
-        setUser(null);
-      }
+      // Use apiClient instead of direct fetch to use correct backend URL
+      const userData = await apiClient.get<User>("/api/v1/auth/me");
+      setUser(userData);
     } catch (error) {
       console.error("Auth check failed:", error);
       setUser(null);
@@ -74,17 +77,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshAuth = async () => {
     try {
-      const response = await fetch("/api/v1/auth/me", {
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-
-        setUser(userData);
-      } else {
-        setUser(null);
-      }
+      const userData = await apiClient.get<User>("/api/v1/auth/me");
+      setUser(userData);
     } catch (error) {
       console.error("Auth refresh failed:", error);
       setUser(null);
@@ -93,11 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      // Call logout endpoint to clear cookie
-      await fetch("/api/v1/auth/logout", {
-        method: "POST",
-        credentials: "include", // Include cookies
-      });
+      // Use apiClient for logout endpoint
+      await apiClient.post("/api/v1/auth/logout");
     } catch (error) {
       console.error("Logout API call failed:", error);
       // Continue with local logout even if API call fails

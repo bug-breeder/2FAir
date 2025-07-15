@@ -1,10 +1,10 @@
-import 'react-i18next';
+import "react-i18next";
 
-declare module 'react-i18next' {
+declare module "react-i18next" {
   interface CustomTypeOptions {
-    defaultNS: 'translation';
+    defaultNS: "translation";
     resources: {
-      translation: typeof import('../locales/en.json');
+      translation: typeof import("../locales/en.json");
     };
   }
-} 
+}

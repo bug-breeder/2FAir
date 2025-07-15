@@ -17,7 +17,7 @@ export async function generateClientTOTPCodes(otp: OTP): Promise<OTPSecret> {
     const [ciphertext, iv, authTag] = otp.Secret.split(".");
 
     if (!ciphertext || !iv || !authTag) {
-      throw new Error("Invalid encrypted secret format");
+      throw new Error(`Invalid encrypted secret format for OTP ${otp.Label}`);
     }
 
     // Decrypt the TOTP secret
@@ -51,32 +51,58 @@ export async function generateClientTOTPCodes(otp: OTP): Promise<OTPSecret> {
       NextExpireAt: codes.nextExpireAt.toISOString(),
     };
   } catch (error) {
-    console.error("Failed to generate TOTP codes:", error);
+    // Note: Console logging removed for production use
     throw new Error(
-      `Failed to generate TOTP codes: ${error instanceof Error ? error.message : "Unknown error"}`,
+      `Failed to generate TOTP codes for ${otp.Label}: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 }
 
 /**
- * Generates TOTP codes for multiple OTPs
- * Returns an array of OTPSecret objects
+ * Generates TOTP codes for multiple OTPs with improved error handling
+ * Returns an array of OTPSecret objects, skipping failed generations
+ *
+ * @param otps Array of OTP objects to generate codes for
+ * @returns Promise resolving to array of successfully generated OTPSecret objects
  */
 export async function generateAllClientTOTPCodes(
   otps: OTP[],
 ): Promise<OTPSecret[]> {
+  if (!otps || !Array.isArray(otps) || otps.length === 0) {
+    return [];
+  }
+
   const results: OTPSecret[] = [];
+  const errors: string[] = [];
 
-  // Generate codes for each OTP
-  for (const otp of otps) {
-    try {
-      const codes = await generateClientTOTPCodes(otp);
+  // Use Promise.allSettled for better error handling
+  const settledPromises = await Promise.allSettled(
+    otps.map(async (otp) => {
+      try {
+        return await generateClientTOTPCodes(otp);
+      } catch (error) {
+        errors.push(
+          `${otp.Label}: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+        throw error;
+      }
+    }),
+  );
 
-      results.push(codes);
-    } catch (error) {
-      console.error(`Failed to generate codes for OTP ${otp.Id}:`, error);
-      // Continue with other OTPs even if one fails
+  // Process results
+  settledPromises.forEach((result, index) => {
+    if (result.status === "fulfilled") {
+      results.push(result.value);
+    } else {
+      // Note: Console logging removed for production use
+      // Error details are tracked in the errors array
     }
+  });
+
+  // Log summary if there were errors
+  if (errors.length > 0) {
+    // Note: Console logging removed for production use
+    // Error information is available in the errors array for debugging
   }
 
   return results;

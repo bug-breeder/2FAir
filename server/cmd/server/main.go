@@ -9,7 +9,8 @@ import (
 
 	"github.com/bug-breeder/2fair/server/internal/infrastructure/config"
 	"github.com/bug-breeder/2fair/server/internal/infrastructure/database"
-	"github.com/bug-breeder/2fair/server/internal/interfaces/http"
+	"github.com/bug-breeder/2fair/server/internal/infrastructure/metrics"
+	api "github.com/bug-breeder/2fair/server/internal/interfaces/http"
 
 	_ "github.com/bug-breeder/2fair/server/docs" // This is important for the Swagger docs to be generated
 )
@@ -42,23 +43,33 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Initialize metrics system
+	appMetrics := metrics.NewMetrics()
+	slog.Info("Metrics system initialized")
+
 	slog.Info("Starting 2FAir server",
 		"environment", cfg.Server.Environment,
 		"address", cfg.GetServerAddress(),
+		"version", "1.0",
 	)
 
+	// Start overall application startup timer
+	startupTimer := appMetrics.StartStartupTimer(cfg.Server.Environment, "2fair-server")
+
 	// Run the application
-	if err := run(cfg); err != nil {
+	if err := run(cfg, appMetrics); err != nil {
+		startupTimer.Complete("failed")
 		slog.Error("Application failed", "error", err)
 		os.Exit(1)
 	}
 
+	startupTimer.Complete("success")
 	slog.Info("2FAir server shutdown complete")
 }
 
-func run(cfg *config.Config) error {
-	// Initialize database connection
-	db, err := database.NewDB(cfg)
+func run(cfg *config.Config, appMetrics *metrics.Metrics) error {
+	// Initialize database connection with timing
+	db, err := database.NewDB(cfg, appMetrics)
 	if err != nil {
 		return err
 	}
@@ -66,15 +77,15 @@ func run(cfg *config.Config) error {
 
 	slog.Info("Database connection established")
 
-	// Run database migrations
-	if err := database.RunMigrations(cfg); err != nil {
+	// Run database migrations with timing
+	if err := database.RunMigrations(cfg, appMetrics); err != nil {
 		return err
 	}
 
 	slog.Info("Database migrations completed")
 
 	// Create and start HTTP server
-	server := api.NewServer(cfg, db)
+	server := api.NewServer(cfg, db, appMetrics)
 
 	// Channel to listen for interrupt/terminate signals
 	stop := make(chan os.Signal, 1)

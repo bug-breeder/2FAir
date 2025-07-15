@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "../lib/toast";
 import { FAir } from "../components/icons";
 import { useAuth } from "../providers/auth-provider";
+import { apiClient } from "../lib/api/client";
 
 interface OAuthProvider {
   name: string;
@@ -30,14 +31,9 @@ function LoginPage() {
   useEffect(() => {
     const fetchProviders = async () => {
       try {
-        const response = await fetch("/api/v1/auth/providers");
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch providers");
-        }
-
-        const data = await response.json();
-
+        const data = await apiClient.get<{ providers: OAuthProvider[] }>(
+          "/api/v1/auth/providers",
+        );
         setProviders(data.providers || []);
       } catch (error) {
         console.error("Error fetching providers:", error);
@@ -52,18 +48,11 @@ function LoginPage() {
     try {
       setLoadingProvider(provider.provider);
 
-      // Get the base URL from the current window location
-      const currentHost = window.location.host;
-      const protocol = window.location.protocol;
-
-      // Construct the login URL using the current host
-      const loginUrl = `${protocol}//${currentHost}/api/v1/auth/${provider.provider}`;
-
-      // Log for debugging
-      console.log("Attempting login with URL:", loginUrl);
+      // Use the login_url directly from the provider response
+      console.log("Attempting login with URL:", provider.login_url);
 
       // Redirect to the OAuth provider
-      window.location.href = loginUrl;
+      window.location.href = provider.login_url;
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login failed. Please try again.");

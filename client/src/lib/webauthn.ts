@@ -3,6 +3,8 @@
  * Handles WebAuthn registration, authentication, and key derivation
  */
 
+import { apiClient } from "./api/client";
+
 // Session-based key storage to maintain consistency
 let sessionEncryptionKey: Uint8Array | null = null;
 
@@ -36,32 +38,19 @@ export interface WebAuthnAuthenticationResponse {
  * Starts WebAuthn registration process
  */
 export async function beginWebAuthnRegistration(): Promise<WebAuthnRegistrationOptions> {
-  const response = await fetch("/api/v1/webauthn/register/begin", {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    console.error(
-      "WebAuthn registration begin failed:",
-      response.status,
-      errorText,
+  try {
+    const data = await apiClient.post<WebAuthnRegistrationOptions>(
+      "/api/v1/webauthn/register/begin",
     );
-    throw new Error(
-      `WebAuthn registration failed: ${response.status} ${response.statusText} - ${errorText}`,
-    );
+    return data;
+  } catch (error) {
+    console.error("WebAuthn registration begin failed:", error);
+    throw new Error(`WebAuthn registration failed: ${error}`);
   }
-
-  return await response.json();
 }
 
 /**
- * Completes WebAuthn registration
+ * Completes WebAuthn registration process
  */
 export async function finishWebAuthnRegistration(
   credential: PublicKeyCredential,
@@ -84,26 +73,11 @@ export async function finishWebAuthnRegistration(
     type: credential.type,
   };
 
-  const response = await fetch("/api/v1/webauthn/register/finish", {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(requestData),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-
-    console.error(
-      "WebAuthn registration completion failed:",
-      response.status,
-      errorText,
-    );
-    throw new Error(
-      `WebAuthn registration completion failed: ${response.status} ${response.statusText} - ${errorText}`,
-    );
+  try {
+    await apiClient.post("/api/v1/webauthn/register/finish", requestData);
+  } catch (error) {
+    console.error("WebAuthn registration completion failed:", error);
+    throw new Error(`WebAuthn registration completion failed: ${error}`);
   }
 }
 
@@ -111,23 +85,19 @@ export async function finishWebAuthnRegistration(
  * Starts WebAuthn authentication process
  */
 export async function beginWebAuthnAuthentication(): Promise<WebAuthnAuthenticationOptions> {
-  const response = await fetch("/api/v1/webauthn/authenticate/begin", {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`WebAuthn authentication failed: ${response.statusText}`);
+  try {
+    const data = await apiClient.post<WebAuthnAuthenticationOptions>(
+      "/api/v1/webauthn/authenticate/begin",
+    );
+    return data;
+  } catch (error) {
+    console.error("WebAuthn authentication begin failed:", error);
+    throw new Error(`WebAuthn authentication failed: ${error}`);
   }
-
-  return await response.json();
 }
 
 /**
- * Completes WebAuthn authentication and derives encryption key
+ * Completes WebAuthn authentication process
  */
 export async function finishWebAuthnAuthentication(
   credential: PublicKeyCredential,
@@ -171,73 +141,59 @@ export async function finishWebAuthnAuthentication(
   // Include client extension results if present
   if (clientExtensionResults) {
     requestData.clientExtensionResults = clientExtensionResults;
-    // Also add as getClientExtensionResults for compatibility
     requestData.getClientExtensionResults = clientExtensionResults;
   }
 
-  const response = await fetch("/api/v1/webauthn/authenticate/finish", {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(requestData),
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `WebAuthn authentication completion failed: ${response.statusText}`,
+  try {
+    const result: WebAuthnAuthenticationResponse = await apiClient.post(
+      "/api/v1/webauthn/authenticate/finish",
+      requestData,
     );
-  }
 
-  const result: WebAuthnAuthenticationResponse = await response.json();
+    // Decode PRF output from base64 if present
+    let prfOutput: Uint8Array | undefined;
 
-  // Decode PRF output from base64 if present
-  let prfOutput: Uint8Array | undefined;
+    if (result.prfOutput) {
+      const prfBase64 =
+        typeof result.prfOutput === "string" ? result.prfOutput : "";
 
-  if (result.prfOutput) {
-    const prfBase64 =
-      typeof result.prfOutput === "string" ? result.prfOutput : "";
+      if (prfBase64) {
+        try {
+          const prfBinary = atob(prfBase64);
 
-    if (prfBase64) {
-      try {
-        const prfBinary = atob(prfBase64);
-
-        prfOutput = new Uint8Array(prfBinary.length);
-        for (let i = 0; i < prfBinary.length; i++) {
-          prfOutput[i] = prfBinary.charCodeAt(i);
+          prfOutput = new Uint8Array(prfBinary.length);
+          for (let i = 0; i < prfBinary.length; i++) {
+            prfOutput[i] = prfBinary.charCodeAt(i);
+          }
+        } catch (error) {
+          console.warn("Failed to decode PRF output from server:", error);
         }
-      } catch (error) {
-        console.warn("Failed to decode PRF output from server:", error);
       }
     }
+
+    // Use PRF-based key derivation with credential.id fallback
+    const key = await deriveEncryptionKey(credential, prfOutput);
+
+    return key;
+  } catch (error) {
+    console.error("WebAuthn authentication finish failed:", error);
+    throw new Error(`WebAuthn authentication failed: ${error}`);
   }
-
-  // Use PRF-based key derivation with credential.id fallback
-  const key = await deriveEncryptionKey(credential, prfOutput);
-
-  return key;
 }
 
 /**
  * Gets list of registered WebAuthn credentials
  */
 export async function getWebAuthnCredentials(): Promise<WebAuthnCredential[]> {
-  const response = await fetch("/api/v1/webauthn/credentials", {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to get WebAuthn credentials: ${response.statusText}`,
+  try {
+    const data = await apiClient.get<WebAuthnCredential[]>(
+      "/api/v1/webauthn/credentials",
     );
+    return data;
+  } catch (error) {
+    console.error("Failed to get WebAuthn credentials:", error);
+    throw new Error(`Failed to get WebAuthn credentials: ${error}`);
   }
-
-  return await response.json();
 }
 
 /**
@@ -246,18 +202,11 @@ export async function getWebAuthnCredentials(): Promise<WebAuthnCredential[]> {
 export async function deleteWebAuthnCredential(
   credentialId: string,
 ): Promise<void> {
-  const response = await fetch(`/api/v1/webauthn/credentials/${credentialId}`, {
-    method: "DELETE",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to delete WebAuthn credential: ${response.statusText}`,
-    );
+  try {
+    await apiClient.delete(`/api/v1/webauthn/credentials/${credentialId}`);
+  } catch (error) {
+    console.error("Failed to delete WebAuthn credential:", error);
+    throw new Error(`Failed to delete WebAuthn credential: ${error}`);
   }
 }
 

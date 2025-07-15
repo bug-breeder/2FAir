@@ -5,7 +5,7 @@ import { Button, Card, CardBody } from "@heroui/react";
 import { Icon } from "@iconify/react";
 
 import LandingLayout from "../layouts/landing";
-import { useAuth } from "../hooks/auth";
+import { useAuth } from "../providers/auth-provider";
 import { FAir } from "../components/icons";
 
 export default function LandingPage() {
