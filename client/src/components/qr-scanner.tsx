@@ -1,218 +1,133 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Button,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
 } from "@heroui/react";
 import QrScanner from "qr-scanner";
-import { MdCameraswitch, MdOutlineFlashOn } from "react-icons/md";
-
-import { toast } from "../lib/toast";
+import { useTranslation } from "react-i18next";
+import { MdCameraswitch, MdFlashlightOn } from "react-icons/md";
 
 interface QrScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onResult: (text: string) => void;
 }
 
-export function QrScannerModal({ isOpen, onClose }: QrScannerModalProps) {
+export function QrScannerModal({
+  isOpen,
+  onClose,
+  onResult,
+}: QrScannerModalProps) {
+  const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const qrScannerRef = useRef<QrScanner | null>(null);
-  const [hasFlash, setHasFlash] = useState<boolean>(false);
-  const [isFlashOn, setIsFlashOn] = useState<boolean>(false);
-  const [currentFacingMode, setCurrentFacingMode] =
+  const scannerRef = useRef<QrScanner | null>(null);
+  const onResultRef = useRef(onResult);
+  const [hasFlash, setHasFlash] = useState(false);
+  const [cameraError, setCameraError] = useState(false);
+  const [facingMode, setFacingMode] =
     useState<QrScanner.FacingMode>("environment");
 
-  const parseOTPAuth = useCallback((url: string) => {
-    try {
-      const urlObj = new URL(url);
-
-      if (urlObj.protocol !== "otpauth:") {
-        throw new Error("Not an OTP Auth URL");
-      }
-
-      const type = urlObj.host;
-
-      if (type !== "totp") {
-        throw new Error("Only TOTP is supported");
-      }
-
-      const pathParts = urlObj.pathname.split("/");
-      const label = decodeURIComponent(pathParts[1] || "");
-
-      const params = new URLSearchParams(urlObj.search);
-      const secret = params.get("secret");
-      const issuer = params.get("issuer") || label.split(":")[0] || "Unknown";
-      const algorithm = params.get("algorithm") || "SHA1";
-      const digits = params.get("digits") || "6";
-      const period = params.get("period") || "30";
-
-      if (!secret) {
-        throw new Error("Secret is required");
-      }
-
-      return {
-        secret,
-        issuer,
-        label: label.includes(":") ? label.split(":")[1] : label,
-        algorithm,
-        digits,
-        period,
-      };
-    } catch (error) {
-      console.error("Failed to parse OTP Auth URL:", error);
-      throw error;
-    }
-  }, []);
-
-  const handleQrCodeScan = useCallback(
-    (data: string) => {
-      try {
-        const otpData = parseOTPAuth(data);
-
-        toast.success(`QR code scanned: ${otpData.issuer}`);
-
-        // Here you would typically open the add OTP modal with pre-filled data
-        // For now, we'll just show a success message and close
-
-        onClose();
-      } catch (error) {
-        console.error("Error parsing OTP QR Code:", error);
-        toast.error(
-          `Invalid QR code: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-      }
-    },
-    [parseOTPAuth, onClose],
-  );
-
-  const toggleFlash = useCallback(() => {
-    if (qrScannerRef.current) {
-      if (isFlashOn) {
-        qrScannerRef.current.turnFlashOff().then(() => {
-          setIsFlashOn(false);
-        });
-      } else {
-        qrScannerRef.current.turnFlashOn().then(() => {
-          setIsFlashOn(true);
-        });
-      }
-    }
-  }, [isFlashOn]);
-
-  const switchCamera = useCallback(() => {
-    if (qrScannerRef.current) {
-      const newFacingMode =
-        currentFacingMode === "environment" ? "user" : "environment";
-
-      qrScannerRef.current.setCamera(newFacingMode).then(() => {
-        setCurrentFacingMode(newFacingMode);
-        qrScannerRef.current?.hasFlash().then(setHasFlash);
-      });
-    }
-  }, [currentFacingMode]);
-
-  const stopScanner = useCallback(() => {
-    if (qrScannerRef.current) {
-      qrScannerRef.current.stop();
-      qrScannerRef.current.destroy();
-      qrScannerRef.current = null;
-    }
-  }, []);
-
-  const handleClose = useCallback(() => {
-    stopScanner();
-    onClose();
-  }, [stopScanner, onClose]);
+  onResultRef.current = onResult;
 
   useEffect(() => {
-    if (isOpen && videoRef.current) {
-      qrScannerRef.current = new QrScanner(
+    if (!isOpen) return;
+
+    // The modal content mounts after open; wait a frame for the <video>.
+    let cancelled = false;
+    const frame = requestAnimationFrame(() => {
+      if (cancelled || !videoRef.current) return;
+
+      let handled = false;
+      const scanner = new QrScanner(
         videoRef.current,
         (result) => {
-          handleQrCodeScan(result.data);
+          if (handled) return;
+          handled = true;
+          scanner.stop();
+          onResultRef.current(result.data);
         },
         {
           highlightScanRegion: true,
           highlightCodeOutline: true,
+          preferredCamera: "environment",
         },
       );
 
-      qrScannerRef.current
+      scannerRef.current = scanner;
+      setCameraError(false);
+      setFacingMode("environment");
+      scanner
         .start()
-        .then(() => {
-          qrScannerRef.current?.hasFlash().then(setHasFlash);
-        })
-        .catch((error) => {
-          console.error("Error starting QR scanner:", error);
-          toast.error("Failed to start camera. Please check permissions.");
-        });
+        .then(() => scanner.hasFlash().then(setHasFlash))
+        .catch(() => setCameraError(true));
+    });
 
-      return () => {
-        stopScanner();
-      };
-    }
-  }, [isOpen, handleQrCodeScan, stopScanner]);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+      scannerRef.current?.destroy();
+      scannerRef.current = null;
+    };
+  }, [isOpen]);
+
+  const switchCamera = async () => {
+    const scanner = scannerRef.current;
+
+    if (!scanner) return;
+    const next = facingMode === "environment" ? "user" : "environment";
+
+    await scanner.setCamera(next);
+    setFacingMode(next);
+    setHasFlash(await scanner.hasFlash());
+  };
 
   return (
-    <Modal isOpen={isOpen} size="lg" onOpenChange={handleClose}>
+    <Modal isOpen={isOpen} placement="center" size="lg" onClose={onClose}>
       <ModalContent>
-        <ModalHeader>Scan QR Code</ModalHeader>
+        <ModalHeader>{t("scan.title")}</ModalHeader>
         <ModalBody>
-          <div id="video-container" style={{ position: "relative" }}>
+          <div className="relative overflow-hidden rounded-xl bg-black">
+            {}
             <video
               ref={videoRef}
-              id="qr-video"
-              style={{ width: "100%", borderRadius: "8px" }}
-            >
-              <track kind="captions" />
-            </video>
-            <div
-              style={{
-                position: "absolute",
-                bottom: "10px",
-                left: "10px",
-              }}
-            >
+              muted
+              playsInline
+              className="aspect-square w-full object-cover"
+            />
+            <div className="absolute bottom-3 right-3 flex gap-2">
               {hasFlash && (
                 <Button
                   isIconOnly
-                  aria-label="Toggle Flash"
-                  color="warning"
-                  onPress={toggleFlash}
+                  aria-label={t("scan.flash")}
+                  radius="full"
+                  onPress={() => scannerRef.current?.toggleFlash()}
                 >
-                  <MdOutlineFlashOn />
+                  <MdFlashlightOn className="text-xl" />
                 </Button>
               )}
-            </div>
-            <div
-              style={{
-                position: "absolute",
-                bottom: "10px",
-                right: "10px",
-              }}
-            >
               <Button
                 isIconOnly
-                aria-label="Switch Camera"
-                color="primary"
+                aria-label={t("scan.switchCamera")}
+                radius="full"
                 onPress={switchCamera}
               >
-                <MdCameraswitch />
+                <MdCameraswitch className="text-xl" />
               </Button>
             </div>
           </div>
-          <div className="mt-4 text-center">
-            <p className="text-sm text-default-500">
-              Point your camera at a QR code to scan
-            </p>
-          </div>
+          <p
+            className={`text-center text-sm ${cameraError ? "text-danger" : "text-default-500"}`}
+          >
+            {cameraError ? t("scan.cameraError") : t("scan.hint")}
+          </p>
         </ModalBody>
         <ModalFooter>
-          <Button color="danger" variant="light" onPress={handleClose}>
-            Cancel
+          <Button radius="full" variant="light" onPress={onClose}>
+            {t("common.cancel")}
           </Button>
         </ModalFooter>
       </ModalContent>

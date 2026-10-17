@@ -1,220 +1,113 @@
-import React, { useState, useRef, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Button,
-  Card,
-  CardBody,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
 } from "@heroui/react";
-import { FiUpload, FiImage } from "react-icons/fi";
 import QrScanner from "qr-scanner";
+import { useTranslation } from "react-i18next";
+import { FiUpload } from "react-icons/fi";
 
 import { toast } from "../lib/toast";
 
-interface QRImageUploaderModalProps {
+interface QrUploaderModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onResult: (text: string) => void;
 }
 
-export function QRImageUploaderModal({
+export function QrUploaderModal({
   isOpen,
   onClose,
-}: QRImageUploaderModalProps) {
-  const [isProcessing, setIsProcessing] = useState(false);
+  onResult,
+}: QrUploaderModalProps) {
+  const { t } = useTranslation();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [processing, setProcessing] = useState(false);
   const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const parseOTPAuth = useCallback((url: string) => {
+  const scan = async (file: File | undefined | null) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    setProcessing(true);
     try {
-      const urlObj = new URL(url);
+      const result = await QrScanner.scanImage(file, {
+        returnDetailedScanResult: true,
+      });
 
-      if (urlObj.protocol !== "otpauth:") {
-        throw new Error("Not an OTP Auth URL");
-      }
-
-      const type = urlObj.host;
-
-      if (type !== "totp") {
-        throw new Error("Only TOTP is supported");
-      }
-
-      const pathParts = urlObj.pathname.split("/");
-      const label = decodeURIComponent(pathParts[1] || "");
-
-      const params = new URLSearchParams(urlObj.search);
-      const secret = params.get("secret");
-      const issuer = params.get("issuer") || label.split(":")[0] || "Unknown";
-      const algorithm = params.get("algorithm") || "SHA1";
-      const digits = params.get("digits") || "6";
-      const period = params.get("period") || "30";
-
-      if (!secret) {
-        throw new Error("Secret is required");
-      }
-
-      return {
-        secret,
-        issuer,
-        label: label.includes(":") ? label.split(":")[1] : label,
-        algorithm,
-        digits,
-        period,
-      };
-    } catch (error) {
-      console.error("Failed to parse OTP Auth URL:", error);
-      throw error;
+      onResult(result.data);
+    } catch {
+      toast.error(t("scan.noQr"));
+    } finally {
+      setProcessing(false);
     }
-  }, []);
+  };
 
-  const handleQrCodeScan = useCallback(
-    (data: string) => {
-      try {
-        const otpData = parseOTPAuth(data);
+  // Paste a screenshot straight from the clipboard.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onPaste = (e: ClipboardEvent) => {
+      const file = Array.from(e.clipboardData?.files ?? []).find((f) =>
+        f.type.startsWith("image/"),
+      );
 
-        toast.success(`QR code found: ${otpData.issuer}`);
+      if (file) void scan(file);
+    };
 
-        // Here you would typically open the add OTP modal with pre-filled data
-        // For now, we'll just show a success message and close
+    window.addEventListener("paste", onPaste);
 
-        onClose();
-      } catch (error) {
-        console.error("Error parsing OTP QR Code:", error);
-        toast.error(
-          `Invalid QR code: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-      }
-    },
-    [parseOTPAuth, onClose],
-  );
-
-  const processImage = useCallback(
-    async (file: File) => {
-      setIsProcessing(true);
-
-      try {
-        const result = await QrScanner.scanImage(file);
-
-        handleQrCodeScan(result);
-      } catch (error) {
-        console.error("Error scanning image:", error);
-        toast.error("No QR code found in image");
-      } finally {
-        setIsProcessing(false);
-      }
-    },
-    [handleQrCodeScan],
-  );
-
-  const handleFileSelect = useCallback(
-    (files: FileList | null) => {
-      if (!files || files.length === 0) return;
-
-      const file = files[0];
-
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please select an image file");
-
-        return;
-      }
-
-      processImage(file);
-    },
-    [processImage],
-  );
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setDragActive(false);
-
-      handleFileSelect(e.dataTransfer.files);
-    },
-    [handleFileSelect],
-  );
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-  }, []);
-
-  const handleFileInputClick = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  const handleFileInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      handleFileSelect(e.target.files);
-    },
-    [handleFileSelect],
-  );
+    return () => window.removeEventListener("paste", onPaste);
+  });
 
   return (
-    <Modal isOpen={isOpen} placement="center" onOpenChange={onClose}>
+    <Modal isOpen={isOpen} placement="center" onClose={onClose}>
       <ModalContent>
-        <ModalHeader>Upload QR Code Image</ModalHeader>
+        <ModalHeader>{t("scan.uploadTitle")}</ModalHeader>
         <ModalBody>
-          <Card
-            className={`border-2 border-dashed cursor-pointer transition-colors ${
+          <button
+            className={`flex flex-col items-center gap-3 rounded-xl border-2 border-dashed px-6 py-12 text-center transition-colors ${
               dragActive
-                ? "border-primary bg-primary-50"
+                ? "border-secondary-600 bg-secondary-50"
                 : "border-default-300 hover:border-default-400"
             }`}
-            onClick={handleFileInputClick}
-            onDragLeave={handleDragLeave}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
+            disabled={processing}
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            onDragLeave={() => setDragActive(false)}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragActive(true);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragActive(false);
+              void scan(e.dataTransfer.files[0]);
+            }}
           >
-            <CardBody className="text-center py-12">
-              <div className="space-y-4">
-                <div className="text-4xl text-default-400">
-                  <FiUpload className="mx-auto" />
-                </div>
-                <div>
-                  <p className="text-lg font-medium">
-                    Drop your QR code image here
-                  </p>
-                  <p className="text-sm text-default-500">or click to browse</p>
-                </div>
-                <div className="flex justify-center">
-                  <Button
-                    color="primary"
-                    isLoading={isProcessing}
-                    startContent={<FiImage />}
-                    variant="flat"
-                  >
-                    {isProcessing ? "Processing..." : "Select Image"}
-                  </Button>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-
+            <FiUpload className="text-4xl text-default-400" />
+            <span className="font-medium">
+              {processing ? t("scan.processing") : t("scan.drop")}
+            </span>
+            <span className="text-xs text-default-500">
+              {t("scan.formats")}
+            </span>
+          </button>
           <input
-            ref={fileInputRef}
+            ref={inputRef}
             accept="image/*"
             className="hidden"
             type="file"
-            onChange={handleFileInputChange}
+            onChange={(e) => {
+              void scan(e.target.files?.[0]);
+              e.target.value = "";
+            }}
           />
-
-          <p className="text-xs text-default-500 text-center">
-            Supported formats: PNG, JPEG, GIF, WebP
-          </p>
         </ModalBody>
         <ModalFooter>
-          <Button color="danger" variant="light" onPress={onClose}>
-            Cancel
+          <Button radius="full" variant="light" onPress={onClose}>
+            {t("common.cancel")}
           </Button>
         </ModalFooter>
       </ModalContent>

@@ -1,37 +1,33 @@
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
 
-import enTranslations from '../locales/en.json';
-import viTranslations from '../locales/vi.json';
+import en from "../locales/en.json";
+import vi from "../locales/vi.json";
 
-const resources = {
-  en: {
-    translation: enTranslations,
-  },
-  vi: {
-    translation: viTranslations,
-  },
-};
+export const LANGUAGES = ["en", "vi"] as const;
 
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources,
-    lng: 'en', // default language
-    fallbackLng: 'en',
-    debug: false,
-
-    interpolation: {
-      escapeValue: false,
+    resources: {
+      en: { translation: en },
+      vi: { translation: vi },
     },
-
+    supportedLngs: LANGUAGES,
+    nonExplicitSupportedLngs: true,
+    fallbackLng: "en",
+    interpolation: { escapeValue: false },
     detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
-      lookupLocalStorage: 'i18nextLng',
-      caches: ['localStorage'],
+      order: ["localStorage", "navigator"],
+      lookupLocalStorage: "i18nextLng",
+      caches: ["localStorage"],
     },
   });
 
-export default i18n; 
+i18n.on("languageChanged", (lng) => {
+  document.documentElement.lang = lng;
+});
+
+export default i18n;

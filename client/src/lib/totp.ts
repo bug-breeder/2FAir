@@ -1,176 +1,151 @@
-import { TOTP, Secret } from "otpauth";
+import { Secret, TOTP } from "otpauth";
 
-export interface TOTPConfig {
-  secret: string;
-  issuer?: string;
-  label?: string;
-  algorithm?: "SHA1" | "SHA256" | "SHA512";
-  digits?: number;
-  period?: number;
+import { isSameAccount } from "./vault/backup";
+import { Algorithm, EntryInput } from "./vault/types";
+
+export const ALGORITHMS: Algorithm[] = ["SHA1", "SHA256", "SHA512"];
+
+export function normalizeSecret(secret: string): string {
+  return secret.toUpperCase().replace(/[\s\-_=]/g, "");
 }
 
-export interface TOTPCodes {
-  currentCode: string;
-  nextCode: string;
-  currentExpireAt: Date;
-  nextExpireAt: Date;
-}
+export function isValidSecret(secret: string): boolean {
+  const normalized = normalizeSecret(secret);
 
-/**
- * Generates a TOTP code from the given configuration
- */
-export function generateTOTPCode(config: TOTPConfig): string {
-  const totp = new TOTP({
-    issuer: config.issuer || "Unknown",
-    label: config.label || "Unknown",
-    algorithm: config.algorithm || "SHA1",
-    digits: config.digits || 6,
-    period: config.period || 30,
-    secret: config.secret,
-  });
+  if (!/^[A-Z2-7]{8,}$/.test(normalized)) return false;
 
-  return totp.generate();
-}
-
-/**
- * Generates both current and next TOTP codes with expiration times
- */
-export function generateTOTPCodes(config: TOTPConfig): TOTPCodes {
-  const totp = new TOTP({
-    issuer: config.issuer || "Unknown",
-    label: config.label || "Unknown",
-    algorithm: config.algorithm || "SHA1",
-    digits: config.digits || 6,
-    period: config.period || 30,
-    secret: config.secret,
-  });
-
-  const now = new Date();
-  const nowSeconds = Math.floor(now.getTime() / 1000);
-  const period = config.period || 30;
-
-  // Calculate current period start and end
-  const currentPeriodStart = Math.floor(nowSeconds / period) * period;
-  const currentPeriodEnd = currentPeriodStart + period;
-
-  // Calculate next period end
-  const nextPeriodEnd = currentPeriodEnd + period;
-
-  // Generate current code
-  const currentCode = totp.generate();
-
-  // Generate next code by using the next period timestamp
-  const nextCode = totp.generate({ timestamp: currentPeriodEnd * 1000 });
-
-  return {
-    currentCode,
-    nextCode,
-    currentExpireAt: new Date(currentPeriodEnd * 1000),
-    nextExpireAt: new Date(nextPeriodEnd * 1000),
-  };
-}
-
-/**
- * Gets the remaining time until the current TOTP code expires
- */
-export function getTOTPRemainingTime(period: number = 30): number {
-  const now = Math.floor(Date.now() / 1000);
-  const remaining = period - (now % period);
-
-  return remaining;
-}
-
-/**
- * Validates a TOTP secret string
- */
-export function validateTOTPSecret(secret: string): boolean {
   try {
-    // Try to create a TOTP instance with the secret
-    new TOTP({ secret });
-
-    return true;
+    return Secret.fromBase32(normalized).bytes.length > 0;
   } catch {
     return false;
   }
 }
 
-/**
- * Generates a random TOTP secret
- */
-export function generateTOTPSecret(): string {
-  const secret = new Secret({ size: 20 }); // 160 bits
-
-  return secret.base32;
-}
-
-/**
- * Creates a QR code URI for TOTP setup
- */
-export function createTOTPUri(config: TOTPConfig): string {
-  const totp = new TOTP({
-    issuer: config.issuer || "Unknown",
-    label: config.label || "Unknown",
-    algorithm: config.algorithm || "SHA1",
-    digits: config.digits || 6,
-    period: config.period || 30,
-    secret: config.secret,
+function toTotp(entry: EntryInput): TOTP {
+  return new TOTP({
+    issuer: entry.issuer,
+    label: entry.label || entry.issuer,
+    algorithm: entry.algorithm,
+    digits: entry.digits,
+    period: entry.period,
+    secret: Secret.fromBase32(normalizeSecret(entry.secret)),
   });
-
-  return totp.toString();
 }
 
-/**
- * Normalizes a TOTP secret to proper Base32 format
- */
-export function normalizeTOTPSecret(secret: string): string {
-  return secret.toUpperCase().replace(/[\s\-_]/g, "");
+export function generateCode(
+  entry: EntryInput,
+  timestamp = Date.now(),
+): string {
+  return toTotp(entry).generate({ timestamp });
 }
 
-/**
- * Parses an otpauth:// URI to extract TOTP configuration
- */
-export function parseOTPAuthURI(uri: string): TOTPConfig | null {
-  try {
-    if (!uri.startsWith("otpauth://totp/")) {
-      return null;
-    }
+export function secondsRemaining(
+  period: number,
+  timestamp = Date.now(),
+): number {
+  return period - (Math.floor(timestamp / 1000) % period);
+}
 
-    const url = new URL(uri);
-    const pathParts = url.pathname.split(":");
-    const label =
-      pathParts.length > 1 ? pathParts[1] : pathParts[0].substring(1);
+/** "123456" -> "123 456", "12345678" -> "1234 5678" */
+export function formatCode(code: string): string {
+  const half = Math.ceil(code.length / 2);
 
-    const secret = url.searchParams.get("secret");
+  return `${code.slice(0, half)} ${code.slice(half)}`;
+}
 
-    if (!secret) return null;
+export function buildOtpauthUri(entry: EntryInput): string {
+  return toTotp(entry).toString();
+}
 
-    return {
-      secret: normalizeTOTPSecret(secret),
-      issuer: url.searchParams.get("issuer") || undefined,
-      label: label || undefined,
-      algorithm:
-        (url.searchParams.get("algorithm") as "SHA1" | "SHA256" | "SHA512") ||
-        "SHA1",
-      digits: parseInt(url.searchParams.get("digits") || "6"),
-      period: parseInt(url.searchParams.get("period") || "30"),
-    };
-  } catch (error) {
-    console.error("Error parsing OTPAuth URI:", error);
-
-    return null;
+export class OtpauthParseError extends Error {
+  constructor(
+    public code: "not-otpauth" | "not-totp" | "no-secret" | "bad-secret",
+  ) {
+    super(code);
   }
 }
 
-/**
- * Generates an otpauth:// URI from TOTP configuration
- */
-export function generateOTPAuthURI(config: TOTPConfig): string {
-  const issuer = encodeURIComponent(config.issuer || "Unknown");
-  const label = encodeURIComponent(config.label || "Unknown");
-  const secret = config.secret;
-  const algorithm = config.algorithm || "SHA1";
-  const digits = config.digits || 6;
-  const period = config.period || 30;
+/** Parses an otpauth://totp/ URI (as found in 2FA QR codes). */
+export function parseOtpauthUri(uri: string): EntryInput {
+  let url: URL;
 
-  return `otpauth://totp/${issuer}:${label}?secret=${secret}&issuer=${issuer}&algorithm=${algorithm}&digits=${digits}&period=${period}`;
+  try {
+    url = new URL(uri.trim());
+  } catch {
+    throw new OtpauthParseError("not-otpauth");
+  }
+
+  if (url.protocol !== "otpauth:") throw new OtpauthParseError("not-otpauth");
+  if (url.host.toLowerCase() !== "totp")
+    throw new OtpauthParseError("not-totp");
+
+  const params = url.searchParams;
+  const secret = normalizeSecret(params.get("secret") ?? "");
+
+  if (!secret) throw new OtpauthParseError("no-secret");
+  if (!isValidSecret(secret)) throw new OtpauthParseError("bad-secret");
+
+  // Path is "/Issuer:account" or "/account", URL-encoded.
+  let path: string;
+
+  try {
+    path = decodeURIComponent(url.pathname.replace(/^\//, ""));
+  } catch {
+    throw new OtpauthParseError("not-otpauth");
+  }
+
+  const colon = path.indexOf(":");
+  const pathIssuer = colon >= 0 ? path.slice(0, colon).trim() : "";
+  const label = (colon >= 0 ? path.slice(colon + 1) : path).trim();
+
+  const algorithm = (
+    params.get("algorithm") ?? "SHA1"
+  ).toUpperCase() as Algorithm;
+  const digits = Number(params.get("digits") ?? 6);
+  const period = Number(params.get("period") ?? 30);
+
+  return {
+    issuer: params.get("issuer")?.trim() || pathIssuer || label,
+    label,
+    secret,
+    algorithm: ALGORITHMS.includes(algorithm) ? algorithm : "SHA1",
+    digits: [6, 7, 8].includes(digits) ? digits : 6,
+    period: period > 0 ? period : 30,
+  };
+}
+
+/**
+ * Finds every otpauth:// link in `text`, such as a plain-text export with one
+ * link per line, dropping repeats. Links that aren't valid TOTP accounts are
+ * counted in `skipped`; Google Authenticator otpauth-migration:// links in
+ * `migration`.
+ */
+export function parseOtpauthList(text: string): {
+  entries: EntryInput[];
+  skipped: number;
+  migration: number;
+} {
+  const entries: EntryInput[] = [];
+  let skipped = 0;
+
+  for (const [uri] of text.matchAll(/otpauth:\/\/[^\s"'<>]+/gi)) {
+    let entry: EntryInput;
+
+    try {
+      entry = parseOtpauthUri(uri);
+    } catch {
+      skipped++;
+      continue;
+    }
+    if (!entries.some((e) => isSameAccount(e, entry))) entries.push(entry);
+  }
+
+  const migration = text.match(/otpauth-migration:\/\//gi)?.length ?? 0;
+
+  return { entries, skipped, migration };
+}
+
+/** One otpauth:// link per line, the format parseOtpauthList reads. */
+export function buildOtpauthList(entries: EntryInput[]): string {
+  return entries.map((entry) => `${buildOtpauthUri(entry)}\n`).join("");
 }
