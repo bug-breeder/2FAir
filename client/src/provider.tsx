@@ -1,39 +1,20 @@
 import React from "react";
 import { HeroUIProvider } from "@heroui/system";
-import { useNavigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ToastProvider } from "@heroui/toast";
+import { useHref, useNavigate } from "react-router-dom";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 
-import { AuthProvider } from "./providers/auth-provider";
-import { SearchProvider } from "./providers/search-provider";
+import { VaultProvider } from "./providers/vault-provider";
 
-export interface ProviderProps {
-  children: React.ReactNode;
-}
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
-    },
-  },
-});
-
-export function Provider({ children }: ProviderProps) {
+export function Provider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   return (
-    <HeroUIProvider navigate={navigate}>
+    <HeroUIProvider navigate={navigate} useHref={useHref}>
       <NextThemesProvider enableSystem attribute="class" defaultTheme="system">
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <SearchProvider>{children}</SearchProvider>
-          </AuthProvider>
-        </QueryClientProvider>
+        <VaultProvider>{children}</VaultProvider>
       </NextThemesProvider>
-      <ToastProvider placement="bottom-center" />
+      <ToastProvider placement="top-center" toastOffset={8} />
     </HeroUIProvider>
   );
 }

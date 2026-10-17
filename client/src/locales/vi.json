@@ -1,186 +1,221 @@
 {
-  "navigation": {
-    "settings": "Cài đặt",
-    "security": "Bảo mật",
-    "export": "Xuất dữ liệu",
-    "about": "Giới thiệu",
-    "pricing": "Bảng giá",
-    "docs": "Tài liệu",
-    "blog": "Blog",
-    "logout": "Đăng xuất",
-    "login": "Đăng nhập"
-  },
   "common": {
-    "add": "Thêm",
-    "cancel": "Hủy",
+    "cancel": "Huỷ",
     "save": "Lưu",
-    "delete": "Xóa",
-    "edit": "Sửa",
-    "export": "Xuất",
-    "import": "Nhập",
-    "loading": "Đang tải",
-    "error": "Lỗi",
-    "success": "Thành công",
+    "delete": "Xoá",
     "close": "Đóng",
-    "confirm": "Xác nhận",
     "back": "Quay lại",
-    "next": "Tiếp theo",
-    "active": "Hoạt động",
-    "revoke": "Thu hồi",
-    "current": "Hiện tại"
+    "continue": "Tiếp tục",
+    "done": "Xong",
+    "remove": "Gỡ",
+    "error": "Đã có lỗi xảy ra"
+  },
+  "onboarding": {
+    "title": "Chào mừng đến với 2FAir",
+    "subtitle": "Mã 2FA của bạn được mã hoá và chỉ lưu trên thiết bị này. Không cần tài khoản, không có server.",
+    "pointEncrypted": "Mã hoá AES-256",
+    "pointOffline": "Chạy offline",
+    "pointPrivate": "Không gì rời khỏi thiết bị",
+    "passkeyCta": "Thiết lập bằng passkey",
+    "passkeyHint": "Face ID, Touch ID, Windows Hello hoặc khoá bảo mật",
+    "passcodeCta": "Dùng passcode",
+    "passkeyName": "Kho 2FAir",
+    "waitingPasskey": "Đang chờ passkey…",
+    "prfUnsupported": "Passkey này không mã hoá được kho trên trình duyệt này. Hãy dùng passcode.",
+    "passkeyUnavailable": "Trình duyệt này không hỗ trợ passkey. Hãy dùng passcode.",
+    "passkeyCancelled": "Đã huỷ thiết lập passkey.",
+    "passkeyReady": "Passkey đã sẵn sàng",
+    "backupTitle": "Thêm passcode dự phòng",
+    "backupBody": "Dùng khi không có passkey, ví dụ trên trình duyệt khác hoặc khi mất thiết bị chứa passkey.",
+    "createTitle": "Tạo passcode",
+    "createBody": "6 chữ số để mở khoá 2FAir.",
+    "confirmTitle": "Xác nhận passcode",
+    "confirmBody": "Nhập lại 6 chữ số vừa rồi.",
+    "mismatch": "Passcode không khớp. Thử lại nhé.",
+    "skip": "Để sau",
+    "skipWarning": "Không có passcode dự phòng thì mất passkey đồng nghĩa với mất quyền truy cập các mã."
+  },
+  "unlock": {
+    "title": "2FAir đang khoá",
+    "withPasskey": "Mở khoá bằng passkey",
+    "orPasscode": "hoặc nhập passcode",
+    "enterPasscode": "Nhập passcode",
+    "wrong": "Sai passcode",
+    "lockedOut": "Thử quá nhiều lần. Thử lại sau {{seconds}} giây.",
+    "passkeyFailed": "Không mở khoá được bằng passkey",
+    "forgot": "Không mở khoá được?",
+    "resetTitle": "Đặt lại 2FAir?",
+    "resetBody": "Toàn bộ mã trên thiết bị này sẽ bị xoá vĩnh viễn. Nếu có file backup, bạn có thể khôi phục sau.",
+    "resetConfirm": "Xoá hết",
+    "passkeyTip": "Muốn mở khoá bằng Face ID hoặc Touch ID, hãy thêm passkey trong Cài đặt."
   },
   "home": {
-    "title": "Mã OTP của bạn",
-    "empty": {
-      "title": "Chưa có OTP nào",
-      "description": "Thêm TOTP đầu tiên để bắt đầu quản lý 2FA an toàn."
-    },
-    "search": {
-      "results": "{{count}} trong số {{total}} OTP{{pluralTotal}} {{query}}",
-      "matching": "khớp với \"{{query}}\"",
-      "noMatches": "Không có OTP nào khớp",
-      "noMatchesDescription": "Thử điều chỉnh từ khóa tìm kiếm để tìm thấy những gì bạn đang tìm."
-    }
+    "search": "Tìm tài khoản",
+    "clearSearch": "Xoá tìm kiếm",
+    "count_one": "{{count}} tài khoản",
+    "count_other": "{{count}} tài khoản",
+    "emptyTitle": "Chưa có tài khoản nào",
+    "emptyBody": "Thêm tài khoản 2FA đầu tiên bằng cách quét mã QR hoặc nhập secret key.",
+    "noResultsTitle": "Không tìm thấy",
+    "noResults": "Không có tài khoản nào khớp “{{query}}”",
+    "lock": "Khoá",
+    "settings": "Cài đặt",
+    "copied": "Đã sao chép mã",
+    "copyFailed": "Không sao chép được mã",
+    "next": "Tiếp",
+    "passkeyNudgeTitle": "Mở khoá bằng passkey",
+    "passkeyNudgeBody": "Dùng Face ID, Touch ID hoặc Windows Hello thay vì gõ passcode.",
+    "passkeyNudgeLater": "Để sau"
+  },
+  "add": {
+    "button": "Thêm tài khoản",
+    "scan": "Quét mã QR",
+    "upload": "Tải ảnh QR lên",
+    "manual": "Nhập thủ công"
+  },
+  "entry": {
+    "addTitle": "Thêm tài khoản",
+    "editTitle": "Sửa tài khoản",
+    "issuer": "Dịch vụ",
+    "issuerPlaceholder": "VD: GitHub",
+    "label": "Tài khoản",
+    "labelPlaceholder": "VD: ban@example.com",
+    "secret": "Secret key",
+    "secretPlaceholder": "VD: JBSW Y3DP EHPK 3PXP",
+    "advanced": "Nâng cao",
+    "algorithm": "Thuật toán",
+    "digits": "Số chữ số",
+    "period": "Chu kỳ",
+    "seconds": "giây",
+    "issuerRequired": "Nhập tên dịch vụ",
+    "secretRequired": "Nhập secret key",
+    "secretInvalid": "Secret key phải ở dạng Base32 (chữ A–Z và số 2–7)",
+    "periodInvalid": "Chu kỳ từ 10 đến 300 giây",
+    "added": "Đã thêm {{issuer}}",
+    "updated": "Đã lưu thay đổi",
+    "duplicate": "Tài khoản này đã có trong 2FAir"
+  },
+  "scan": {
+    "title": "Quét mã QR",
+    "hint": "Đưa camera vào mã QR 2FA",
+    "cameraError": "Không truy cập được camera. Kiểm tra lại quyền truy cập.",
+    "switchCamera": "Đổi camera",
+    "flash": "Đèn flash",
+    "uploadTitle": "Tải ảnh QR lên",
+    "drop": "Thả ảnh vào đây hoặc bấm để chọn",
+    "formats": "PNG, JPEG, WebP hoặc ảnh chụp màn hình",
+    "processing": "Đang đọc…",
+    "noQr": "Không tìm thấy mã QR trong ảnh",
+    "notOtpauth": "Mã QR này không phải mã 2FA",
+    "notTotp": "Chỉ hỗ trợ mã theo thời gian (TOTP)",
+    "badSecret": "Secret key trong mã QR không hợp lệ",
+    "migration": "Chưa hỗ trợ mã xuất từ Google Authenticator. Hãy xuất từng tài khoản một."
+  },
+  "menu": {
+    "actions": "Thao tác",
+    "showQr": "Hiện mã QR",
+    "edit": "Sửa",
+    "delete": "Xoá",
+    "deleteTitle": "Xoá {{issuer}}?",
+    "deleteBody": "Hãy chắc là bạn đã tắt 2FA cho tài khoản này hoặc còn cách đăng nhập khác. Không thể hoàn tác.",
+    "deleted": "Đã xoá tài khoản"
+  },
+  "qr": {
+    "title": "Chuyển sang app khác",
+    "warning": "Ai thấy mã QR hoặc secret này đều có thể tạo mã của bạn.",
+    "reveal": "Hiện mã QR",
+    "openUri": "Mở bằng app xác thực",
+    "copySecret": "Sao chép secret key",
+    "secretCopied": "Đã sao chép secret key"
   },
   "settings": {
     "title": "Cài đặt",
-    "description": "Quản lý tùy chọn tài khoản của bạn",
-    "appPreferences": {
-      "title": "Tùy chọn ứng dụng",
-      "description": "Tùy chỉnh trải nghiệm của bạn",
-      "autoRefresh": {
-        "title": "Tự động làm mới mã OTP"
-      },
-      "notifications": {
-        "title": "Hiển thị thông báo"
-      },
-      "autoBackup": {
-        "title": "Tự động sao lưu đã bật"
-      }
+    "security": "Bảo mật",
+    "passkeys": "Passkey",
+    "passkeysHint": "Mở khoá bằng Face ID, Touch ID, Windows Hello hoặc khoá bảo mật.",
+    "addPasskey": "Thêm passkey",
+    "noPasskeys": "Chưa có passkey",
+    "addedOn": "Thêm ngày {{date}}",
+    "passkeyAdded": "Đã thêm passkey",
+    "passkeyRemoved": "Đã gỡ passkey",
+    "keepOne": "Cần giữ ít nhất một cách mở khoá",
+    "passcode": "Passcode",
+    "passcodeHint": "6 chữ số, dùng được trên mọi trình duyệt.",
+    "passcodeOn": "Bật",
+    "passcodeOff": "Tắt",
+    "setPasscode": "Đặt passcode",
+    "changePasscode": "Đổi",
+    "passcodeSaved": "Đã lưu passcode",
+    "passcodeRemoved": "Đã gỡ passcode",
+    "autoLock": "Tự động khoá",
+    "autoLockHint": "Khoá 2FAir sau khoảng thời gian không dùng này.",
+    "autoLockOptions": {
+      "1": "1 phút",
+      "5": "5 phút",
+      "15": "15 phút",
+      "60": "1 giờ",
+      "never": "Không bao giờ"
     },
-    "language": {
-      "title": "Ngôn ngữ",
-      "description": "Chọn ngôn ngữ ưa thích",
-      "autoDetect": {
-        "title": "Tự động phát hiện ngôn ngữ",
-        "description": "Tự động phát hiện ngôn ngữ từ cài đặt trình duyệt"
-      },
-      "manual": {
-        "title": "Chọn ngôn ngữ thủ công",
-        "description": "Chọn một ngôn ngữ cụ thể"
-      },
-      "current": "Ngôn ngữ hiện tại",
-      "changeLanguage": "Thay đổi ngôn ngữ"
+    "backup": "Sao lưu",
+    "backupHint": "Mã của bạn chỉ nằm trong trình duyệt này. Hãy xuất file backup mã hoá và cất ở nơi an toàn.",
+    "export": "Xuất tài khoản",
+    "import": "Nhập tài khoản",
+    "exportAction": "Xuất",
+    "importAction": "Nhập",
+    "importHint": "Khôi phục backup 2FAir, hoặc chuyển tài khoản từ ứng dụng xác thực khác sang.",
+    "exportTitle": "Xuất tài khoản",
+    "exportFormat": "Định dạng xuất",
+    "format": {
+      "backup": "Backup mã hoá (.json)",
+      "backupHint": "Có mật khẩu bảo vệ. Khôi phục bằng 2FAir trên bất kỳ thiết bị nào.",
+      "links": "Link otpauth:// (.txt)",
+      "linksHint": "Mỗi dòng một link, để chuyển sang ứng dụng xác thực khác. Không mã hoá."
     },
-    "dataManagement": {
-      "title": "Quản lý dữ liệu",
-      "description": "Xuất và quản lý dữ liệu của bạn",
-      "exportData": {
-        "title": "Xuất dữ liệu"
-      },
-      "securitySettings": {
-        "title": "Cài đặt bảo mật"
-      }
+    "linksWarning": "Ai mở được file này cũng tạo được mã của bạn. Nhập xong ở nơi cần dùng thì hãy xoá file.",
+    "linksConfirm": "Tôi hiểu file này không được mã hoá",
+    "importTitle": "Nhập tài khoản",
+    "backupPassword": "Mật khẩu backup",
+    "backupPasswordHint": "Cần mật khẩu này để khôi phục. Tối thiểu 8 ký tự.",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "passwordMismatch": "Mật khẩu không khớp",
+    "passwordTooShort": "Tối thiểu 8 ký tự",
+    "chooseFile": "Chọn file",
+    "importFileHint": "File backup 2FAir (.json) hoặc file văn bản có mỗi dòng một link otpauth://.",
+    "found_other": "Tìm thấy {{count}} tài khoản",
+    "skippedLinks_other": "{{count}} link không phải tài khoản TOTP hợp lệ, sẽ được bỏ qua",
+    "plaintextWarning": "File này chứa secret key ở dạng không mã hoá. Hãy xoá file sau khi nhập xong.",
+    "unsupportedFile": "Không tìm thấy tài khoản nào. Hãy chọn file backup 2FAir hoặc file văn bản chứa link otpauth://.",
+    "exported": "Đã tải file backup",
+    "exportedLinks": "Đã tải file tài khoản",
+    "imported_one": "Đã nhập {{count}} tài khoản",
+    "imported_other": "Đã nhập {{count}} tài khoản",
+    "importedNone": "Các tài khoản này đã có trong 2FAir",
+    "importedWithExisting_other": "Đã nhập {{count}} tài khoản ({{existing}} tài khoản đã có sẵn)",
+    "wrongPassword": "Sai mật khẩu backup",
+    "invalidFile": "Không nhập được file này",
+    "appearance": "Giao diện",
+    "theme": "Chủ đề",
+    "themeOptions": {
+      "system": "Theo hệ thống",
+      "light": "Sáng",
+      "dark": "Tối"
     },
-    "savePreferences": "Lưu",
-    "preferencesSaved": "Đã lưu cài đặt",
-    "failedToSave": "Lưu thất bại"
-  },
-  "security": {
-    "title": "Bảo mật",
-    "description": "Bảo vệ tài khoản của bạn với các tính năng bảo mật nâng cao",
-    "webauthn": {
-      "title": "Thông tin xác thực WebAuthn",
-      "description": "Khóa bảo mật và passkey để bảo vệ nâng cao",
-      "addCredential": "Thêm thông tin xác thực",
-      "noCredentials": "Chưa đăng ký thông tin xác thực nào",
-      "noCredentialsDescription": "Thêm khóa bảo mật hoặc passkey để tăng cường bảo mật",
-      "addFirst": "Thêm thông tin xác thực đầu tiên",
-      "table": {
-        "credential": "THÔNG TIN XÁC THỰC",
-        "deviceType": "LOẠI THIẾT BỊ",
-        "created": "ĐƯỢC TẠO",
-        "lastUsed": "SỬ DỤNG LẦN CUỐI",
-        "actions": "HÀNH ĐỘNG"
-      },
-      "removeConfirm": "Bạn có chắc chắn muốn xóa thông tin xác thực WebAuthn này?",
-      "removeSuccess": "Xóa thông tin xác thực WebAuthn thành công",
-      "removeFailed": "Không thể xóa thông tin xác thực WebAuthn",
-      "registerSuccess": "Đăng ký thông tin xác thực WebAuthn thành công!"
-    },
-    "sessions": {
-      "title": "Phiên hoạt động",
-      "description": "Giám sát và quản lý các phiên đăng nhập của bạn",
-      "table": {
-        "device": "THIẾT BỊ",
-        "location": "VỊ TRÍ",
-        "ipAddress": "ĐỊA CHỈ IP",
-        "lastActive": "HOẠT ĐỘNG LẦN CUỐI",
-        "actions": "HÀNH ĐỘNG"
-      },
-      "revokeConfirm": "Bạn có chắc chắn muốn thu hồi phiên này?",
-      "revokeSuccess": "Thu hồi phiên thành công",
-      "revokeFailed": "Không thể thu hồi phiên"
-    }
-  },
-  "export": {
-    "title": "Xuất dữ liệu",
-    "description": "Tải xuống mã OTP và cài đặt của bạn",
-    "options": {
-      "title": "Tùy chọn xuất",
-      "description": "Chọn dữ liệu cần bao gồm",
-      "otpCodes": {
-        "title": "Mã OTP",
-        "description": "{{count}} mục"
-      },
-      "appSettings": {
-        "title": "Cài đặt ứng dụng"
-      },
-      "metadata": {
-        "title": "Metadata xuất"
-      },
-      "estimatedSize": {
-        "title": "Kích thước tệp ước tính"
-      }
-    },
-    "actions": {
-      "title": "Hành động xuất",
-      "description": "Tải xuống hoặc sao lưu dữ liệu của bạn",
-      "downloading": "Đang xuất...",
-      "downloadExport": "Tải xuống",
-      "backupToCloud": "Sao lưu lên Cloud"
-    },
-    "security": {
-      "title": "Thông báo bảo mật",
-      "description": "Thông tin bảo mật quan trọng",
-      "warning": "Dữ liệu xuất chứa thông tin nhạy cảm bao gồm cả secret OTP.",
-      "tips": [
-        "Lưu trữ tệp đã xuất ở nơi an toàn",
-        "Sử dụng mã hóa mạnh khi lưu trữ hoặc chia sẻ tệp",
-        "Xóa tệp khi không còn cần thiết",
-        "Không bao giờ chia sẻ secret OTP của bạn với bất kỳ ai"
-      ]
-    },
-    "history": {
-      "title": "Xuất gần đây",
-      "description": "Lịch sử xuất của bạn",
-      "empty": "Chưa có lần xuất nào",
-      "emptyDescription": "Lịch sử xuất của bạn sẽ xuất hiện ở đây"
-    },
-    "errors": {
-      "selectData": "Vui lòng chọn ít nhất một loại dữ liệu để xuất",
-      "exportFailed": "Xuất thất bại"
-    },
-    "success": {
-      "exported": "Xuất dữ liệu thành công",
-      "backedUp": "Tạo bản sao lưu thành công"
-    }
+    "language": "Ngôn ngữ",
+    "install": "Cài app",
+    "installHint": "Thêm 2FAir vào màn hình chính hoặc dock để mở nhanh.",
+    "installIos": "Trong Safari, bấm Chia sẻ rồi chọn “Thêm vào MH chính”.",
+    "danger": "Vùng nguy hiểm",
+    "reset": "Đặt lại 2FAir",
+    "resetHint": "Xoá toàn bộ tài khoản và cài đặt trên thiết bị này.",
+    "about": "Giới thiệu",
+    "aboutBody": "2FAir chạy hoàn toàn offline. Mã của bạn không bao giờ rời khỏi thiết bị này.",
+    "sourceCode": "Mã nguồn"
   },
   "language": {
-    "title": "Ngôn ngữ",
-    "english": "Tiếng Anh",
-    "vietnamese": "Tiếng Việt",
-    "autoDetect": "Tự động phát hiện",
-    "switchTo": "Chuyển sang {{language}}"
+    "en": "English",
+    "vi": "Tiếng Việt"
+  },
+  "pwa": {
+    "offlineReady": "2FAir đã sẵn sàng chạy offline"
   }
-} 
+}

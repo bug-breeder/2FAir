@@ -1,164 +1,224 @@
 {
-  "navigation": {
-    "settings": "Settings",
-    "security": "Security",
-    "export": "Export",
-    "about": "About",
-    "pricing": "Pricing",
-    "docs": "Docs",
-    "blog": "Blog",
-    "logout": "Logout",
-    "login": "Login"
-  },
   "common": {
-    "add": "Add",
     "cancel": "Cancel",
     "save": "Save",
     "delete": "Delete",
-    "edit": "Edit",
-    "export": "Export",
-    "import": "Import",
-    "loading": "Loading",
-    "error": "Error",
-    "success": "Success",
     "close": "Close",
-    "confirm": "Confirm",
     "back": "Back",
-    "next": "Next",
-    "active": "Active",
-    "revoke": "Revoke",
-    "current": "Current"
+    "continue": "Continue",
+    "done": "Done",
+    "remove": "Remove",
+    "error": "Something went wrong"
+  },
+  "onboarding": {
+    "title": "Welcome to 2FAir",
+    "subtitle": "Your 2FA codes, encrypted and kept only on this device. No account, no server.",
+    "pointEncrypted": "Encrypted with AES-256",
+    "pointOffline": "Works offline",
+    "pointPrivate": "Nothing leaves your device",
+    "passkeyCta": "Set up with passkey",
+    "passkeyHint": "Face ID, Touch ID, Windows Hello or a security key",
+    "passcodeCta": "Use a passcode instead",
+    "passkeyName": "2FAir vault",
+    "waitingPasskey": "Waiting for your passkey…",
+    "prfUnsupported": "This passkey can't encrypt your vault in this browser. Use a passcode instead.",
+    "passkeyUnavailable": "Passkeys aren't available in this browser. Use a passcode instead.",
+    "passkeyCancelled": "Passkey setup was cancelled.",
+    "passkeyReady": "Passkey ready",
+    "backupTitle": "Add a backup passcode",
+    "backupBody": "Use it when your passkey isn't available, for example in another browser or if you lose the device that holds it.",
+    "createTitle": "Create a passcode",
+    "createBody": "6 digits you'll enter to unlock 2FAir.",
+    "confirmTitle": "Confirm your passcode",
+    "confirmBody": "Enter the same 6 digits again.",
+    "mismatch": "Passcodes didn't match. Try again.",
+    "skip": "Skip for now",
+    "skipWarning": "Without a backup passcode, losing your passkey means losing access to your codes."
+  },
+  "unlock": {
+    "title": "2FAir is locked",
+    "withPasskey": "Unlock with passkey",
+    "orPasscode": "or enter your passcode",
+    "enterPasscode": "Enter your passcode",
+    "wrong": "Wrong passcode",
+    "lockedOut": "Too many attempts. Try again in {{seconds}}s.",
+    "passkeyFailed": "Couldn't unlock with passkey",
+    "forgot": "Can't unlock?",
+    "resetTitle": "Reset 2FAir?",
+    "resetBody": "This permanently deletes every code stored on this device. If you have a backup file you can restore it afterwards.",
+    "resetConfirm": "Delete everything",
+    "passkeyTip": "To unlock with Face ID or Touch ID, add a passkey in Settings."
   },
   "home": {
-    "title": "Your OTP Codes",
-    "empty": {
-      "title": "No OTPs Yet",
-      "description": "Add your first TOTP to get started with secure 2FA management."
-    },
-    "search": {
-      "results": "{{count}} of {{total}} OTP{{pluralTotal}} {{query}}",
-      "matching": "matching \"{{query}}\"",
-      "noMatches": "No Matching OTPs",
-      "noMatchesDescription": "Try adjusting your search query to find what you're looking for."
-    }
+    "search": "Search accounts",
+    "clearSearch": "Clear search",
+    "count_one": "{{count}} account",
+    "count_other": "{{count}} accounts",
+    "emptyTitle": "No accounts yet",
+    "emptyBody": "Add your first 2FA account by scanning its QR code or entering the secret key.",
+    "noResultsTitle": "No matches",
+    "noResults": "No accounts match “{{query}}”",
+    "lock": "Lock",
+    "settings": "Settings",
+    "copied": "Code copied",
+    "copyFailed": "Couldn't copy the code",
+    "next": "Next",
+    "passkeyNudgeTitle": "Unlock with a passkey",
+    "passkeyNudgeBody": "Use Face ID, Touch ID or Windows Hello instead of typing your passcode.",
+    "passkeyNudgeLater": "Not now"
+  },
+  "add": {
+    "button": "Add account",
+    "scan": "Scan QR code",
+    "upload": "Upload QR image",
+    "manual": "Enter manually"
+  },
+  "entry": {
+    "addTitle": "Add account",
+    "editTitle": "Edit account",
+    "issuer": "Service",
+    "issuerPlaceholder": "e.g. GitHub",
+    "label": "Account",
+    "labelPlaceholder": "e.g. you@example.com",
+    "secret": "Secret key",
+    "secretPlaceholder": "e.g. JBSW Y3DP EHPK 3PXP",
+    "advanced": "Advanced",
+    "algorithm": "Algorithm",
+    "digits": "Digits",
+    "period": "Period",
+    "seconds": "sec",
+    "issuerRequired": "Enter the service name",
+    "secretRequired": "Enter the secret key",
+    "secretInvalid": "The secret key should be Base32 (letters A–Z and digits 2–7)",
+    "periodInvalid": "Use a period between 10 and 300 seconds",
+    "added": "{{issuer}} added",
+    "updated": "Changes saved",
+    "duplicate": "This account is already in 2FAir"
+  },
+  "scan": {
+    "title": "Scan QR code",
+    "hint": "Point your camera at the 2FA QR code",
+    "cameraError": "Can't access the camera. Check the permission settings.",
+    "switchCamera": "Switch camera",
+    "flash": "Flashlight",
+    "uploadTitle": "Upload QR image",
+    "drop": "Drop an image here or click to choose one",
+    "formats": "PNG, JPEG, WebP or a screenshot",
+    "processing": "Reading…",
+    "noQr": "No QR code found in this image",
+    "notOtpauth": "This QR code isn't a 2FA code",
+    "notTotp": "Only time-based (TOTP) codes are supported",
+    "badSecret": "This QR code has an invalid secret key",
+    "migration": "Google Authenticator export codes aren't supported yet. Export accounts one at a time instead."
+  },
+  "menu": {
+    "actions": "Actions",
+    "showQr": "Show QR code",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteTitle": "Delete {{issuer}}?",
+    "deleteBody": "Make sure you've turned off 2FA for this account or have another way to sign in. This can't be undone.",
+    "deleted": "Account deleted"
+  },
+  "qr": {
+    "title": "Move to another app",
+    "warning": "Anyone who sees this QR code or secret can generate your codes.",
+    "reveal": "Show QR code",
+    "openUri": "Open in authenticator app",
+    "copySecret": "Copy secret key",
+    "secretCopied": "Secret key copied"
   },
   "settings": {
     "title": "Settings",
-    "appPreferences": {
-      "title": "App Preferences",
-      "autoRefresh": {
-        "title": "Auto-refresh OTP codes"
-      },
-      "notifications": {
-        "title": "Show notifications"
-      },
-      "autoBackup": {
-        "title": "Auto-backup enabled"
-      }
+    "security": "Security",
+    "passkeys": "Passkeys",
+    "passkeysHint": "Unlock with Face ID, Touch ID, Windows Hello or a security key.",
+    "addPasskey": "Add passkey",
+    "noPasskeys": "No passkeys yet",
+    "addedOn": "Added {{date}}",
+    "passkeyAdded": "Passkey added",
+    "passkeyRemoved": "Passkey removed",
+    "keepOne": "Keep at least one way to unlock",
+    "passcode": "Passcode",
+    "passcodeHint": "6 digits, works in any browser.",
+    "passcodeOn": "On",
+    "passcodeOff": "Off",
+    "setPasscode": "Set passcode",
+    "changePasscode": "Change",
+    "passcodeSaved": "Passcode saved",
+    "passcodeRemoved": "Passcode removed",
+    "autoLock": "Auto-lock",
+    "autoLockHint": "Lock 2FAir after this long without activity.",
+    "autoLockOptions": {
+      "1": "1 minute",
+      "5": "5 minutes",
+      "15": "15 minutes",
+      "60": "1 hour",
+      "never": "Never"
     },
-    "language": {
-      "title": "Language"
+    "backup": "Backup",
+    "backupHint": "Your codes live only in this browser. Export an encrypted backup and keep it somewhere safe.",
+    "export": "Export accounts",
+    "import": "Import accounts",
+    "exportAction": "Export",
+    "importAction": "Import",
+    "importHint": "Restore a 2FAir backup, or bring accounts over from another authenticator app.",
+    "exportTitle": "Export accounts",
+    "exportFormat": "Export format",
+    "format": {
+      "backup": "Encrypted backup (.json)",
+      "backupHint": "Password-protected. Restore it in 2FAir on any device.",
+      "links": "otpauth:// links (.txt)",
+      "linksHint": "One link per line, for moving to another authenticator app. Not encrypted."
     },
-    "dataManagement": {
-      "title": "Data Management",
-      "exportData": {
-        "title": "Export your data"
-      },
-      "securitySettings": {
-        "title": "Security settings"
-      }
+    "linksWarning": "Anyone who opens this file can generate your codes. Import it where you need it, then delete it.",
+    "linksConfirm": "I understand this file isn't encrypted",
+    "importTitle": "Import accounts",
+    "backupPassword": "Backup password",
+    "backupPasswordHint": "You'll need it to restore. At least 8 characters.",
+    "confirmPassword": "Confirm password",
+    "passwordMismatch": "Passwords don't match",
+    "passwordTooShort": "Use at least 8 characters",
+    "chooseFile": "Choose a file",
+    "importFileHint": "A 2FAir backup (.json) or a text file with one otpauth:// link per line.",
+    "found_one": "{{count}} account found",
+    "found_other": "{{count}} accounts found",
+    "skippedLinks_one": "{{count}} link isn't a valid TOTP account and will be skipped",
+    "skippedLinks_other": "{{count}} links aren't valid TOTP accounts and will be skipped",
+    "plaintextWarning": "This file holds your secret keys unencrypted. Delete it once you've imported it.",
+    "unsupportedFile": "No accounts found. Choose a 2FAir backup or a text file of otpauth:// links.",
+    "exported": "Backup downloaded",
+    "exportedLinks": "Accounts file downloaded",
+    "imported_one": "Imported {{count}} account",
+    "imported_other": "Imported {{count}} accounts",
+    "importedNone": "These accounts are already in 2FAir",
+    "importedWithExisting_one": "Imported {{count}} account ({{existing}} already in 2FAir)",
+    "importedWithExisting_other": "Imported {{count}} accounts ({{existing}} already in 2FAir)",
+    "wrongPassword": "Wrong backup password",
+    "invalidFile": "Couldn't import this file",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "themeOptions": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
     },
-    "savePreferences": "Save",
-    "preferencesSaved": "Settings saved",
-    "failedToSave": "Failed to save"
-  },
-  "security": {
-    "title": "Security",
-    "webauthn": {
-      "title": "WebAuthn Credentials",
-      "addCredential": "Add Credential",
-      "noCredentials": "No credentials registered",
-      "noCredentialsDescription": "Add a security key or passkey for enhanced security",
-      "addFirst": "Add Your First Credential",
-      "table": {
-        "credential": "CREDENTIAL",
-        "deviceType": "DEVICE TYPE",
-        "created": "CREATED",
-        "lastUsed": "LAST USED",
-        "actions": "ACTIONS"
-      },
-      "removeConfirm": "Are you sure you want to remove this WebAuthn credential?",
-      "removeSuccess": "WebAuthn credential removed successfully",
-      "removeFailed": "Failed to remove WebAuthn credential",
-      "registerSuccess": "WebAuthn credential registered successfully!"
-    },
-    "sessions": {
-      "title": "Active Sessions",
-      "table": {
-        "device": "DEVICE",
-        "location": "LOCATION",
-        "ipAddress": "IP ADDRESS",
-        "lastActive": "LAST ACTIVE",
-        "actions": "ACTIONS"
-      },
-      "revokeConfirm": "Are you sure you want to revoke this session?",
-      "revokeSuccess": "Session revoked successfully",
-      "revokeFailed": "Failed to revoke session"
-    }
-  },
-  "export": {
-    "title": "Export Data",
-    "options": {
-      "title": "Export Options",
-      "otpCodes": {
-        "title": "OTP Codes",
-        "description": "{{count}} items"
-      },
-      "appSettings": {
-        "title": "App Settings"
-      },
-      "metadata": {
-        "title": "Export Metadata"
-      },
-      "estimatedSize": {
-        "title": "Estimated file size"
-      }
-    },
-    "actions": {
-      "title": "Export Actions",
-      "downloading": "Exporting...",
-      "downloadExport": "Download",
-      "backupToCloud": "Backup to Cloud"
-    },
-    "security": {
-      "title": "Security Notice",
-      "warning": "Your exported data contains sensitive information including OTP secrets.",
-      "tips": [
-        "Store the exported file in a secure location",
-        "Use strong encryption when storing or sharing the file",
-        "Delete the file when no longer needed",
-        "Never share your OTP secrets with anyone"
-      ]
-    },
-    "history": {
-      "title": "Recent Exports",
-      "empty": "No exports yet",
-      "emptyDescription": "Your export history will appear here"
-    },
-    "errors": {
-      "selectData": "Please select at least one data type to export",
-      "exportFailed": "Export failed"
-    },
-    "success": {
-      "exported": "Data exported successfully",
-      "backedUp": "Backup created successfully"
-    }
+    "language": "Language",
+    "install": "Install app",
+    "installHint": "Add 2FAir to your home screen or dock for quick access.",
+    "installIos": "In Safari, tap Share, then “Add to Home Screen”.",
+    "danger": "Danger zone",
+    "reset": "Reset 2FAir",
+    "resetHint": "Delete all accounts and settings on this device.",
+    "about": "About",
+    "aboutBody": "2FAir works fully offline. Your codes never leave this device.",
+    "sourceCode": "Source code"
   },
   "language": {
-    "title": "Language",
-    "english": "English",
-    "vietnamese": "Vietnamese",
-    "autoDetect": "Auto Detect",
-    "switchTo": "Switch to {{language}}"
+    "en": "English",
+    "vi": "Tiếng Việt"
+  },
+  "pwa": {
+    "offlineReady": "2FAir is ready to work offline"
   }
-} 
+}
